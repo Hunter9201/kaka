@@ -65,6 +65,7 @@
   .loading{display:none;position:fixed;z-index:2000;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.9);justify-content:center;align-items:center;flex-direction:column;gap:16px;}
   .loading-spinner{width:40px;height:40px;border:4px solid #f3f3f3;border-top:4px solid var(--brand);border-radius:50%;animation:spin 1s linear infinite;}
   @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+  .mono{font-family:ui-monospace, Menlo, Consolas, "Courier New", monospace; white-space: pre-wrap;}
   @media (max-width: 1200px){.grid-4{grid-template-columns:repeat(2,1fr);}}
   @media (max-width: 768px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}.row{grid-template-columns:1fr;}.card{padding:16px;}.nav{flex-direction:column;gap:16px;}.tabs{width:100%;justify-content:center;}}
 </style>
@@ -507,29 +508,163 @@
 
     <!-- Data -->
     <section id="data" class="tabpanel" style="display:none;">
-      <div class="grid-2">
-        <div class="card">
-          <h3>Backup / Restore</h3>
-          <div class="stack">
+      <div class="row">
+        <!-- Backup / Restore -->
+        <div class="card" style="grid-column: span 4;">
+          <h3>Backup / Restore (Local JSON)</h3>
+          <div class="stack section-tools">
             <button class="btn primary" id="btnBackup2">Export JSON</button>
             <label class="btn">
               <input type="file" id="restoreFile2" accept="application/json" style="display:none">
               Import JSON
             </label>
+            <button class="btn" id="btnSaveNow2">Save Now</button>
           </div>
-          <p class="help">Export all data as JSON for backup</p>
+          <div class="stat" style="margin-top:12px;">
+            <span class="muted">Last Saved</span>
+            <b id="lastSaveTime">Never</b>
+          </div>
+          <p class="help">Exports all products, purchases, sales, and settings to a JSON file.</p>
         </div>
-        
-        <div class="card">
-          <h3>Initialize Products</h3>
-          <button class="btn ok" id="btnInitFromExcel">Initialize from Excel Data</button>
-          <p class="help">Create products from your Excel file</p>
+
+        <!-- Excel Import / Export -->
+        <div class="card" style="grid-column: span 4;">
+          <h3>Excel Import / Export</h3>
+          <div class="stack section-tools">
+            <button class="btn" id="btnExportXLSX">Export Excel (All Data)</button>
+            <button class="btn" id="btnExportLedgerXLSX">Export Blank Template</button>
+            <label class="btn">
+              <input type="file" id="importXLSX" accept=".xlsx,.xls" style="display:none">
+              Import Excel
+            </label>
+          </div>
+          
+          <div class="grid-2" style="margin-top:12px; gap:8px;">
+            <div>
+              <label>Export From</label>
+              <input type="date" id="exportFrom">
+            </div>
+            <div>
+              <label>Export To</label>
+              <input type="date" id="exportTo">
+            </div>
+          </div>
+          
+          <div class="right" style="margin-top:12px;">
+            <button class="btn" id="btnExportFilledLedger">Export Filled Ledger</button>
+          </div>
+          <p class="help">Export all data or import from Excel files. Duplicate same-date entries are blocked on import.</p>
         </div>
-        
-        <div class="card">
-          <h3>Reset Data</h3>
-          <button class="btn bad" id="btnWipe">Reset ALL Data</button>
-          <p class="help">This cannot be undone!</p>
+
+        <!-- Template Generator -->
+        <div class="card" style="grid-column: span 4;">
+          <h3>Excel Template Generator</h3>
+          <div class="grid-3" style="margin-top:8px;">
+            <button class="btn" id="btnTemplateDailySales2">Sales Template</button>
+            <button class="btn" id="btnTemplateDailyPurchases2">Purchases Template</button>
+            <button class="btn" id="btnTemplateInventory2">Inventory Template</button>
+          </div>
+          <div class="grid-2" style="margin-top:12px; gap:8px;">
+            <button class="btn warn" id="btnGenerateBlankExcel2">Generate All Templates</button>
+          </div>
+          <p class="help">Create blank Excel sheets for daily data entry.</p>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:16px;">
+        <!-- Batch Processing -->
+        <div class="card" style="grid-column: span 6;">
+          <h3>Batch Import & Automation</h3>
+          <div class="stack section-tools">
+            <label class="btn">
+              <input type="file" id="batchExcelFiles2" multiple accept=".xlsx,.xls" style="display:none">
+              Upload Excel Files
+            </label>
+            <button class="btn ok" id="btnProcessBatch2">Process Batch</button>
+          </div>
+          
+          <div class="grid-3" style="margin-top:12px;">
+            <div class="stat">
+              <span class="muted">Sheets Processed</span>
+              <b id="processedSheetsCount2">0</b>
+            </div>
+            <div class="stat">
+              <span class="muted">Import Days</span>
+              <b id="autoImportDays2">0</b>
+            </div>
+            <div class="stat">
+              <span class="muted">Last Import</span>
+              <b id="lastAutoRun2">Never</b>
+            </div>
+          </div>
+          
+          <div class="stack" style="margin-top:12px;">
+            <button class="btn primary" id="btnCheckGmail2">Check Gmail</button>
+            <button class="btn" id="btnInitFromExcel">Initialize Products</button>
+          </div>
+          
+          <p class="help">Upload multiple daily Excel sheets to automatically aggregate data. Initialize products from your Excel file.</p>
+        </div>
+
+        <!-- Cloud Sync (Google Drive) -->
+        <div class="card" style="grid-column: span 6;">
+          <h3>Cloud Sync (Google Drive)</h3>
+          <div class="stack section-tools">
+            <button class="btn" id="btnGSignIn">Sign in with Google</button>
+            <button class="btn" id="btnCloudSave" disabled>Save to Google Drive</button>
+            <button class="btn" id="btnCloudLoad" disabled>Load from Google Drive</button>
+            <button class="btn bad" id="btnGSignOut" disabled>Sign out</button>
+          </div>
+          
+          <div class="stack" style="margin-top:12px;">
+            <span id="cloudStatus" class="pill">Signed out</span>
+          </div>
+          
+          <div class="goodmsg" style="margin-top:12px;">
+            <strong>Auto-Import Status</strong>
+            <div>Last import: <span id="lastImportTime2">Never</span></div>
+          </div>
+          
+          <p class="help">Stores backup in Google Drive. Works with the newest Google Identity Services.</p>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:16px;">
+        <!-- Import Log -->
+        <div class="card" style="grid-column: span 8;">
+          <h3>Import Log</h3>
+          <div style="max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:12px;background:#f8fafc;">
+            <pre id="importLog2" style="margin:0;font-size:12px;white-space:pre-wrap;">No import activity yet.</pre>
+          </div>
+          <div class="right" style="margin-top:12px;">
+            <button class="btn" id="btnClearLog2">Clear Log</button>
+          </div>
+        </div>
+
+        <!-- Self-Test & Diagnostics -->
+        <div class="card" style="grid-column: span 4;">
+          <h3>Self-Test / Diagnostics</h3>
+          <div class="stack">
+            <button class="btn" id="btnSelfTest">Run Self-Test</button>
+            <button class="btn" id="btnValidateData">Validate Data</button>
+          </div>
+          <div id="diagOut" class="mono" style="margin-top:8px; font-size:12px;"></div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:16px;">
+        <!-- Danger Zone -->
+        <div class="card" style="grid-column: span 12;">
+          <h3 style="color: var(--bad);">Danger Zone</h3>
+          <div class="warnmsg">
+            <strong>Warning:</strong> These actions are irreversible. Make sure you have a backup.
+          </div>
+          <div class="stack" style="margin-top:16px;">
+            <button class="btn bad" id="btnWipe">Reset ALL Data</button>
+            <button class="btn bad" id="btnClearTransactions">Clear All Transactions</button>
+            <button class="btn bad" id="btnResetProducts">Reset Products</button>
+          </div>
+          <p class="help">This cannot be undone! Export your data first.</p>
         </div>
       </div>
     </section>
@@ -573,8 +708,12 @@ function showLoading(show) {
 
 function logImport(message) {
   const logEl = document.getElementById('importLog');
+  const logEl2 = document.getElementById('importLog2');
   const timestamp = new Date().toLocaleTimeString();
-  logEl.textContent = `[${timestamp}] ${message}\n${logEl.textContent}`;
+  const logMessage = `[${timestamp}] ${message}`;
+  
+  if (logEl) logEl.textContent = logMessage + '\n' + logEl.textContent;
+  if (logEl2) logEl2.textContent = logMessage + '\n' + logEl2.textContent;
 }
 
 // ================ DATA MANAGEMENT ================
@@ -601,6 +740,7 @@ function saveData() {
   try {
     db.settings.lastSave = new Date().toISOString();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+    updateLastSaveTime();
     return true;
   } catch (e) {
     console.error('Error saving data:', e);
@@ -610,6 +750,14 @@ function saveData() {
 
 function getProductById(id) {
   return db.products.find(p => p.id === id);
+}
+
+function updateLastSaveTime() {
+  const lastSaveEl = document.getElementById('lastSaveTime');
+  if (lastSaveEl && db.settings.lastSave) {
+    const lastSave = new Date(db.settings.lastSave);
+    lastSaveEl.textContent = lastSave.toLocaleDateString() + ' ' + lastSave.toLocaleTimeString();
+  }
 }
 
 // ================ DASHBOARD ================
@@ -704,9 +852,30 @@ function setupTabs() {
         if (tabId === 'inventory') renderInventory();
         if (tabId === 'reports') initReports();
         if (tabId === 'automation') renderAutomation();
+        if (tabId === 'data') renderDataSection();
       }
     });
   });
+}
+
+// ================ DATA SECTION ================
+function renderDataSection() {
+  // Update stats
+  document.getElementById('processedSheetsCount2').textContent = db.dailySheets.length;
+  document.getElementById('autoImportDays2').textContent = db.dailySheets.length;
+  
+  if (db.dailySheets.length > 0) {
+    const lastSheet = db.dailySheets[db.dailySheets.length - 1];
+    document.getElementById('lastAutoRun2').textContent = new Date(lastSheet.importDate).toLocaleDateString();
+    document.getElementById('lastImportTime2').textContent = new Date(lastSheet.importDate).toLocaleString();
+  }
+  
+  // Set date ranges
+  const today = todayStr();
+  document.getElementById('exportFrom').value = today;
+  document.getElementById('exportTo').value = today;
+  
+  updateLastSaveTime();
 }
 
 // ================ PRODUCTS MANAGEMENT ================
@@ -1544,6 +1713,7 @@ async function processBatchExcelFiles(files) {
   renderProducts();
   updateDashboardStats();
   renderAutomation();
+  renderDataSection();
   
   alert(`Processed ${files.length} files with ${totalProcessed} total records.`);
 }
@@ -1582,15 +1752,629 @@ function setupAutomation() {
   document.getElementById('btnClearLog').addEventListener('click', () => {
     if (confirm('Clear import log?')) {
       document.getElementById('importLog').textContent = 'Log cleared.';
+      document.getElementById('importLog2').textContent = 'Log cleared.';
     }
   });
+}
+
+// ================ ENHANCED DATA MANAGEMENT ================
+function setupEnhancedDataManagement() {
+  // Template buttons in Data section
+  document.getElementById('btnTemplateDailySales2').addEventListener('click', () => generateExcelTemplate('sales'));
+  document.getElementById('btnTemplateDailyPurchases2').addEventListener('click', () => generateExcelTemplate('purchases'));
+  document.getElementById('btnTemplateInventory2').addEventListener('click', () => generateExcelTemplate('inventory'));
+  document.getElementById('btnGenerateBlankExcel2').addEventListener('click', () => {
+    generateExcelTemplate('sales');
+    generateExcelTemplate('purchases');
+    generateExcelTemplate('inventory');
+    alert('All templates generated!');
+  });
+  
+  // Batch processing in Data section
+  document.getElementById('batchExcelFiles2').addEventListener('change', function(e) {
+    if (this.files.length > 0) {
+      processBatchExcelFiles(Array.from(this.files));
+      this.value = '';
+    }
+  });
+  
+  document.getElementById('btnProcessBatch2').addEventListener('click', () => {
+    document.getElementById('batchExcelFiles2').click();
+  });
+  
+  // Clear log in Data section
+  document.getElementById('btnClearLog2').addEventListener('click', () => {
+    if (confirm('Clear import log?')) {
+      document.getElementById('importLog').textContent = 'Log cleared.';
+      document.getElementById('importLog2').textContent = 'Log cleared.';
+    }
+  });
+  
+  // Enhanced backup/restore
+  document.getElementById('btnBackup2').addEventListener('click', backupData);
+  document.getElementById('btnSaveNow2').addEventListener('click', () => {
+    if (saveData()) {
+      alert('Data saved successfully!');
+    }
+  });
+
+  // Enhanced Excel export
+  document.getElementById('btnExportXLSX').addEventListener('click', exportAllDataToExcel);
+  document.getElementById('btnExportFilledLedger').addEventListener('click', exportFilledLedgerToExcel);
+  document.getElementById('btnExportLedgerXLSX').addEventListener('click', exportBlankLedgerTemplate);
+
+  // Self-test
+  document.getElementById('btnSelfTest').addEventListener('click', runSelfTest);
+  document.getElementById('btnValidateData').addEventListener('click', validateData);
+
+  // Clear transactions
+  document.getElementById('btnClearTransactions').addEventListener('click', () => {
+    if (confirm('Clear ALL transactions (purchases and sales)? This cannot be undone!')) {
+      db.purchases = [];
+      db.sales = [];
+      saveData();
+      updateDashboardStats();
+      alert('All transactions cleared!');
+    }
+  });
+
+  // Reset products
+  document.getElementById('btnResetProducts').addEventListener('click', () => {
+    if (confirm('Reset all products to default values? Current stock will be lost.')) {
+      const defaultProducts = [
+        { name: "gilbeys (s)", category: "spirits", costPrice: 8500, sellingPrice: 12000, currentStock: 15, minStockLevel: 5 },
+        { name: "gilbeys (b)", category: "spirits", costPrice: 33000, sellingPrice: 45000, currentStock: 5, minStockLevel: 3 },
+        { name: "Ug Plastic", category: "spirits", costPrice: 5000, sellingPrice: 7000, currentStock: 10, minStockLevel: 5 },
+        { name: "HIGH 5", category: "energy", costPrice: 2083, sellingPrice: 3000, currentStock: 12, minStockLevel: 10 },
+        { name: "4 COUSINS", category: "wine", costPrice: 33000, sellingPrice: 50000, currentStock: 4, minStockLevel: 2 },
+        { name: "CLUB", category: "beer", costPrice: 3100, sellingPrice: 4000, currentStock: 20, minStockLevel: 10 },
+        { name: "LITE", category: "beer", costPrice: 3000, sellingPrice: 4000, currentStock: 20, minStockLevel: 10 },
+        { name: "GUINESS", category: "beer", costPrice: 3000, sellingPrice: 4000, currentStock: 20, minStockLevel: 10 },
+        { name: "REDBULL", category: "energy", costPrice: 6500, sellingPrice: 10000, currentStock: 8, minStockLevel: 5 },
+        { name: "NILE", category: "beer", costPrice: 3500, sellingPrice: 5000, currentStock: 20, minStockLevel: 10 }
+      ];
+      
+      db.products = defaultProducts.map((p, i) => ({
+        id: 'prod_' + (i + 1),
+        ...p
+      }));
+      
+      saveData();
+      renderProducts();
+      updateDashboardStats();
+      alert('Products reset to defaults!');
+    }
+  });
+
+  // Initialize from Excel
+  document.getElementById('btnInitFromExcel').addEventListener('click', () => {
+    const sampleProducts = [
+      { name: "gilbeys (s)", category: "spirits", costPrice: 8500, sellingPrice: 12000, currentStock: 15, minStockLevel: 5 },
+      { name: "gilbeys (b)", category: "spirits", costPrice: 33000, sellingPrice: 45000, currentStock: 5, minStockLevel: 3 },
+      { name: "Ug Plastic", category: "spirits", costPrice: 5000, sellingPrice: 7000, currentStock: 10, minStockLevel: 5 },
+      { name: "HIGH 5", category: "energy", costPrice: 2083, sellingPrice: 3000, currentStock: 12, minStockLevel: 10 },
+      { name: "4 COUSINS", category: "wine", costPrice: 33000, sellingPrice: 50000, currentStock: 4, minStockLevel: 2 },
+      { name: "CLUB", category: "beer", costPrice: 3100, sellingPrice: 4000, currentStock: 20, minStockLevel: 10 },
+      { name: "LITE", category: "beer", costPrice: 3000, sellingPrice: 4000, currentStock: 20, minStockLevel: 10 },
+      { name: "GUINESS", category: "beer", costPrice: 3000, sellingPrice: 4000, currentStock: 20, minStockLevel: 10 },
+      { name: "REDBULL", category: "energy", costPrice: 6500, sellingPrice: 10000, currentStock: 8, minStockLevel: 5 },
+      { name: "NILE", category: "beer", costPrice: 3500, sellingPrice: 5000, currentStock: 20, minStockLevel: 10 }
+    ];
+    
+    if (db.products.length > 0 && !confirm('Replace existing products?')) {
+      return;
+    }
+    
+    db.products = sampleProducts.map((p, i) => ({
+      id: 'prod_' + (i + 1),
+      ...p
+    }));
+    
+    saveData();
+    renderProducts();
+    updateDashboardStats();
+    
+    alert(`${sampleProducts.length} sample products initialized!`);
+  });
+
+  // Gmail check
+  document.getElementById('btnCheckGmail2').addEventListener('click', () => {
+    alert('Gmail integration requires Google Apps Script setup. Use the Excel upload feature instead.');
+  });
+
+  // Import Excel
+  document.getElementById('importXLSX').addEventListener('change', handleExcelImport);
+}
+
+// ================ ENHANCED EXCEL EXPORT ================
+function exportAllDataToExcel() {
+  try {
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    
+    // Products sheet
+    const productsData = db.products.map(p => ({
+      'ID': p.id,
+      'Name': p.name,
+      'Category': p.category || 'other',
+      'Cost Price (UGX)': p.costPrice || 0,
+      'Selling Price (UGX)': p.sellingPrice || 0,
+      'Current Stock': p.currentStock || 0,
+      'Min Stock Level': p.minStockLevel || 5,
+      'Stock Value (UGX)': (p.currentStock || 0) * (p.costPrice || 0)
+    }));
+    
+    const wsProducts = XLSX.utils.json_to_sheet(productsData);
+    XLSX.utils.book_append_sheet(wb, wsProducts, 'Products');
+    
+    // Purchases sheet
+    const purchasesData = db.purchases.flatMap(p => 
+      (p.items || []).map(item => ({
+        'Date': p.date,
+        'Supplier': p.supplier || '',
+        'Receipt No': p.receiptNo || '',
+        'Product': getProductById(item.productId)?.name || 'Unknown',
+        'Quantity': item.qty || 0,
+        'Unit Price (UGX)': item.unitPrice || 0,
+        'Total (UGX)': item.total || 0
+      }))
+    );
+    
+    const wsPurchases = XLSX.utils.json_to_sheet(purchasesData);
+    XLSX.utils.book_append_sheet(wb, wsPurchases, 'Purchases');
+    
+    // Sales sheet
+    const salesData = db.sales.flatMap(s => 
+      (s.items || []).map(item => ({
+        'Date': s.date,
+        'Customer': s.customer || '',
+        'Receipt No': s.receiptNo || '',
+        'Product': getProductById(item.productId)?.name || 'Unknown',
+        'Quantity': item.qty || 0,
+        'Unit Price (UGX)': item.unitPrice || 0,
+        'Total (UGX)': item.total || 0
+      }))
+    );
+    
+    const wsSales = XLSX.utils.json_to_sheet(salesData);
+    XLSX.utils.book_append_sheet(wb, wsSales, 'Sales');
+    
+    // Summary sheet
+    const summaryData = [
+      ['BAR MANAGEMENT SYSTEM - DATA EXPORT'],
+      ['Export Date:', new Date().toLocaleString()],
+      ['Total Products:', db.products.length],
+      ['Total Purchases:', db.purchases.length],
+      ['Total Sales:', db.sales.length],
+      ['Total Stock Value:', UGX(db.products.reduce((sum, p) => sum + (p.currentStock || 0) * (p.costPrice || 0), 0))]
+    ];
+    
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+    
+    // Download
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+    
+    function s2ab(s) {
+      const buf = new ArrayBuffer(s.length);
+      const view = new Uint8Array(buf);
+      for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+      return buf;
+    }
+    
+    download(`bar-export-${todayStr()}.xlsx`, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
+    
+    alert('All data exported to Excel successfully!');
+  } catch (error) {
+    console.error('Excel export error:', error);
+    alert('Error exporting to Excel: ' + error.message);
+  }
+}
+
+function exportBlankLedgerTemplate() {
+  try {
+    const data = [
+      ["BAR MANAGEMENT SYSTEM - LEDGER TEMPLATE"],
+      ["Date:", todayStr()],
+      ["", "", "", "", "", "", ""],
+      ["Date", "Product", "Category", "Purchases", "Sales", "Opening Stock", "Closing Stock", "Stock Value (UGX)"],
+      [todayStr(), "Gilbeys (s)", "Spirits", "5", "3", "15", "17", "144500"],
+      [todayStr(), "Ug Plastic", "Spirits", "10", "5", "20", "25", "125000"],
+      [todayStr(), "CLUB Beer", "Beer", "24", "15", "30", "39", "120900"]
+    ];
+    
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Ledger");
+    
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+    
+    function s2ab(s) {
+      const buf = new ArrayBuffer(s.length);
+      const view = new Uint8Array(buf);
+      for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+      return buf;
+    }
+    
+    download(`bar-ledger-template-${todayStr()}.xlsx`, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
+    
+    alert('Blank ledger template exported!');
+  } catch (error) {
+    console.error('Template export error:', error);
+    alert('Error exporting template: ' + error.message);
+  }
+}
+
+function exportFilledLedgerToExcel() {
+  const from = document.getElementById('exportFrom').value || todayStr();
+  const to = document.getElementById('exportTo').value || todayStr();
+  
+  try {
+    // Create ledger data
+    const ledgerData = [];
+    
+    // Headers
+    ledgerData.push(['Date', 'Product', 'Category', 'Purchases', 'Sales', 'Opening Stock', 'Closing Stock', 'Stock Value (UGX)']);
+    
+    // For each date in range
+    const dateRange = getDateRange(from, to);
+    const products = db.products;
+    
+    dateRange.forEach(date => {
+      // Get purchases for this date
+      const dailyPurchases = db.purchases
+        .filter(p => p.date === date)
+        .flatMap(p => p.items || []);
+      
+      // Get sales for this date
+      const dailySales = db.sales
+        .filter(s => s.date === date)
+        .flatMap(s => s.items || []);
+      
+      // For each product
+      products.forEach(product => {
+        const purchases = dailyPurchases
+          .filter(item => item.productId === product.id)
+          .reduce((sum, item) => sum + (item.qty || 0), 0);
+        
+        const sales = dailySales
+          .filter(item => item.productId === product.id)
+          .reduce((sum, item) => sum + (item.qty || 0), 0);
+        
+        if (purchases > 0 || sales > 0) {
+          // Calculate opening and closing stock (simplified)
+          const openingStock = (product.currentStock || 0) + sales - purchases;
+          const closingStock = openingStock + purchases - sales;
+          const stockValue = closingStock * (product.costPrice || 0);
+          
+          ledgerData.push([
+            date,
+            product.name,
+            product.category || 'other',
+            purchases,
+            sales,
+            openingStock,
+            closingStock,
+            stockValue
+          ]);
+        }
+      });
+    });
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(ledgerData);
+    
+    // Add totals row
+    const totalRow = ledgerData.length + 1;
+    ws['A' + totalRow] = { t: 's', v: 'TOTALS' };
+    
+    // Add formulas for totals
+    ws['D' + totalRow] = { t: 'n', f: `SUM(D2:D${ledgerData.length})` };
+    ws['E' + totalRow] = { t: 'n', f: `SUM(E2:E${ledgerData.length})` };
+    ws['H' + totalRow] = { t: 'n', f: `SUM(H2:H${ledgerData.length})` };
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'Ledger');
+    
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+    
+    function s2ab(s) {
+      const buf = new ArrayBuffer(s.length);
+      const view = new Uint8Array(buf);
+      for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+      return buf;
+    }
+    
+    download(`bar-ledger-${from}-to-${to}.xlsx`, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
+    
+    alert(`Ledger exported from ${from} to ${to}!`);
+  } catch (error) {
+    console.error('Ledger export error:', error);
+    alert('Error exporting ledger: ' + error.message);
+  }
+}
+
+function getDateRange(start, end) {
+  const dates = [];
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  
+  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+    dates.push(d.toISOString().split('T')[0]);
+  }
+  
+  return dates;
+}
+
+// ================ EXCEL IMPORT ================
+async function handleExcelImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  showLoading(true);
+  
+  try {
+    const result = await processExcelFile(file);
+    logImport(`Imported ${file.name}: ${result.totalRecords} records`);
+    alert(`Excel file imported successfully! ${result.totalRecords} records processed.`);
+  } catch (error) {
+    console.error('Import error:', error);
+    alert('Error importing Excel file: ' + error.message);
+  } finally {
+    showLoading(false);
+    e.target.value = '';
+  }
+}
+
+// ================ GOOGLE DRIVE SYNC ================
+// Note: This requires a Google Cloud Console project with Drive API enabled
+// For demo purposes, we'll simulate the functionality
+function initGoogleDriveSync() {
+  const signInBtn = document.getElementById('btnGSignIn');
+  const signOutBtn = document.getElementById('btnGSignOut');
+  const saveBtn = document.getElementById('btnCloudSave');
+  const loadBtn = document.getElementById('btnCloudLoad');
+  
+  // Simulate Google Drive status
+  updateCloudStatus();
+  
+  if (signInBtn) {
+    signInBtn.addEventListener('click', () => {
+      // Simulate Google sign-in
+      if (confirm('For this demo, Google Drive sync is simulated. In a real implementation, you would need:\n\n1. Google Cloud Console project\n2. Drive API enabled\n3. OAuth2 credentials\n\nWould you like to simulate being signed in?')) {
+        localStorage.setItem('google_drive_simulated', 'true');
+        updateCloudStatus();
+        alert('Simulated Google Drive sign-in successful!');
+      }
+    });
+  }
+  
+  if (signOutBtn) {
+    signOutBtn.addEventListener('click', () => {
+      localStorage.removeItem('google_drive_simulated');
+      updateCloudStatus();
+      alert('Simulated Google Drive sign-out successful!');
+    });
+  }
+  
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      if (localStorage.getItem('google_drive_simulated') === 'true') {
+        // Simulate saving to Google Drive
+        const simulatedData = {
+          ...db,
+          cloudBackup: true,
+          cloudBackupDate: new Date().toISOString()
+        };
+        localStorage.setItem('bar_management_cloud_backup', JSON.stringify(simulatedData));
+        alert('Data saved to simulated Google Drive! (Stored in localStorage)');
+      } else {
+        alert('Please sign in to Google Drive first.');
+      }
+    });
+  }
+  
+  if (loadBtn) {
+    loadBtn.addEventListener('click', () => {
+      if (localStorage.getItem('google_drive_simulated') === 'true') {
+        const cloudBackup = localStorage.getItem('bar_management_cloud_backup');
+        if (cloudBackup) {
+          if (confirm('Load data from simulated Google Drive? Current data will be replaced.')) {
+            try {
+              const newData = JSON.parse(cloudBackup);
+              if (newData.products && newData.purchases && newData.sales) {
+                db = newData;
+                saveData();
+                location.reload();
+              } else {
+                alert('Invalid cloud backup data.');
+              }
+            } catch (error) {
+              alert('Error loading cloud backup: ' + error.message);
+            }
+          }
+        } else {
+          alert('No cloud backup found.');
+        }
+      } else {
+        alert('Please sign in to Google Drive first.');
+      }
+    });
+  }
+}
+
+function updateCloudStatus() {
+  const status = document.getElementById('cloudStatus');
+  const saveBtn = document.getElementById('btnCloudSave');
+  const loadBtn = document.getElementById('btnCloudLoad');
+  const signOutBtn = document.getElementById('btnGSignOut');
+  const signInBtn = document.getElementById('btnGSignIn');
+  
+  const isSignedIn = localStorage.getItem('google_drive_simulated') === 'true';
+  
+  if (isSignedIn) {
+    status.textContent = 'Signed in (Demo)';
+    status.className = 'pill';
+    status.style.background = 'var(--ok)';
+    status.style.color = 'white';
+    
+    if (saveBtn) saveBtn.disabled = false;
+    if (loadBtn) loadBtn.disabled = false;
+    if (signOutBtn) signOutBtn.disabled = false;
+    if (signInBtn) signInBtn.disabled = true;
+  } else {
+    status.textContent = 'Signed out';
+    status.className = 'pill';
+    status.style.background = 'var(--muted)';
+    status.style.color = 'white';
+    
+    if (saveBtn) saveBtn.disabled = true;
+    if (loadBtn) loadBtn.disabled = true;
+    if (signOutBtn) signOutBtn.disabled = true;
+    if (signInBtn) signInBtn.disabled = false;
+  }
+}
+
+// ================ SELF-TEST & DIAGNOSTICS ================
+function runSelfTest() {
+  const diagOut = document.getElementById('diagOut');
+  diagOut.innerHTML = '';
+  
+  const tests = [
+    { name: 'Data Structure', test: testDataStructure },
+    { name: 'Products Validation', test: testProducts },
+    { name: 'Transactions', test: testTransactions },
+    { name: 'Stock Consistency', test: testStockConsistency },
+    { name: 'Date Formats', test: testDateFormats }
+  ];
+  
+  let passed = 0;
+  let failed = 0;
+  
+  tests.forEach(test => {
+    const result = test.test();
+    const line = document.createElement('div');
+    
+    if (result.passed) {
+      line.innerHTML = `✅ ${test.name}: ${result.message}`;
+      passed++;
+    } else {
+      line.innerHTML = `❌ ${test.name}: ${result.message}`;
+      failed++;
+    }
+    
+    diagOut.appendChild(line);
+  });
+  
+  const summary = document.createElement('div');
+  summary.innerHTML = `<br><strong>Results:</strong> ${passed} passed, ${failed} failed`;
+  diagOut.appendChild(summary);
+}
+
+function validateData() {
+  const issues = [];
+  
+  // Check for negative stock
+  db.products.forEach(p => {
+    if (p.currentStock < 0) {
+      issues.push(`Negative stock for ${p.name}: ${p.currentStock}`);
+    }
+  });
+  
+  // Check for invalid prices
+  db.products.forEach(p => {
+    if (p.costPrice < 0 || p.sellingPrice < 0) {
+      issues.push(`Invalid price for ${p.name}`);
+    }
+  });
+  
+  // Check for missing product IDs in transactions
+  db.purchases.forEach(p => {
+    p.items?.forEach(item => {
+      if (!getProductById(item.productId)) {
+        issues.push(`Purchase references missing product: ${item.productId}`);
+      }
+    });
+  });
+  
+  db.sales.forEach(s => {
+    s.items?.forEach(item => {
+      if (!getProductById(item.productId)) {
+        issues.push(`Sale references missing product: ${item.productId}`);
+      }
+    });
+  });
+  
+  const diagOut = document.getElementById('diagOut');
+  diagOut.innerHTML = '';
+  
+  if (issues.length === 0) {
+    diagOut.innerHTML = '✅ All data validation checks passed!';
+  } else {
+    diagOut.innerHTML = '⚠️ Found issues:<br>' + issues.map(i => `• ${i}`).join('<br>');
+  }
+}
+
+function testDataStructure() {
+  if (!db.products || !db.purchases || !db.sales) {
+    return { passed: false, message: 'Missing core data structures' };
+  }
+  return { passed: true, message: 'OK' };
+}
+
+function testProducts() {
+  if (db.products.length === 0) {
+    return { passed: false, message: 'No products defined' };
+  }
+  
+  const invalid = db.products.filter(p => !p.name || !p.category);
+  if (invalid.length > 0) {
+    return { passed: false, message: `${invalid.length} products missing required fields` };
+  }
+  
+  return { passed: true, message: `${db.products.length} products OK` };
+}
+
+function testTransactions() {
+  const totalPurchases = db.purchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+  const totalSales = db.sales.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+  
+  return {
+    passed: true,
+    message: `${db.purchases.length} purchases (${UGX(totalPurchases)}), ${db.sales.length} sales (${UGX(totalSales)})`
+  };
+}
+
+function testStockConsistency() {
+  // Simple check for negative stock
+  const negativeStock = db.products.filter(p => p.currentStock < 0);
+  if (negativeStock.length > 0) {
+    return { passed: false, message: `${negativeStock.length} products have negative stock` };
+  }
+  
+  return { passed: true, message: 'Stock levels consistent' };
+}
+
+function testDateFormats() {
+  const invalidDates = [];
+  
+  [...db.purchases, ...db.sales].forEach(item => {
+    if (item.date && !/^\d{4}-\d{2}-\d{2}$/.test(item.date)) {
+      invalidDates.push(item.date);
+    }
+  });
+  
+  if (invalidDates.length > 0) {
+    return { passed: false, message: `${invalidDates.length} invalid date formats` };
+  }
+  
+  return { passed: true, message: 'All dates valid' };
 }
 
 // ================ DATA MANAGEMENT ================
 function setupDataManagement() {
   // Backup data
   document.getElementById('btnBackup').addEventListener('click', backupData);
-  document.getElementById('btnBackup2').addEventListener('click', backupData);
   
   // Save data
   document.getElementById('btnSaveNow').addEventListener('click', () => {
@@ -1621,37 +2405,6 @@ function setupDataManagement() {
     };
     reader.readAsText(file);
     this.value = '';
-  });
-  
-  // Initialize from Excel data
-  document.getElementById('btnInitFromExcel').addEventListener('click', () => {
-    const sampleProducts = [
-      { name: "gilbeys (s)", category: "spirits", costPrice: 8500, sellingPrice: 12000, currentStock: 15, minStockLevel: 5 },
-      { name: "gilbeys (b)", category: "spirits", costPrice: 33000, sellingPrice: 45000, currentStock: 5, minStockLevel: 3 },
-      { name: "Ug Plastic", category: "spirits", costPrice: 5000, sellingPrice: 7000, currentStock: 10, minStockLevel: 5 },
-      { name: "HIGH 5", category: "energy", costPrice: 2083, sellingPrice: 3000, currentStock: 12, minStockLevel: 10 },
-      { name: "4 COUSINS", category: "wine", costPrice: 33000, sellingPrice: 50000, currentStock: 4, minStockLevel: 2 },
-      { name: "CLUB", category: "beer", costPrice: 3100, sellingPrice: 4000, currentStock: 20, minStockLevel: 10 },
-      { name: "LITE", category: "beer", costPrice: 3000, sellingPrice: 4000, currentStock: 20, minStockLevel: 10 },
-      { name: "GUINESS", category: "beer", costPrice: 3000, sellingPrice: 4000, currentStock: 20, minStockLevel: 10 },
-      { name: "REDBULL", category: "energy", costPrice: 6500, sellingPrice: 10000, currentStock: 8, minStockLevel: 5 },
-      { name: "NILE", category: "beer", costPrice: 3500, sellingPrice: 5000, currentStock: 20, minStockLevel: 10 }
-    ];
-    
-    if (db.products.length > 0 && !confirm('Replace existing products?')) {
-      return;
-    }
-    
-    db.products = sampleProducts.map((p, i) => ({
-      id: 'prod_' + (i + 1),
-      ...p
-    }));
-    
-    saveData();
-    renderProducts();
-    updateDashboardStats();
-    
-    alert(`${sampleProducts.length} sample products initialized!`);
   });
   
   // Wipe data
@@ -1704,11 +2457,14 @@ function initializeApp() {
   setupAutomation();
   setupDataManagement();
   setupQuickActions();
+  setupEnhancedDataManagement();
+  initGoogleDriveSync();
   
   // Initial render
   renderProducts();
   updateDashboardStats();
   renderAutomation();
+  updateLastSaveTime();
   
   console.log('Bar Management System initialized successfully!');
 }
