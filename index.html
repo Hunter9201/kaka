@@ -3,10 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BAR MANAGEMENT SYSTEM - Complete Working Version</title>
-<meta name="description" content="Fully functional bar stock management system with Excel and Gmail integration">
+<title>BAR MANAGEMENT SYSTEM - Working Version</title>
+<meta name="description" content="Fully functional bar stock management system">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<!-- ADD THESE TWO LINES FOR GOOGLE -->
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
 <style>
   :root{ --brand:#0ea5e9; --brand-d:#0369a1; --ok:#16a34a; --warn:#f59e0b; --bad:#ef4444; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f8fafc; }
   *{box-sizing:border-box; margin:0; padding:0;}
@@ -553,7 +556,7 @@
           <div class="right" style="margin-top:12px;">
             <button class="btn" id="btnExportFilledLedger">Export Filled Ledger</button>
           </div>
-          <p class="help">Export all data or import from Excel files. Duplicate same-date entries are blocked on import.</p>
+          <p class="help">Export all data or import from Excel files.</p>
         </div>
 
         <!-- Template Generator -->
@@ -603,29 +606,29 @@
             <button class="btn" id="btnInitFromExcel">Initialize Products</button>
           </div>
           
-          <p class="help">Upload multiple daily Excel sheets to automatically aggregate data. Initialize products from your Excel file.</p>
+          <p class="help">Upload multiple daily Excel sheets to automatically aggregate data.</p>
         </div>
 
-        <!-- Cloud Sync (Google Drive) -->
+        <!-- Cloud Sync (REAL GOOGLE DRIVE - READY TO USE) -->
         <div class="card" style="grid-column: span 6;">
-          <h3>Cloud Sync (Google Drive)</h3>
+          <h3>Google Drive Sync (Ready)</h3>
           <div class="stack section-tools">
-            <button class="btn" id="btnGSignIn">Sign in with Google</button>
+            <button class="btn" id="btnGSignIn">Sign in to Google</button>
             <button class="btn" id="btnCloudSave" disabled>Save to Google Drive</button>
             <button class="btn" id="btnCloudLoad" disabled>Load from Google Drive</button>
             <button class="btn bad" id="btnGSignOut" disabled>Sign out</button>
           </div>
           
           <div class="stack" style="margin-top:12px;">
-            <span id="cloudStatus" class="pill">Signed out</span>
+            <span id="cloudStatus" class="pill" style="background:#64748b;color:white;">Not signed in</span>
           </div>
           
           <div class="goodmsg" style="margin-top:12px;">
-            <strong>Auto-Import Status</strong>
-            <div>Last import: <span id="lastImportTime2">Never</span></div>
+            <strong>Google Drive Status</strong>
+            <div>Last backup: <span id="lastImportTime2">Never</span></div>
           </div>
           
-          <p class="help">Stores backup in Google Drive. Works with the newest Google Identity Services.</p>
+          <p class="help">Uses your Google Account to save/load backups to Google Drive.</p>
         </div>
       </div>
 
@@ -677,13 +680,6 @@
   </div>
 
 <script>
-// ================ GOOGLE DRIVE CONFIGURATION ================
-const GOOGLE_CLIENT_ID = "482427381630-s2mvfnv240oambf64l8huvqvt16of44v.apps.googleusercontent.com";
-const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
-const DRIVE_FILE_NAME = "bar-management-backup.json";
-let driveAccessToken = null;
-let driveTokenClient = null;
-
 // ================ UTILITY FUNCTIONS ================
 const UGX = (v) => new Intl.NumberFormat('en-UG', {
   style: 'currency',
@@ -767,33 +763,177 @@ function updateLastSaveTime() {
   }
 }
 
-// ================ GOOGLE DRIVE FUNCTIONS ================
-function loadGIS() {
-  return new Promise((resolve, reject) => {
-    if (window.google && window.google.accounts) {
-      return resolve();
+// ================ REAL GOOGLE DRIVE INTEGRATION ================
+function initCloudSync() {
+  const CLIENT_ID = '1012401719257-nm0hj0h1na9d7tm8eat4tllgigjrbir0.apps.googleusercontent.com';
+  let tokenClient = null;
+  let googleInitialized = false;
+  
+  // Initialize Google APIs
+  function initializeGoogle() {
+    gapi.load('client', () => {
+      gapi.client.init({
+        apiKey: '',
+        clientId: CLIENT_ID,
+        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+        scope: 'https://www.googleapis.com/auth/drive.file'
+      }).then(() => {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: CLIENT_ID,
+          scope: 'https://www.googleapis.com/auth/drive.file',
+          callback: (tokenResponse) => {
+            if (tokenResponse.access_token) {
+              gapi.client.setToken(tokenResponse);
+              setCloudStatus("✓ Signed in to Google Drive", true);
+              enableCloudButtons(true);
+              document.getElementById('btnGSignIn').disabled = true;
+              document.getElementById('btnGSignOut').disabled = false;
+            }
+          }
+        });
+        googleInitialized = true;
+        console.log('Google API initialized');
+      }).catch(error => {
+        console.error('Google API init error:', error);
+        alert('Google API initialization failed. Make sure you added localhost to authorized origins in Google Console.');
+      });
+    });
+  }
+  
+  // Start initialization
+  initializeGoogle();
+  
+  // Sign in button
+  document.getElementById('btnGSignIn').addEventListener('click', () => {
+    if (!googleInitialized) {
+      alert('Google API still loading. Please wait a moment.');
+      return;
     }
-    const s = document.createElement('script');
-    s.src = "https://accounts.google.com/gsi/client";
-    s.async = true;
-    s.defer = true;
-    s.onload = resolve;
-    s.onerror = () => reject(new Error("Failed to load Google Identity Services"));
-    document.head.appendChild(s);
+    if (tokenClient) {
+      tokenClient.requestAccessToken({prompt: 'consent'});
+    }
   });
-}
-
-async function initDrive() {
-  await loadGIS();
-  driveTokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: GOOGLE_CLIENT_ID,
-    scope: DRIVE_SCOPE,
-    callback: (resp) => {
-      if (resp && resp.access_token) {
-        driveAccessToken = resp.access_token;
-        setCloudStatus("Signed in • Ready", true);
-        setCloudButtons(true);
+  
+  // Sign out button
+  document.getElementById('btnGSignOut').addEventListener('click', () => {
+    const token = gapi.client.getToken();
+    if (token) {
+      google.accounts.oauth2.revoke(token.access_token);
+      gapi.client.setToken(null);
+      setCloudStatus("✗ Signed out", false);
+      enableCloudButtons(false);
+      document.getElementById('btnGSignIn').disabled = false;
+      document.getElementById('btnGSignOut').disabled = true;
+    }
+  });
+  
+  // Save to Google Drive
+  document.getElementById('btnCloudSave').addEventListener('click', async () => {
+    if (!gapi.client.getToken()) {
+      alert('Please sign in to Google first');
+      return;
+    }
+    
+    const backupData = JSON.stringify(db, null, 2);
+    const metadata = {
+      name: `bar-backup-${todayStr()}.json`,
+      mimeType: 'application/json'
+    };
+    
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
+    form.append('file', new Blob([backupData], {type: 'application/json'}));
+    
+    try {
+      const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&uploadType=media', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + gapi.client.getToken().access_token
+        },
+        body: form
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        setCloudStatus(`✓ Saved: ${new Date().toLocaleTimeString()}`, true);
+        document.getElementById('lastImportTime').textContent = new Date().toLocaleString();
+        document.getElementById('lastImportTime2').textContent = new Date().toLocaleString();
+        
+        // Visual feedback
+        const btn = document.getElementById('btnCloudSave');
+        const originalText = btn.textContent;
+        btn.textContent = "✓ Saved!";
+        btn.style.background = '#16a34a';
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.style.background = '';
+        }, 2000);
+        
+        alert(`✅ Backup saved to Google Drive!\nFile: ${result.name}`);
+      } else {
+        throw new Error('Failed to save to Google Drive');
       }
+    } catch (error) {
+      console.error('Google Drive save error:', error);
+      alert('Error saving to Google Drive: ' + error.message);
+    }
+  });
+  
+  // Load from Google Drive
+  document.getElementById('btnCloudLoad').addEventListener('click', async () => {
+    if (!gapi.client.getToken()) {
+      alert('Please sign in to Google first');
+      return;
+    }
+    
+    try {
+      // List backup files
+      const response = await gapi.client.drive.files.list({
+        pageSize: 10,
+        fields: 'files(id, name, createdTime)',
+        orderBy: 'createdTime desc',
+        q: "name contains 'bar-backup' and mimeType='application/json'"
+      });
+      
+      const files = response.result.files;
+      if (files.length === 0) {
+        alert('No backup files found in Google Drive');
+        return;
+      }
+      
+      // Show simple file picker (most recent file)
+      const latestFile = files[0];
+      if (confirm(`Load the most recent backup?\n\nFile: ${latestFile.name}\nCreated: ${new Date(latestFile.createdTime).toLocaleString()}`)) {
+        // Get file content
+        const fileResponse = await gapi.client.drive.files.get({
+          fileId: latestFile.id,
+          alt: 'media'
+        });
+        
+        const backupData = fileResponse.result;
+        if (backupData && backupData.products) {
+          if (confirm('This will replace ALL current data. Continue?')) {
+            db = backupData;
+            saveData();
+            
+            // Visual feedback
+            const btn = document.getElementById('btnCloudLoad');
+            const originalText = btn.textContent;
+            btn.textContent = "✓ Loaded!";
+            btn.style.background = '#16a34a';
+            setTimeout(() => {
+              btn.textContent = originalText;
+              btn.style.background = '';
+              location.reload(); // Refresh to show loaded data
+            }, 1000);
+          }
+        } else {
+          alert('Invalid backup file format');
+        }
+      }
+    } catch (error) {
+      console.error('Google Drive load error:', error);
+      alert('Error loading from Google Drive: ' + error.message);
     }
   });
 }
@@ -802,231 +942,17 @@ function setCloudStatus(text, good = false) {
   const el = document.getElementById('cloudStatus');
   if (!el) return;
   el.textContent = text;
-  el.className = 'pill';
-  if (good) {
-    el.style.background = 'var(--ok)';
-    el.style.color = 'white';
-  } else {
-    el.style.background = 'var(--muted)';
-    el.style.color = 'white';
-  }
+  el.style.background = good ? '#16a34a' : '#64748b';
+  el.style.color = 'white';
+  el.style.borderColor = good ? '#15803d' : '#475569';
 }
 
-function setCloudButtons(enabled) {
-  ['btnCloudSave', 'btnCloudLoad', 'btnGSignOut'].forEach(id => {
-    const b = document.getElementById(id);
-    if (b) b.disabled = !enabled;
+function enableCloudButtons(enabled) {
+  const buttons = ['btnCloudSave', 'btnCloudLoad', 'btnGSignOut'];
+  buttons.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = !enabled;
   });
-  const signInBtn = document.getElementById('btnGSignIn');
-  if (signInBtn) signInBtn.disabled = enabled;
-}
-
-function driveEnsureToken(interactive = true) {
-  return new Promise((resolve) => {
-    if (driveAccessToken) {
-      return resolve(true);
-    }
-    if (!driveTokenClient) {
-      setCloudStatus("Cloud not ready");
-      return resolve(false);
-    }
-    driveTokenClient.callback = (resp) => {
-      if (resp && resp.access_token) {
-        driveAccessToken = resp.access_token;
-        setCloudStatus("Signed in • Ready", true);
-        setCloudButtons(true);
-        return resolve(true);
-      }
-      resolve(false);
-    };
-    driveTokenClient.requestAccessToken(interactive ? {} : { prompt: "" });
-  });
-}
-
-async function driveFindBackup() {
-  const q = encodeURIComponent(`name='${DRIVE_FILE_NAME}' and mimeType='application/json' and trashed=false`);
-  const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime)`;
-  const r = await fetch(url, { headers: { Authorization: `Bearer ${driveAccessToken}` } });
-  if (!r.ok) throw new Error(await r.text());
-  const j = await r.json();
-  return (j.files && j.files[0]) ? j.files[0] : null;
-}
-
-async function driveDownloadFile(fileId) {
-  const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-    headers: { Authorization: `Bearer ${driveAccessToken}` }
-  });
-  if (!r.ok) throw new Error(await r.text());
-  return r.text();
-}
-
-function makeMultipartBody(meta, contentStr, mime = "application/json") {
-  const boundary = "-------bar-management" + Math.random().toString(36).slice(2);
-  const delimiter = `\r\n--${boundary}\r\n`;
-  const close = `\r\n--${boundary}--`;
-  const body =
-    delimiter +
-    "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
-    JSON.stringify(meta) +
-    delimiter +
-    `Content-Type: ${mime}\r\n\r\n` +
-    contentStr +
-    close;
-  const headers = { "Content-Type": `multipart/related; boundary=${boundary}`, "Authorization": `Bearer ${driveAccessToken}` };
-  return { body, headers };
-}
-
-async function driveCreateBackup(jsonStr) {
-  const meta = { name: DRIVE_FILE_NAME, mimeType: "application/json" };
-  const { body, headers } = makeMultipartBody(meta, jsonStr);
-  const url = "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart";
-  const r = await fetch(url, { method: "POST", headers, body });
-  if (!r.ok) throw new Error(await r.text());
-  return r.json();
-}
-
-async function driveUpdateBackup(fileId, jsonStr) {
-  const meta = { mimeType: "application/json" };
-  const { body, headers } = makeMultipartBody(meta, jsonStr);
-  const url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`;
-  const r = await fetch(url, { method: "PATCH", headers, body });
-  if (!r.ok) throw new Error(await r.text());
-  return r.json();
-}
-
-async function driveSave() {
-  const ok = await driveEnsureToken(true);
-  if (!ok) {
-    alert("Please sign in to Google first.");
-    return;
-  }
-  
-  const btn = document.getElementById('btnCloudSave');
-  try {
-    const json = JSON.stringify(db, null, 2);
-    const existing = await driveFindBackup();
-    
-    if (existing) {
-      await driveUpdateBackup(existing.id, json);
-    } else {
-      await driveCreateBackup(json);
-    }
-    
-    if (btn) {
-      btn.textContent = "Data saved ✓";
-      setTimeout(() => btn.textContent = "Save to Google Drive", 2200);
-    }
-    
-    const t = new Date().toLocaleString('en-UG', { timeZone: 'Africa/Kampala' });
-    setCloudStatus(`Last saved: ${t}`, true);
-    alert('Data successfully saved to Google Drive!');
-  } catch (err) {
-    console.error(err);
-    alert("Failed to save to Google Drive:\n" + (err.message || err));
-    if (btn) btn.textContent = "Save to Google Drive";
-  }
-}
-
-async function driveLoad() {
-  const ok = await driveEnsureToken(true);
-  if (!ok) {
-    alert("Please sign in to Google first.");
-    return;
-  }
-  
-  try {
-    const existing = await driveFindBackup();
-    if (!existing) {
-      alert("No cloud backup found yet.");
-      return;
-    }
-    
-    if (!confirm('Load data from Google Drive? Current data will be replaced.')) {
-      return;
-    }
-    
-    const txt = await driveDownloadFile(existing.id);
-    const remote = JSON.parse(txt);
-    
-    if (!remote.products || !remote.purchases || !remote.sales) {
-      throw new Error("Backup is invalid.");
-    }
-    
-    db = remote;
-    saveData();
-    
-    // Refresh all displays
-    renderProducts();
-    updateDashboardStats();
-    renderPurchases();
-    renderSales();
-    renderInventory();
-    renderAutomation();
-    renderDataSection();
-    
-    const t = new Date(existing.modifiedTime).toLocaleString('en-UG', { timeZone: 'Africa/Kampala' });
-    setCloudStatus(`Loaded: ${t}`, true);
-    alert("Loaded latest backup from Google Drive!");
-  } catch (err) {
-    console.error(err);
-    alert("Failed to load from Google Drive:\n" + (err.message || err));
-  }
-}
-
-function driveSignOut() {
-  driveAccessToken = null;
-  setCloudButtons(false);
-  setCloudStatus("Signed out");
-  
-  // Re-enable sign in button
-  const signInBtn = document.getElementById('btnGSignIn');
-  if (signInBtn) signInBtn.disabled = false;
-}
-
-async function maybeDriveAutoSave() {
-  if (!driveTokenClient) return;
-  const ok = await driveEnsureToken(false);
-  if (ok) {
-    try {
-      const json = JSON.stringify(db, null, 2);
-      const existing = await driveFindBackup();
-      if (existing) {
-        await driveUpdateBackup(existing.id, json);
-      }
-    } catch (err) {
-      console.error('Auto-save failed:', err);
-    }
-  }
-}
-
-function initGoogleDriveSync() {
-  const signInBtn = document.getElementById('btnGSignIn');
-  const signOutBtn = document.getElementById('btnGSignOut');
-  const saveBtn = document.getElementById('btnCloudSave');
-  const loadBtn = document.getElementById('btnCloudLoad');
-  
-  if (signInBtn) {
-    signInBtn.addEventListener('click', async () => {
-      const ok = await driveEnsureToken(true);
-      if (ok) {
-        setCloudStatus("Signed in • Ready", true);
-        setCloudButtons(true);
-        alert('Google Drive sign-in successful!');
-      }
-    });
-  }
-  
-  if (signOutBtn) {
-    signOutBtn.addEventListener('click', () => driveSignOut());
-  }
-  
-  if (saveBtn) {
-    saveBtn.addEventListener('click', () => driveSave());
-  }
-  
-  if (loadBtn) {
-    loadBtn.addEventListener('click', () => driveLoad());
-  }
 }
 
 // ================ DASHBOARD ================
@@ -2034,9 +1960,9 @@ function setupEnhancedDataManagement() {
   document.getElementById('btnTemplateInventory2').addEventListener('click', () => generateExcelTemplate('inventory'));
   document.getElementById('btnGenerateBlankExcel2').addEventListener('click', () => {
     generateExcelTemplate('sales');
-    generateExcelTemplate('purchases');
-    generateExcelTemplate('inventory');
-    alert('All templates generated!');
+    setTimeout(() => generateExcelTemplate('purchases'), 100);
+    setTimeout(() => generateExcelTemplate('inventory'), 200);
+    alert('All templates generated! Check your downloads.');
   });
   
   // Batch processing in Data section
@@ -2063,7 +1989,14 @@ function setupEnhancedDataManagement() {
   document.getElementById('btnBackup2').addEventListener('click', backupData);
   document.getElementById('btnSaveNow2').addEventListener('click', () => {
     if (saveData()) {
-      alert('Data saved successfully!');
+      const btn = document.getElementById('btnSaveNow2');
+      const originalText = btn.textContent;
+      btn.textContent = "✓ Saved!";
+      btn.style.background = '#16a34a';
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = '';
+      }, 1500);
     }
   });
 
@@ -2148,7 +2081,7 @@ function setupEnhancedDataManagement() {
 
   // Gmail check
   document.getElementById('btnCheckGmail2').addEventListener('click', () => {
-    alert('Gmail integration requires Google Apps Script setup. Use the Excel upload feature instead.');
+    alert('Gmail integration requires additional setup. For now, use the "Upload Excel Files" option.');
   });
 
   // Import Excel
@@ -2333,15 +2266,6 @@ function exportFilledLedgerToExcel() {
     // Create workbook
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(ledgerData);
-    
-    // Add totals row
-    const totalRow = ledgerData.length + 1;
-    ws['A' + totalRow] = { t: 's', v: 'TOTALS' };
-    
-    // Add formulas for totals
-    ws['D' + totalRow] = { t: 'n', f: `SUM(D2:D${ledgerData.length})` };
-    ws['E' + totalRow] = { t: 'n', f: `SUM(E2:E${ledgerData.length})` };
-    ws['H' + totalRow] = { t: 'n', f: `SUM(H2:H${ledgerData.length})` };
     
     XLSX.utils.book_append_sheet(wb, ws, 'Ledger');
     
@@ -2539,9 +2463,14 @@ function setupDataManagement() {
   // Save data
   document.getElementById('btnSaveNow').addEventListener('click', () => {
     if (saveData()) {
-      alert('Data saved successfully!');
-    } else {
-      alert('Error saving data');
+      const btn = document.getElementById('btnSaveNow');
+      const originalText = btn.textContent;
+      btn.textContent = "✓ Saved!";
+      btn.style.background = '#16a34a';
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = '';
+      }, 1500);
     }
   });
   
@@ -2585,22 +2514,20 @@ function backupData() {
 // ================ QUICK ACTIONS ================
 function setupQuickActions() {
   document.getElementById('btnNewPurchase').addEventListener('click', () => {
-    // Switch to purchases tab
     document.querySelector('[data-tab="purchases"]').click();
   });
   
   document.getElementById('btnNewSale').addEventListener('click', () => {
-    // Switch to sales tab
     document.querySelector('[data-tab="sales"]').click();
   });
   
   document.getElementById('btnCheckGmail').addEventListener('click', () => {
-    alert('Gmail integration requires Google Apps Script setup. Use the Excel upload feature instead.');
+    alert('Use the "Upload Excel Files" option in the Data tab for now.');
   });
 }
 
 // ================ INITIALIZATION ================
-async function initializeApp() {
+function initializeApp() {
   // Set today's date in all date fields
   const today = todayStr();
   document.querySelectorAll('input[type="date"]').forEach(input => {
@@ -2618,14 +2545,7 @@ async function initializeApp() {
   setupDataManagement();
   setupQuickActions();
   setupEnhancedDataManagement();
-  
-  // Initialize Google Drive (async)
-  try {
-    await initDrive();
-    initGoogleDriveSync();
-  } catch (error) {
-    console.error('Failed to initialize Google Drive:', error);
-  }
+  initCloudSync();  // Initialize REAL Google Drive
   
   // Initial render
   renderProducts();
