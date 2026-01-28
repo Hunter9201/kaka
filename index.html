@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BAR MANAGEMENT SYSTEM - Enhanced with Daily Sheets</title>
-<meta name="description" content="Fully functional bar stock management system with Daily Sheet support">
+<meta name="description" content="Fully functional bar stock management system with daily sheet tracking">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <!-- Google Identity Services -->
@@ -52,18 +52,14 @@
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
   .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
   .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
-  .grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;}
   .stat{padding:16px;border:1px solid var(--line);border-radius:10px;background:#fff;}
   .stat b{display:block;font-size:24px;margin-top:4px;color:var(--ink);}
-  .stat.small{padding:12px;}
-  .stat.small b{font-size:18px;}
   .hr{height:1px;background:var(--line);margin:20px 0;}
   .warnmsg{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;padding:12px;border-radius:10px;margin:12px 0;}
   .goodmsg{background:#ecfdf5;border:1px solid #86efac;color:#065f46;padding:12px;border-radius:10px;margin:12px 0;}
+  .badmsg{background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;padding:12px;border-radius:10px;margin:12px 0;}
   .section-tools{display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
-  .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
   .compact-table th,.compact-table td{padding:8px 10px;font-size:13px;}
-  .small-table th, .small-table td { padding:6px 8px; font-size:12px; }
   .modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;}
   .modal-content{background:#fff;padding:24px;border-radius:12px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto;box-shadow:0 10px 25px rgba(0,0,0,0.2);}
   .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
@@ -73,11 +69,8 @@
   .loading-spinner{width:40px;height:40px;border:4px solid #f3f3f3;border-top:4px solid var(--brand);border-radius:50%;animation:spin 1s linear infinite;}
   @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
   .mono{font-family:ui-monospace, Menlo, Consolas, "Courier New", monospace; white-space: pre-wrap;}
-  .profit-positive { color: #16a34a; font-weight: bold; }
-  .profit-negative { color: #ef4444; font-weight: bold; }
-  .profit-neutral { color: #f59e0b; }
-  @media (max-width: 1200px){.grid-4,.grid-5{grid-template-columns:repeat(2,1fr);}}
-  @media (max-width: 768px){.grid-2,.grid-3,.grid-4,.grid-5{grid-template-columns:1fr;}.row{grid-template-columns:1fr;}.card{padding:16px;}.nav{flex-direction:column;gap:16px;}.tabs{width:100%;justify-content:center;}}
+  @media (max-width: 1200px){.grid-4{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width: 768px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}.row{grid-template-columns:1fr;}.card{padding:16px;}.nav{flex-direction:column;gap:16px;}.tabs{width:100%;justify-content:center;}}
 </style>
 </head>
 <body>
@@ -87,11 +80,10 @@
       <div class="tabs" id="tabs">
         <button class="tab active" data-tab="dashboard">Dashboard</button>
         <button class="tab" data-tab="inventory">Inventory</button>
-        <button class="tab" data-tab="purchases">Purchases</button>
-        <button class="tab" data-tab="sales">Sales</button>
+        <button class="tab" data-tab="sales">Daily Sales</button>
         <button class="tab" data-tab="expenses">Expenses</button>
-        <button class="tab" data-tab="products">Products</button>
         <button class="tab" data-tab="reports">Reports</button>
+        <button class="tab" data-tab="products">Products</button>
         <button class="tab" data-tab="automation">Automation</button>
         <button class="tab" data-tab="data">Data</button>
       </div>
@@ -99,75 +91,39 @@
   </header>
 
   <main>
-    <!-- Enhanced Dashboard -->
+    <!-- Dashboard -->
     <section id="dashboard" class="tabpanel">
-      <div class="section-header">
-        <h2>Dashboard Overview</h2>
-        <select id="accountingPeriod" style="width: 150px;">
-          <option value="daily">Today</option>
-          <option value="weekly">This Week</option>
-          <option value="monthly" selected>This Month</option>
-        </select>
+      <h2>Dashboard Overview</h2>
+      <div class="grid-4">
+        <div class="stat"><span class="muted">Total Products</span><b id="statProducts">0</b></div>
+        <div class="stat"><span class="muted">Stock Value</span><b id="statStockValue">UGX 0</b></div>
+        <div class="stat"><span class="muted">Monthly Purchases</span><b id="statMonthPurchases">UGX 0</b></div>
+        <div class="stat"><span class="muted">Most Moving Category</span><b id="statMostMoving">-</b></div>
       </div>
       
-      <div class="grid-5">
+      <div class="hr"></div>
+      
+      <div class="grid-3">
         <div class="stat">
-          <span class="muted">Total Products</span>
-          <b id="statProducts">0</b>
+          <span class="muted">Gross Profit (Period)</span>
+          <b id="statGrossProfit">UGX 0</b>
         </div>
         <div class="stat">
-          <span class="muted">Stock Value</span>
-          <b id="statStockValue">UGX 0</b>
+          <span class="muted">Total Expenses</span>
+          <b id="statTotalExpenses">UGX 0</b>
         </div>
         <div class="stat">
-          <span class="muted">Monthly Purchases</span>
-          <b id="statMonthPurchases">UGX 0</b>
-        </div>
-        <div class="stat">
-          <span class="muted">Top Category</span>
-          <b id="statTopCategory">None</b>
-        </div>
-        <div class="stat" id="profitStat">
-          <span class="muted">Period Profit/Loss</span>
-          <b id="statPeriodProfit">UGX 0</b>
+          <span class="muted">Net Profit/Loss</span>
+          <b id="statNetProfit">UGX 0</b>
         </div>
       </div>
       
       <div class="hr"></div>
       
-      <div class="grid-2">
-        <div class="card">
-          <h3>Quick Actions</h3>
-          <div class="stack">
-            <button class="btn primary" id="btnNewPurchase">New Purchase</button>
-            <button class="btn ok" id="btnNewSale">Record Sale</button>
-            <button class="btn bad" id="btnNewExpense">Add Expense</button>
-            <button class="btn warn" id="btnGenerateBlankExcel">Excel Template</button>
-            <button class="btn" id="btnSaveNow">Save Data</button>
-          </div>
-          <p class="help">Click "Excel Template" to create daily sheets for data entry</p>
-        </div>
-        
-        <div class="card">
-          <h3>System Status</h3>
-          <div class="grid-3" style="margin-top: 12px;">
-            <div class="stat small">
-              <span class="muted">Days Recorded</span>
-              <b id="daysRecorded">0</b>
-            </div>
-            <div class="stat small">
-              <span class="muted">Last Import</span>
-              <b id="lastImportDate">Never</b>
-            </div>
-            <div class="stat small">
-              <span class="muted">Total Expenses</span>
-              <b id="totalExpensesDash">UGX 0</b>
-            </div>
-          </div>
-          <button class="btn primary" id="btnUploadSheet" style="margin-top: 12px;">Upload Daily Sheet</button>
-          <div id="cloudStatusDash" class="goodmsg" style="margin-top: 12px;">
-            <span id="cloudStatusText">Google Drive: Not connected</span>
-          </div>
+      <div class="card" id="profitStatusCard">
+        <h3>Profitability Status</h3>
+        <div id="profitStatus" class="goodmsg">
+          <strong>Status:</strong> Calculating profitability...
         </div>
       </div>
     </section>
@@ -191,10 +147,10 @@
             <select id="filterCategory">
               <option value="">All Categories</option>
               <option value="beer">Beer</option>
-              <option value="spirit">Spirit</option>
+              <option value="Soft Drink">Soft Drink</option>
+              <option value="Energy Drink">Energy Drink</option>
+              <option value="Spirit">Spirit</option>
               <option value="wine">Wine</option>
-              <option value="soft">Soft Drinks</option>
-              <option value="energy">Energy Drinks</option>
             </select>
           </div>
           <div class="right">
@@ -213,7 +169,8 @@
               <th>Purchased</th>
               <th>Sold</th>
               <th>Closing</th>
-              <th>Unit Price</th>
+              <th>Cost Price</th>
+              <th>Sale Price</th>
               <th>Stock Value</th>
             </tr>
           </thead>
@@ -222,118 +179,39 @@
       </div>
     </section>
 
-    <!-- Purchases -->
-    <section id="purchases" class="tabpanel" style="display:none;">
-      <div class="grid-2">
-        <div class="card">
-          <h3>Record Daily Purchase</h3>
-          <div class="grid-3">
-            <div>
-              <label>Date</label>
-              <input type="date" id="purchaseDate" value="">
-            </div>
-            <div>
-              <label>Supplier</label>
-              <input type="text" id="purchaseSupplier" placeholder="Supplier name">
-            </div>
-            <div>
-              <label>Receipt No</label>
-              <input type="text" id="purchaseReceiptNo" placeholder="Optional">
-            </div>
-          </div>
-          
-          <div class="hr"></div>
-          
-          <h4>Purchase Items</h4>
-          <div class="grid-4" style="margin-bottom:12px;">
-            <div>
-              <label>Product</label>
-              <select id="purchaseProduct"></select>
-            </div>
-            <div>
-              <label>Quantity</label>
-              <input type="number" id="purchaseQty" min="1" value="1">
-            </div>
-            <div>
-              <label>Unit Price (UGX)</label>
-              <input type="number" id="purchasePrice" min="0" value="0">
-            </div>
-            <div style="align-self:flex-end;">
-              <button class="btn" id="btnAddPurchaseItem">Add Item</button>
-            </div>
-          </div>
-          
-          <table class="table compact-table" id="purchaseItemsTable">
-            <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th><th></th></tr></thead>
-            <tbody></tbody>
-          </table>
-          
-          <div class="right" style="margin-top:16px;">
-            <div class="stat">
-              <span class="muted">Total Amount</span>
-              <b id="purchaseTotal">UGX 0</b>
-            </div>
-            <button class="btn ok" id="btnSavePurchase">Save Purchase</button>
-          </div>
-        </div>
-        
-        <div class="card">
-          <h3>Recent Purchases</h3>
-          <div class="grid-3" style="margin-bottom:16px;">
-            <div>
-              <label>From Date</label>
-              <input type="date" id="purchaseFrom">
-            </div>
-            <div>
-              <label>To Date</label>
-              <input type="date" id="purchaseTo">
-            </div>
-            <div style="align-self:flex-end;">
-              <button class="btn" id="btnFilterPurchases">Filter</button>
-            </div>
-          </div>
-          
-          <table class="table compact-table" id="purchasesTable">
-            <thead><tr><th>Date</th><th>Supplier</th><th>Items</th><th>Total</th><th></th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- Enhanced Sales Section -->
+    <!-- Daily Sales -->
     <section id="sales" class="tabpanel" style="display:none;">
       <div class="grid-2">
         <div class="card">
           <h3>Record Daily Sales</h3>
           <div class="grid-3">
             <div>
-              <label>Date</label>
+              <label>Date (Unique Day)</label>
               <input type="date" id="saleDate" value="">
             </div>
             <div>
-              <label>Record Type</label>
-              <select id="saleType">
-                <option value="manual">Manual Entry</option>
-                <option value="sheet">From Sheet</option>
-              </select>
+              <label>Sheet Reference</label>
+              <input type="text" id="sheetReference" placeholder="e.g., Sheet1">
             </div>
             <div>
-              <label>Notes</label>
-              <input type="text" id="saleNotes" placeholder="Optional notes">
+              <label>Record Type</label>
+              <select id="recordType">
+                <option value="manual">Manual Entry</option>
+                <option value="excel">From Excel Sheet</option>
+              </select>
             </div>
           </div>
           
           <div class="hr"></div>
           
-          <h4>Sale Items</h4>
+          <h4>Daily Sales Items</h4>
           <div class="grid-4" style="margin-bottom:12px;">
             <div>
               <label>Product</label>
               <select id="saleProduct"></select>
             </div>
             <div>
-              <label>Quantity</label>
+              <label>Quantity Sold</label>
               <input type="number" id="saleQty" min="1" value="1">
             </div>
             <div>
@@ -346,25 +224,25 @@
           </div>
           
           <table class="table compact-table" id="saleItemsTable">
-            <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th><th></th></tr></thead>
+            <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Profit</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
           
           <div class="right" style="margin-top:16px;">
             <div class="stat">
-              <span class="muted">Total Amount</span>
+              <span class="muted">Total Sales</span>
               <b id="saleTotal">UGX 0</b>
             </div>
-            <button class="btn ok" id="btnSaveSale">Save Daily Sales</button>
+            <div class="stat">
+              <span class="muted">Total Profit</span>
+              <b id="saleProfit">UGX 0</b>
+            </div>
+            <button class="btn ok" id="btnSaveDailySales">Save Daily Sales</button>
           </div>
         </div>
         
         <div class="card">
-          <div class="section-header">
-            <h3>Sales History</h3>
-            <button class="btn" id="btnExportSales">Export</button>
-          </div>
-          
+          <h3>Recent Daily Sales</h3>
           <div class="grid-3" style="margin-bottom:16px;">
             <div>
               <label>From Date</label>
@@ -383,33 +261,52 @@
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Total Amount</th>
+                <th>Items Sold</th>
+                <th>Total Sales</th>
+                <th>Total Profit</th>
+                <th>Source</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
-          
-          <div class="grid-3" style="margin-top: 16px;">
-            <div class="stat small">
-              <span class="muted">Total Items</span>
-              <b id="totalItemsSold">0</b>
-            </div>
-            <div class="stat small">
-              <span class="muted">Total Sales</span>
-              <b id="totalSalesAmount">UGX 0</b>
-            </div>
-            <div class="stat small">
-              <span class="muted">Avg Daily</span>
-              <b id="avgDailySales">UGX 0</b>
-            </div>
+        </div>
+      </div>
+      
+      <div class="hr"></div>
+      
+      <div class="card">
+        <h3>Product Sales History</h3>
+        <div class="grid-3" style="margin-bottom:16px;">
+          <div>
+            <label>Product</label>
+            <select id="productHistorySelect"></select>
+          </div>
+          <div>
+            <label>From Date</label>
+            <input type="date" id="productHistoryFrom">
+          </div>
+          <div>
+            <label>To Date</label>
+            <input type="date" id="productHistoryTo">
           </div>
         </div>
+        
+        <table class="table compact-table" id="productHistoryTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Quantity Sold</th>
+              <th>Total Sales</th>
+              <th>Total Profit</th>
+              <th>Avg Price</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
     </section>
 
-    <!-- Expenses Section (NEW) -->
+    <!-- Expenses -->
     <section id="expenses" class="tabpanel" style="display:none;">
       <div class="grid-2">
         <div class="card">
@@ -420,14 +317,13 @@
               <input type="date" id="expenseDate" value="">
             </div>
             <div>
-              <label>Category</label>
-              <select id="expenseCategory">
+              <label>Expense Type</label>
+              <select id="expenseType">
                 <option value="rent">Rent</option>
                 <option value="utilities">Utilities</option>
                 <option value="salaries">Salaries</option>
-                <option value="maintenance">Maintenance</option>
                 <option value="supplies">Supplies</option>
-                <option value="marketing">Marketing</option>
+                <option value="maintenance">Maintenance</option>
                 <option value="other">Other</option>
               </select>
             </div>
@@ -437,19 +333,19 @@
             </div>
           </div>
           
-          <div style="margin-top: 12px;">
+          <div>
             <label>Description</label>
-            <textarea id="expenseDescription" rows="3" placeholder="Enter expense description..."></textarea>
+            <textarea id="expenseDescription" rows="3" placeholder="Enter expense details..."></textarea>
           </div>
           
-          <div class="right" style="margin-top: 16px;">
-            <button class="btn bad" id="btnAddExpense">Record Expense</button>
+          <div class="right" style="margin-top:16px;">
+            <button class="btn primary" id="btnSaveExpense">Save Expense</button>
           </div>
         </div>
         
         <div class="card">
           <h3>Recent Expenses</h3>
-          <div class="grid-3" style="margin-bottom: 16px;">
+          <div class="grid-3" style="margin-bottom:16px;">
             <div>
               <label>From Date</label>
               <input type="date" id="expenseFrom">
@@ -464,56 +360,63 @@
           </div>
           
           <table class="table compact-table" id="expensesTable">
-            <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th></th></tr></thead>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Amount</th>
+                <th></th>
+              </tr>
+            </thead>
             <tbody></tbody>
           </table>
           
-          <div class="right" style="margin-top: 16px;">
+          <div class="right" style="margin-top:16px;">
             <div class="stat">
               <span class="muted">Total Expenses</span>
-              <b id="expenseTotal">UGX 0</b>
+              <b id="totalExpenses">UGX 0</b>
             </div>
           </div>
         </div>
       </div>
-      
-      <div class="hr"></div>
-      
+    </section>
+
+    <!-- Reports -->
+    <section id="reports" class="tabpanel" style="display:none;">
       <div class="card">
-        <h3>Expense Analysis</h3>
-        <div class="grid-3">
-          <div class="stat">
-            <span class="muted">This Month</span>
-            <b id="monthExpenses">UGX 0</b>
+        <div class="section-tools">
+          <h3 style="margin-right:auto">Profit & Loss Report</h3>
+          <button class="btn" id="btnPrintReport">Print</button>
+          <button class="btn" id="btnExportReport">Export Excel</button>
+        </div>
+        
+        <div class="grid-4">
+          <div>
+            <label>Report Period Start</label>
+            <input type="date" id="reportStart" value="">
           </div>
-          <div class="stat">
-            <span class="muted">This Week</span>
-            <b id="weekExpenses">UGX 0</b>
+          <div>
+            <label>Report Period End</label>
+            <input type="date" id="reportEnd" value="">
           </div>
-          <div class="stat">
-            <span class="muted">Today</span>
-            <b id="todayExpenses">UGX 0</b>
+          <div>
+            <label>Compare With</label>
+            <select id="comparePeriod">
+              <option value="none">No Comparison</option>
+              <option value="previous">Previous Period</option>
+              <option value="same_last_year">Same Period Last Year</option>
+            </select>
+          </div>
+          <div class="right">
+            <button class="btn primary" id="btnGenerateReport">Generate Report</button>
           </div>
         </div>
-        <div id="expenseChart" style="margin-top: 20px; height: 200px; border: 1px solid var(--line); border-radius: 8px; padding: 12px;">
-          <div style="display: flex; align-items: flex-end; height: 150px; gap: 10px;" id="expenseBars">
-            <div style="text-align: center; flex: 1;">
-              <div style="background: var(--bad); height: 20px; border-radius: 4px;"></div>
-              <div style="font-size: 11px; margin-top: 4px;">Rent</div>
-            </div>
-            <div style="text-align: center; flex: 1;">
-              <div style="background: var(--warn); height: 40px; border-radius: 4px;"></div>
-              <div style="font-size: 11px; margin-top: 4px;">Salaries</div>
-            </div>
-            <div style="text-align: center; flex: 1;">
-              <div style="background: var(--muted); height: 30px; border-radius: 4px;"></div>
-              <div style="font-size: 11px; margin-top: 4px;">Utilities</div>
-            </div>
-            <div style="text-align: center; flex: 1;">
-              <div style="background: var(--brand); height: 25px; border-radius: 4px;"></div>
-              <div style="font-size: 11px; margin-top: 4px;">Supplies</div>
-            </div>
-          </div>
+        
+        <div class="hr"></div>
+        
+        <div id="reportOutput">
+          <!-- Report will be generated here -->
         </div>
       </div>
     </section>
@@ -525,53 +428,54 @@
           <h3>Add/Edit Product</h3>
           <div>
             <label>Product Name</label>
-            <input id="productName" type="text" placeholder="e.g., Gilbeys (s)">
+            <input id="productName" type="text" placeholder="e.g., NILE Beer">
           </div>
           <div style="margin-top:12px;">
             <label>Category</label>
             <select id="productCategory">
               <option value="beer">Beer</option>
-              <option value="spirit">Spirit</option>
+              <option value="Soft Drink">Soft Drink</option>
+              <option value="Energy Drink">Energy Drink</option>
+              <option value="Spirit">Spirit</option>
               <option value="wine">Wine</option>
-              <option value="soft">Soft Drinks</option>
-              <option value="energy">Energy Drinks</option>
             </select>
           </div>
           <div class="grid-2" style="margin-top:12px;gap:12px;">
             <div>
-              <label>Cost Price (UGX)</label>
+              <label>Purchase Price (UGX)</label>
               <input id="productCost" type="number" min="0" value="0">
             </div>
             <div>
-              <label>Selling Price (UGX)</label>
+              <label>Sale Price (UGX)</label>
               <input id="productPrice" type="number" min="0" value="0">
             </div>
           </div>
           <div class="grid-2" style="margin-top:12px;gap:12px;">
             <div>
-              <label>Current Stock</label>
-              <input id="productStock" type="number" min="0" value="0">
+              <label>Opening Stock</label>
+              <input id="productOpeningStock" type="number" min="0" value="0">
             </div>
             <div>
               <label>Min Stock Level</label>
-              <input id="productMinStock" type="number" min="0" value="5">
+              <input id="productMinStock" type="number" min="0" value="10">
             </div>
           </div>
           <div class="stack" style="margin-top:20px;">
             <button class="btn primary" id="btnSaveProduct">Save Product</button>
             <button class="btn bad" id="btnDeleteProduct" disabled>Delete</button>
           </div>
-          <p class="help">All products are saved automatically</p>
+          <p class="help">Products are saved automatically</p>
         </div>
         
         <div class="card" style="grid-column:span 8;">
-          <h3>Product List</h3>
+          <h3>Product List (From Excel Sheet)</h3>
           <div class="section-tools" style="margin-bottom:16px;">
             <input type="text" id="productSearch" placeholder="Search products..." style="flex:1;">
             <select id="productSort">
               <option value="name">Sort by Name</option>
               <option value="category">Sort by Category</option>
               <option value="stock">Sort by Stock</option>
+              <option value="profit">Sort by Profit Margin</option>
             </select>
           </div>
           
@@ -580,12 +484,12 @@
               <tr>
                 <th>Product</th>
                 <th>Category</th>
-                <th>Stock</th>
-                <th>Min</th>
-                <th>Cost</th>
-                <th>Price</th>
-                <th>Margin</th>
-                <th>Value</th>
+                <th>Purchase Price</th>
+                <th>Sale Price</th>
+                <th>Profit Margin</th>
+                <th>Opening Stock</th>
+                <th>Sold</th>
+                <th>Current Stock</th>
                 <th></th>
               </tr>
             </thead>
@@ -595,125 +499,18 @@
       </div>
     </section>
 
-    <!-- Enhanced Reports Section -->
-    <section id="reports" class="tabpanel" style="display:none;">
-      <div class="grid-2">
-        <div class="card">
-          <h3>Daily Profit & Loss</h3>
-          <div class="grid-3">
-            <div>
-              <label>Report Date</label>
-              <input type="date" id="reportDate" value="">
-            </div>
-            <div>
-              <label>Compare With</label>
-              <input type="date" id="compareDate">
-            </div>
-            <div class="right">
-              <button class="btn primary" id="btnGenerateDaily">Generate</button>
-            </div>
-          </div>
-          <div class="hr"></div>
-          <div id="dailyReportOut"></div>
-        </div>
-        
-        <div class="card">
-          <h3>Period Analysis</h3>
-          <div class="grid-3">
-            <div>
-              <label>Period Type</label>
-              <select id="periodType">
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="custom">Custom</option>
-              </select>
-            </div>
-            <div>
-              <label>Start Date</label>
-              <input type="date" id="periodStart">
-            </div>
-            <div>
-              <label>End Date</label>
-              <input type="date" id="periodEnd">
-            </div>
-          </div>
-          
-          <div class="right" style="margin: 16px 0;">
-            <button class="btn ok" id="btnAnalyzePeriod">Analyze</button>
-          </div>
-          
-          <div id="periodAnalysisOut">
-            <div class="grid-3">
-              <div class="stat">
-                <span class="muted">Total Sales</span>
-                <b id="periodSales">UGX 0</b>
-              </div>
-              <div class="stat">
-                <span class="muted">Total Expenses</span>
-                <b id="periodExpenses">UGX 0</b>
-              </div>
-              <div class="stat">
-                <span class="muted">Net Profit</span>
-                <b id="periodProfit">UGX 0</b>
-              </div>
-            </div>
-            
-            <div class="hr"></div>
-            
-            <h4>Profitability Status</h4>
-            <div id="profitabilityStatus" class="goodmsg">
-              Business is profitable for this period.
-            </div>
-            
-            <h4 style="margin-top: 20px;">Key Metrics</h4>
-            <table class="table small-table">
-              <thead>
-                <tr>
-                  <th>Metric</th>
-                  <th>Value</th>
-                  <th>Target</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Gross Margin</td>
-                  <td id="grossMargin">0%</td>
-                  <td>40%</td>
-                  <td><span class="pill">Meeting</span></td>
-                </tr>
-                <tr>
-                  <td>Expense Ratio</td>
-                  <td id="expenseRatio">0%</td>
-                  <td>30%</td>
-                  <td><span class="pill">Good</span></td>
-                </tr>
-                <tr>
-                  <td>Net Profit Margin</td>
-                  <td id="netProfitMargin">0%</td>
-                  <td>10%</td>
-                  <td><span class="pill">Needs Improvement</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- Automation -->
     <section id="automation" class="tabpanel" style="display:none;">
       <div class="card">
-        <h3>Excel Automation</h3>
+        <h3>Excel Sheet Processor</h3>
         <div class="grid-3">
           <div class="stat">
             <span class="muted">Sheets Processed</span>
             <b id="processedSheetsCount">0</b>
           </div>
           <div class="stat">
-            <span class="muted">Import Days</span>
-            <b id="autoImportDays">0</b>
+            <span class="muted">Unique Dates</span>
+            <b id="uniqueDatesCount">0</b>
           </div>
           <div class="stat">
             <span class="muted">Last Import</span>
@@ -723,33 +520,36 @@
         
         <div class="hr"></div>
         
-        <h4>Excel Template Generator</h4>
-        <div class="grid-3" style="margin-top:12px;">
-          <button class="btn" id="btnTemplateDailySales">Sales Template</button>
-          <button class="btn" id="btnTemplateDailyPurchases">Purchases Template</button>
-          <button class="btn" id="btnTemplateInventory">Inventory Template</button>
-        </div>
-        
-        <div class="hr"></div>
-        
-        <h4>Batch Import Excel Files</h4>
+        <h4>Import Excel Daily Sheet</h4>
         <div class="stack">
           <label class="btn">
-            <input type="file" id="batchExcelFiles" multiple accept=".xlsx,.xls" style="display:none">
-            Upload Excel Files
+            <input type="file" id="dailyExcelFile" accept=".xlsx,.xls" style="display:none">
+            Upload Daily Sheet
           </label>
-          <button class="btn ok" id="btnProcessBatch">Process Batch</button>
+          <button class="btn ok" id="btnProcessDailySheet">Process Sheet</button>
         </div>
-        <p class="help">Upload multiple daily Excel sheets to automatically aggregate data</p>
+        
+        <div class="grid-3" style="margin-top:12px;">
+          <div>
+            <label>Sheet Date</label>
+            <input type="date" id="sheetDate" value="">
+          </div>
+          <div>
+            <label>Overwrite Existing</label>
+            <select id="overwriteOption">
+              <option value="no">Keep Existing</option>
+              <option value="yes">Overwrite</option>
+            </select>
+          </div>
+        </div>
+        
+        <p class="help">Each sheet must have a unique date. Uploaded sheets will create/update daily sales records.</p>
         
         <div class="hr"></div>
         
         <h4>Import Log</h4>
         <div style="max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:12px;background:#f8fafc;">
           <pre id="importLog" style="margin:0;font-size:12px;white-space:pre-wrap;">No import activity yet.</pre>
-        </div>
-        <div class="right" style="margin-top:12px;">
-          <button class="btn" id="btnClearLog">Clear Log</button>
         </div>
       </div>
     </section>
@@ -758,33 +558,29 @@
     <section id="data" class="tabpanel" style="display:none;">
       <div class="row">
         <!-- Backup / Restore -->
-        <div class="card" style="grid-column:span 4;">
+        <div class="card" style="grid-column: span 4;">
           <h3>Backup / Restore (Local JSON)</h3>
           <div class="stack section-tools">
-            <button class="btn primary" id="btnBackup2">Export JSON</button>
+            <button class="btn primary" id="btnBackup">Export JSON</button>
             <label class="btn">
-              <input type="file" id="restoreFile2" accept="application/json" style="display:none">
+              <input type="file" id="restoreFile" accept="application/json" style="display:none">
               Import JSON
             </label>
-            <button class="btn" id="btnSaveNow2">Save Now</button>
+            <button class="btn" id="btnSaveNow">Save Now</button>
           </div>
           <div class="stat" style="margin-top:12px;">
             <span class="muted">Last Saved</span>
             <b id="lastSaveTime">Never</b>
           </div>
-          <p class="help">Exports all products, purchases, sales, and settings to a JSON file.</p>
+          <p class="help">Exports all daily sheets, products, and expenses to a JSON file.</p>
         </div>
 
-        <!-- Excel Import / Export -->
+        <!-- Excel Export -->
         <div class="card" style="grid-column: span 4;">
-          <h3>Excel Import / Export</h3>
+          <h3>Excel Export</h3>
           <div class="stack section-tools">
-            <button class="btn" id="btnExportXLSX">Export Excel (All Data)</button>
-            <button class="btn" id="btnExportLedgerXLSX">Export Blank Template</button>
-            <label class="btn">
-              <input type="file" id="importXLSX" accept=".xlsx,.xls" style="display:none">
-              Import Excel
-            </label>
+            <button class="btn" id="btnExportAllData">Export All Data</button>
+            <button class="btn" id="btnExportProfitLoss">Export P&L Report</button>
           </div>
           
           <div class="grid-2" style="margin-top:12px; gap:8px;">
@@ -798,70 +594,16 @@
             </div>
           </div>
           
-          <div class="right" style="margin-top:12px;">
-            <button class="btn" id="btnExportFilledLedger">Export Filled Ledger</button>
-          </div>
-          <p class="help">Export all data or import from Excel files.</p>
+          <p class="help">Export data for specific date ranges.</p>
         </div>
 
-        <!-- Template Generator -->
+        <!-- Google Drive Sync -->
         <div class="card" style="grid-column: span 4;">
-          <h3>Excel Template Generator</h3>
-          <div class="grid-3" style="margin-top:8px;">
-            <button class="btn" id="btnTemplateDailySales2">Sales Template</button>
-            <button class="btn" id="btnTemplateDailyPurchases2">Purchases Template</button>
-            <button class="btn" id="btnTemplateInventory2">Inventory Template</button>
-          </div>
-          <div class="grid-2" style="margin-top:12px; gap:8px;">
-            <button class="btn warn" id="btnGenerateBlankExcel2">Generate All Templates</button>
-          </div>
-          <p class="help">Create blank Excel sheets for daily data entry.</p>
-        </div>
-      </div>
-
-      <div class="row" style="margin-top:16px;">
-        <!-- Batch Processing -->
-        <div class="card" style="grid-column: span 6;">
-          <h3>Batch Import & Automation</h3>
-          <div class="stack section-tools">
-            <label class="btn">
-              <input type="file" id="batchExcelFiles2" multiple accept=".xlsx,.xls" style="display:none">
-              Upload Excel Files
-            </label>
-            <button class="btn ok" id="btnProcessBatch2">Process Batch</button>
-          </div>
-          
-          <div class="grid-3" style="margin-top:12px;">
-            <div class="stat">
-              <span class="muted">Sheets Processed</span>
-              <b id="processedSheetsCount2">0</b>
-            </div>
-            <div class="stat">
-              <span class="muted">Import Days</span>
-              <b id="autoImportDays2">0</b>
-            </div>
-            <div class="stat">
-              <span class="muted">Last Import</span>
-              <b id="lastAutoRun2">Never</b>
-            </div>
-          </div>
-          
-          <div class="stack" style="margin-top:12px;">
-            <button class="btn primary" id="btnCheckGmail2">Check Gmail</button>
-            <button class="btn" id="btnInitFromExcel">Initialize Products</button>
-          </div>
-          
-          <p class="help">Upload multiple daily Excel sheets to automatically aggregate data.</p>
-        </div>
-
-        <!-- GOOGLE DRIVE SYNC -->
-        <div class="card" style="grid-column: span 6;">
           <h3>Google Drive Sync</h3>
           <div class="stack section-tools">
             <button class="btn" id="btnGSignIn">Sign in with Google</button>
-            <button class="btn primary" id="btnCloudSave" disabled>Save to Google Drive</button>
-            <button class="btn" id="btnCloudLoad" disabled>Load from Google Drive</button>
-            <button class="btn bad" id="btnGSignOut" disabled>Sign out</button>
+            <button class="btn primary" id="btnCloudSave" disabled>Save to Drive</button>
+            <button class="btn" id="btnCloudLoad" disabled>Load from Drive</button>
           </div>
           
           <div class="stack" style="margin-top:12px;">
@@ -873,31 +615,6 @@
             <span class="muted">Last Cloud Backup</span>
             <b id="lastCloudBackup">Never</b>
           </div>
-          
-          <p class="help">Stores a single <b>bar-backup.json</b> file in your Google Drive.</p>
-        </div>
-      </div>
-
-      <div class="row" style="margin-top:16px;">
-        <!-- Import Log -->
-        <div class="card" style="grid-column: span 8;">
-          <h3>Import Log</h3>
-          <div style="max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:12px;background:#f8fafc;">
-            <pre id="importLog2" style="margin:0;font-size:12px;white-space:pre-wrap;">No import activity yet.</pre>
-          </div>
-          <div class="right" style="margin-top:12px;">
-            <button class="btn" id="btnClearLog2">Clear Log</button>
-          </div>
-        </div>
-
-        <!-- Self-Test & Diagnostics -->
-        <div class="card" style="grid-column: span 4;">
-          <h3>Self-Test / Diagnostics</h3>
-          <div class="stack">
-            <button class="btn" id="btnSelfTest">Run Self-Test</button>
-            <button class="btn" id="btnValidateData">Validate Data</button>
-          </div>
-          <div id="diagOut" class="mono" style="margin-top:8px; font-size:12px;"></div>
         </div>
       </div>
 
@@ -910,10 +627,9 @@
           </div>
           <div class="stack" style="margin-top:16px;">
             <button class="btn bad" id="btnWipe">Reset ALL Data</button>
-            <button class="btn bad" id="btnClearTransactions">Clear All Transactions</button>
-            <button class="btn bad" id="btnResetProducts">Reset Products</button>
+            <button class="btn bad" id="btnClearSheets">Clear All Daily Sheets</button>
+            <button class="btn bad" id="btnClearExpenses">Clear All Expenses</button>
           </div>
-          <p class="help">This cannot be undone! Export your data first.</p>
         </div>
       </div>
     </section>
@@ -922,22 +638,10 @@
   <!-- Loading Modal -->
   <div id="loading" class="loading">
     <div class="loading-spinner"></div>
-    <p>Processing...</p>
+    <p>Processing Excel files...</p>
   </div>
 
 <script>
-// ================ ENHANCED DATA STRUCTURE ================
-const STORAGE_KEY = 'bar_management_data_v2';
-let db = {
-  products: [],
-  dailyRecords: {}, // Keyed by date: "2024-01-15": { sales: [], purchases: [], expenses: [] }
-  expenses: [], // Standalone expenses with categories
-  settings: { 
-    lastSave: new Date().toISOString(),
-    accountingPeriod: 'monthly'
-  }
-};
-
 // ================ UTILITY FUNCTIONS ================
 const UGX = (v) => new Intl.NumberFormat('en-UG', {
   style: 'currency',
@@ -952,32 +656,6 @@ const todayStr = () => {
   const day = String(now.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
-
-function getCurrentMonth() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
-
-function getDateRange(type) {
-  const today = new Date();
-  const start = new Date(today);
-  
-  if (type === 'daily') {
-    return { start: todayStr(), end: todayStr() };
-  } else if (type === 'weekly') {
-    start.setDate(today.getDate() - 7);
-    return { 
-      start: start.toISOString().split('T')[0], 
-      end: todayStr() 
-    };
-  } else { // monthly
-    start.setMonth(today.getMonth() - 1);
-    return { 
-      start: start.toISOString().split('T')[0], 
-      end: todayStr() 
-    };
-  }
-}
 
 function download(filename, blob) {
   const a = document.createElement('a');
@@ -995,26 +673,35 @@ function showLoading(show) {
 
 function logImport(message) {
   const logEl = document.getElementById('importLog');
-  const logEl2 = document.getElementById('importLog2');
   const timestamp = new Date().toLocaleTimeString();
   const logMessage = `[${timestamp}] ${message}`;
   
   if (logEl) logEl.textContent = logMessage + '\n' + logEl.textContent;
-  if (logEl2) logEl2.textContent = logMessage + '\n' + logEl2.textContent;
 }
 
-// ================ DATA MANAGEMENT ================
+// ================ ENHANCED DATA MANAGEMENT ================
+const STORAGE_KEY = 'bar_management_enhanced_v2';
+let db = {
+  // Products from the Excel sheet
+  products: [],
+  // Daily sheets - each with unique date
+  dailySheets: {}, // key: date, value: { date, items: [], totalSales, totalProfit }
+  // Expenses
+  expenses: [], // { date, type, description, amount }
+  // Settings
+  settings: { 
+    lastSave: new Date().toISOString(),
+    accountingPeriod: 'monthly', // monthly, weekly, custom
+    periodStart: todayStr().substring(0, 7) + '-01', // First day of current month
+    periodEnd: todayStr()
+  }
+};
+
 // Load saved data
 try {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
-    const parsed = JSON.parse(saved);
-    // Migrate from old structure if needed
-    if (parsed.products && !parsed.dailyRecords) {
-      parsed.dailyRecords = {};
-      parsed.expenses = [];
-    }
-    db = parsed;
+    db = JSON.parse(saved);
   }
 } catch (e) {
   console.error('Error loading saved data:', e);
@@ -1032,10 +719,6 @@ function saveData() {
   }
 }
 
-function getProductById(id) {
-  return db.products.find(p => p.id === id);
-}
-
 function updateLastSaveTime() {
   const lastSaveEl = document.getElementById('lastSaveTime');
   if (lastSaveEl && db.settings.lastSave) {
@@ -1044,170 +727,171 @@ function updateLastSaveTime() {
   }
 }
 
-// ================ DAILY RECORDS MANAGEMENT ================
-function getDailyRecord(date) {
-  if (!db.dailyRecords[date]) {
-    db.dailyRecords[date] = {
-      sales: [],
-      purchases: [],
-      expenses: [],
-      imported: false
-    };
+// Initialize products from the Excel sheet data
+function initializeProductsFromExcel() {
+  // This is the data from the provided Excel sheet
+  const excelProducts = [
+    { name: "NILE", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
+    { name: "LITE", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
+    { name: "MALT", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
+    { name: "CLUB", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
+    { name: "BELL", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
+    { name: "GUINESS SMALL", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
+    { name: "GUINESS BIG", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
+    { name: "SIRMINOFF", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
+    { name: "T.LAGER", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
+    { name: "EAGLE", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
+    { name: "T.CIDER", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
+    { name: "PILSNER", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
+    { name: "SODA", category: "Soft Drink", purchasePrice: 1000, salePrice: 2000, openingStock: 10 },
+    { name: "POWER PLAY", category: "Energy Drink", purchasePrice: 1000, salePrice: 2000, openingStock: 10 },
+    { name: "PREDATOR", category: "Energy Drink", purchasePrice: 1000, salePrice: 2000, openingStock: 10 },
+    { name: "ROCK BOOM", category: "Energy Drink", purchasePrice: 1000, salePrice: 2000, openingStock: 10 },
+    { name: "STING", category: "Energy Drink", purchasePrice: 1000, salePrice: 2000, openingStock: 10 },
+    { name: "RWENZORI", category: "Soft Drink", purchasePrice: 600, salePrice: 1000, openingStock: 10 },
+    { name: "YACKET", category: "Soft Drink", purchasePrice: 416, salePrice: 1000, openingStock: 10 },
+    { name: "MINUTE MAID", category: "Soft Drink", purchasePrice: 1000, salePrice: 2000, openingStock: 10 },
+    { name: "ONER", category: "Soft Drink", purchasePrice: 1000, salePrice: 2000, openingStock: 10 },
+    { name: "UG Big", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "ug1/2", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Ug1/4", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Ug Plastic", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "V&A BIG", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "V&A 1/4", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "FOUR COUSINS", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "BLACK & WHITE", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Bond 7 ( 1/4)", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Bond 7 Big", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Gilbeys 1/4", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Red Bull", category: "Energy Drink", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Guiness Smooth", category: "beer", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Amalula", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Grands", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Ondavit", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "C.Morgan", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Scount", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Antonious", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Robertson", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Ballanties", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Singleton", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Jameson", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Famous Grouse", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "J.P Chente", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Baileys", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "8PM", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "GIlbeys BIG", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Castle Lite", category: "beer", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Can of Guinness", category: "beer", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Doprick", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "High 5", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 }
+  ];
+  
+  // Only initialize if no products exist
+  if (db.products.length === 0) {
+    db.products = excelProducts.map((p, index) => ({
+      id: 'prod_' + (index + 1),
+      name: p.name,
+      category: p.category,
+      purchasePrice: p.purchasePrice,
+      salePrice: p.salePrice,
+      openingStock: p.openingStock,
+      minStockLevel: 10,
+      currentStock: p.openingStock, // Start with opening stock
+      soldCount: 0,
+      totalProfit: 0
+    }));
+    saveData();
   }
-  return db.dailyRecords[date];
 }
 
-function saveDailyRecord(date, type, items) {
-  const record = getDailyRecord(date);
-  
-  if (type === 'sales') {
-    record.sales.push(...items);
-  } else if (type === 'purchases') {
-    record.purchases.push(...items);
-  } else if (type === 'expenses') {
-    record.expenses.push(...items);
-  }
-  
-  // Update product stock if it's a sale or purchase
-  items.forEach(item => {
-    const product = getProductById(item.productId);
-    if (product) {
-      if (type === 'sales') {
-        product.currentStock = Math.max(0, (product.currentStock || 0) - (item.qty || 0));
-      } else if (type === 'purchases') {
-        product.currentStock = (product.currentStock || 0) + (item.qty || 0);
-      }
-    }
-  });
-  
-  saveData();
-}
-
-// ================ ENHANCED DASHBOARD ================
+// ================ DASHBOARD FUNCTIONS ================
 function updateDashboardStats() {
-  const period = db.settings.accountingPeriod || 'monthly';
-  const { start, end } = getDateRange(period);
-  
   // Total products
   document.getElementById('statProducts').textContent = db.products.length;
   
-  // Stock value
+  // Stock value (based on purchase price)
   const stockValue = db.products.reduce((sum, p) => {
-    return sum + (p.currentStock || 0) * (p.costPrice || 0);
+    return sum + (p.currentStock || p.openingStock || 0) * (p.purchasePrice || 0);
   }, 0);
   document.getElementById('statStockValue').textContent = UGX(stockValue);
   
-  // Monthly purchases
-  const monthlyPurchases = calculateTotalPurchases(start, end);
+  // Monthly purchases (calculate from product purchases)
+  const currentMonth = todayStr().substring(0, 7); // YYYY-MM
+  const monthlyPurchases = db.products.reduce((sum, p) => {
+    // For now, we'll estimate purchases based on sold items
+    // In a real system, you'd track actual purchases
+    const sold = p.soldCount || 0;
+    const purchaseValue = sold * (p.purchasePrice || 0);
+    return sum + purchaseValue;
+  }, 0);
   document.getElementById('statMonthPurchases').textContent = UGX(monthlyPurchases);
   
   // Most moving category
-  const topCategory = getMostMovingCategory(start, end);
-  document.getElementById('statTopCategory').textContent = topCategory.name || 'None';
-  
-  // Profits for period
-  const profit = calculateProfit(start, end);
-  const expenses = calculateExpenses(start, end);
-  const netProfit = profit - expenses;
-  
-  const profitStat = document.getElementById('statPeriodProfit');
-  profitStat.textContent = UGX(netProfit);
-  
-  // Color code profit/loss
-  const profitStatDiv = document.getElementById('profitStat');
-  if (netProfit > 0) {
-    profitStatDiv.style.background = '#ecfdf5';
-    profitStatDiv.style.borderColor = '#86efac';
-  } else if (netProfit < 0) {
-    profitStatDiv.style.background = '#fef2f2';
-    profitStatDiv.style.borderColor = '#fca5a5';
-  }
-  
-  // Update expense analysis
-  initializeExpenseAnalysis();
-}
-
-function calculateTotalPurchases(start, end) {
-  let total = 0;
-  
-  for (const date in db.dailyRecords) {
-    if (date >= start && date <= end) {
-      const record = db.dailyRecords[date];
-      record.purchases.forEach(p => {
-        total += (p.total || (p.qty * p.unitPrice) || 0);
-      });
-    }
-  }
-  
-  return total;
-}
-
-function getMostMovingCategory(start, end) {
   const categorySales = {};
+  Object.values(db.dailySheets).forEach(sheet => {
+    sheet.items.forEach(item => {
+      const product = db.products.find(p => p.name === item.productName);
+      if (product) {
+        const cat = product.category || 'other';
+        categorySales[cat] = (categorySales[cat] || 0) + item.quantity;
+      }
+    });
+  });
   
-  for (const date in db.dailyRecords) {
-    if (date >= start && date <= end) {
-      const record = db.dailyRecords[date];
-      record.sales.forEach(sale => {
-        const product = getProductById(sale.productId);
-        if (product && product.category) {
-          categorySales[product.category] = (categorySales[product.category] || 0) + (sale.qty || 0);
-        }
-      });
+  let mostMovingCategory = '-';
+  let maxSales = 0;
+  for (const [category, sales] of Object.entries(categorySales)) {
+    if (sales > maxSales) {
+      maxSales = sales;
+      mostMovingCategory = category;
     }
   }
+  document.getElementById('statMostMoving').textContent = mostMovingCategory;
   
-  let topCategory = { name: 'None', count: 0 };
-  for (const [category, count] of Object.entries(categorySales)) {
-    if (count > topCategory.count) {
-      topCategory = { name: category, count };
-    }
-  }
+  // Calculate profits for the accounting period
+  const periodStart = db.settings.periodStart || todayStr().substring(0, 7) + '-01';
+  const periodEnd = db.settings.periodEnd || todayStr();
   
-  return topCategory;
-}
-
-function calculateProfit(start, end) {
-  let profit = 0;
-  
-  for (const date in db.dailyRecords) {
-    if (date >= start && date <= end) {
-      const record = db.dailyRecords[date];
-      record.sales.forEach(sale => {
-        const product = getProductById(sale.productId);
-        if (product) {
-          const cost = product.costPrice || 0;
-          const selling = sale.unitPrice || product.sellingPrice || 0;
-          profit += (selling - cost) * (sale.qty || 0);
-        }
-      });
-    }
-  }
-  
-  return profit;
-}
-
-function calculateExpenses(start, end) {
+  let grossProfit = 0;
   let totalExpenses = 0;
   
-  // Daily expenses
-  for (const date in db.dailyRecords) {
-    if (date >= start && date <= end) {
-      const record = db.dailyRecords[date];
-      record.expenses.forEach(exp => {
-        totalExpenses += (exp.amount || 0);
-      });
-    }
-  }
-  
-  // Standalone expenses
-  db.expenses.forEach(exp => {
-    if (exp.date >= start && exp.date <= end) {
-      totalExpenses += (exp.amount || 0);
+  // Calculate gross profit from daily sheets
+  Object.values(db.dailySheets).forEach(sheet => {
+    if (sheet.date >= periodStart && sheet.date <= periodEnd) {
+      grossProfit += sheet.totalProfit || 0;
     }
   });
   
-  return totalExpenses;
+  // Calculate total expenses for period
+  db.expenses.forEach(expense => {
+    if (expense.date >= periodStart && expense.date <= periodEnd) {
+      totalExpenses += expense.amount || 0;
+    }
+  });
+  
+  const netProfit = grossProfit - totalExpenses;
+  
+  document.getElementById('statGrossProfit').textContent = UGX(grossProfit);
+  document.getElementById('statTotalExpenses').textContent = UGX(totalExpenses);
+  document.getElementById('statNetProfit').textContent = UGX(netProfit);
+  
+  // Update profitability status
+  const profitStatusEl = document.getElementById('profitStatus');
+  const profitStatusCard = document.getElementById('profitStatusCard');
+  
+  if (netProfit > 0) {
+    profitStatusEl.innerHTML = `<strong>✅ PROFITABLE:</strong> Business is making a net profit of ${UGX(netProfit)}`;
+    profitStatusEl.className = 'goodmsg';
+    profitStatusCard.style.borderLeft = '4px solid #16a34a';
+  } else if (netProfit < 0) {
+    profitStatusEl.innerHTML = `<strong>⚠️ LOSS MAKING:</strong> Business is making a net loss of ${UGX(Math.abs(netProfit))}`;
+    profitStatusEl.className = 'badmsg';
+    profitStatusCard.style.borderLeft = '4px solid #ef4444';
+  } else {
+    profitStatusEl.innerHTML = `<strong>⚖️ BREAK EVEN:</strong> Business is breaking even`;
+    profitStatusEl.className = 'warnmsg';
+    profitStatusCard.style.borderLeft = '4px solid #f59e0b';
+  }
 }
 
 // ================ TAB MANAGEMENT ================
@@ -1231,37 +915,16 @@ function setupTabs() {
         panel.style.display = 'block';
         
         // Initialize panel if needed
-        if (tabId === 'dashboard') updateDashboardStats();
         if (tabId === 'products') renderProducts();
-        if (tabId === 'purchases') renderPurchases();
         if (tabId === 'sales') renderSales();
-        if (tabId === 'expenses') renderExpenses();
         if (tabId === 'inventory') renderInventory();
+        if (tabId === 'expenses') renderExpenses();
         if (tabId === 'reports') initReports();
         if (tabId === 'automation') renderAutomation();
         if (tabId === 'data') renderDataSection();
       }
     });
   });
-}
-
-// ================ DATA SECTION ================
-function renderDataSection() {
-  // Update stats
-  document.getElementById('processedSheetsCount2').textContent = Object.keys(db.dailyRecords).length;
-  document.getElementById('autoImportDays2').textContent = Object.keys(db.dailyRecords).length;
-  
-  const importedDates = Object.keys(db.dailyRecords).filter(date => db.dailyRecords[date].imported);
-  if (importedDates.length > 0) {
-    document.getElementById('lastAutoRun2').textContent = importedDates[importedDates.length - 1];
-  }
-  
-  // Set date ranges
-  const today = todayStr();
-  document.getElementById('exportFrom').value = today;
-  document.getElementById('exportTo').value = today;
-  
-  updateLastSaveTime();
 }
 
 // ================ PRODUCTS MANAGEMENT ================
@@ -1285,27 +948,31 @@ function renderProducts() {
     if (sortBy === 'name') return a.name.localeCompare(b.name);
     if (sortBy === 'category') return (a.category || '').localeCompare(b.category || '');
     if (sortBy === 'stock') return (b.currentStock || 0) - (a.currentStock || 0);
+    if (sortBy === 'profit') {
+      const marginA = (a.salePrice - a.purchasePrice) / a.purchasePrice * 100;
+      const marginB = (b.salePrice - b.purchasePrice) / b.purchasePrice * 100;
+      return marginB - marginA;
+    }
     return 0;
   });
   
   const tbody = document.querySelector('#productsTable tbody');
   if (tbody) {
     tbody.innerHTML = filtered.map(p => {
-      const margin = p.costPrice > 0 ? 
-        ((p.sellingPrice - p.costPrice) / p.costPrice * 100).toFixed(1) : 0;
-      const stockValue = (p.currentStock || 0) * (p.costPrice || 0);
+      const profitMargin = p.purchasePrice > 0 ? 
+        ((p.salePrice - p.purchasePrice) / p.purchasePrice * 100).toFixed(1) : 0;
       const isLowStock = (p.currentStock || 0) <= (p.minStockLevel || 5);
       
       return `
       <tr ${isLowStock ? 'style="background:#fff7ed"' : ''}>
         <td><strong>${p.name}</strong></td>
         <td><span class="pill">${p.category || 'other'}</span></td>
-        <td>${p.currentStock || 0}</td>
-        <td>${p.minStockLevel || 5}</td>
-        <td>${UGX(p.costPrice || 0)}</td>
-        <td>${UGX(p.sellingPrice || 0)}</td>
-        <td>${margin}%</td>
-        <td>${UGX(stockValue)}</td>
+        <td>${UGX(p.purchasePrice || 0)}</td>
+        <td>${UGX(p.salePrice || 0)}</td>
+        <td>${profitMargin}%</td>
+        <td>${p.openingStock || 0}</td>
+        <td>${p.soldCount || 0}</td>
+        <td>${p.currentStock || p.openingStock || 0}</td>
         <td><button class="btn" data-edit="${p.id}">Edit</button></td>
       </tr>
       `;
@@ -1317,20 +984,20 @@ function renderProducts() {
 }
 
 function populateProductSelects() {
-  const purchaseSelect = document.getElementById('purchaseProduct');
   const saleSelect = document.getElementById('saleProduct');
-  
-  if (purchaseSelect) {
-    purchaseSelect.innerHTML = '<option value="">Select Product</option>' +
-      db.products.map(p => 
-        `<option value="${p.id}">${p.name} (Stock: ${p.currentStock || 0})</option>`
-      ).join('');
-  }
+  const historySelect = document.getElementById('productHistorySelect');
   
   if (saleSelect) {
     saleSelect.innerHTML = '<option value="">Select Product</option>' +
       db.products.map(p => 
-        `<option value="${p.id}">${p.name} (Stock: ${p.currentStock || 0})</option>`
+        `<option value="${p.id}" data-price="${p.salePrice}">${p.name} (Stock: ${p.currentStock || p.openingStock || 0})</option>`
+      ).join('');
+  }
+  
+  if (historySelect) {
+    historySelect.innerHTML = '<option value="">Select Product</option>' +
+      db.products.map(p => 
+        `<option value="${p.id}">${p.name}</option>`
       ).join('');
   }
 }
@@ -1342,16 +1009,16 @@ function setupProducts() {
     if (!editBtn) return;
     
     const productId = editBtn.getAttribute('data-edit');
-    const product = getProductById(productId);
+    const product = db.products.find(p => p.id === productId);
     if (!product) return;
     
     editingProductId = productId;
     document.getElementById('productName').value = product.name;
     document.getElementById('productCategory').value = product.category || 'beer';
-    document.getElementById('productCost').value = product.costPrice || 0;
-    document.getElementById('productPrice').value = product.sellingPrice || 0;
-    document.getElementById('productStock').value = product.currentStock || 0;
-    document.getElementById('productMinStock').value = product.minStockLevel || 5;
+    document.getElementById('productCost').value = product.purchasePrice || 0;
+    document.getElementById('productPrice').value = product.salePrice || 0;
+    document.getElementById('productOpeningStock').value = product.openingStock || 0;
+    document.getElementById('productMinStock').value = product.minStockLevel || 10;
     document.getElementById('btnDeleteProduct').disabled = false;
   });
   
@@ -1364,21 +1031,26 @@ function setupProducts() {
     }
     
     const category = document.getElementById('productCategory').value;
-    const costPrice = parseInt(document.getElementById('productCost').value) || 0;
-    const sellingPrice = parseInt(document.getElementById('productPrice').value) || 0;
-    const currentStock = parseInt(document.getElementById('productStock').value) || 0;
-    const minStockLevel = parseInt(document.getElementById('productMinStock').value) || 5;
+    const purchasePrice = parseInt(document.getElementById('productCost').value) || 0;
+    const salePrice = parseInt(document.getElementById('productPrice').value) || 0;
+    const openingStock = parseInt(document.getElementById('productOpeningStock').value) || 0;
+    const minStockLevel = parseInt(document.getElementById('productMinStock').value) || 10;
     
     if (editingProductId) {
       // Update existing product
-      const product = getProductById(editingProductId);
+      const product = db.products.find(p => p.id === editingProductId);
       if (product) {
         product.name = name;
         product.category = category;
-        product.costPrice = costPrice;
-        product.sellingPrice = sellingPrice;
-        product.currentStock = currentStock;
+        product.purchasePrice = purchasePrice;
+        product.salePrice = salePrice;
+        product.openingStock = openingStock;
         product.minStockLevel = minStockLevel;
+        
+        // Update current stock if opening stock changed
+        if (product.currentStock === undefined) {
+          product.currentStock = openingStock;
+        }
       }
     } else {
       // Create new product
@@ -1386,10 +1058,13 @@ function setupProducts() {
         id: 'prod_' + Date.now(),
         name,
         category,
-        costPrice,
-        sellingPrice,
-        currentStock,
-        minStockLevel
+        purchasePrice,
+        salePrice,
+        openingStock,
+        currentStock: openingStock,
+        minStockLevel,
+        soldCount: 0,
+        totalProfit: 0
       };
       db.products.push(newProduct);
     }
@@ -1397,13 +1072,14 @@ function setupProducts() {
     saveData();
     renderProducts();
     updateDashboardStats();
+    populateProductSelects();
     
     // Reset form
     document.getElementById('productName').value = '';
     document.getElementById('productCost').value = '0';
     document.getElementById('productPrice').value = '0';
-    document.getElementById('productStock').value = '0';
-    document.getElementById('productMinStock').value = '5';
+    document.getElementById('productOpeningStock').value = '0';
+    document.getElementById('productMinStock').value = '10';
     document.getElementById('btnDeleteProduct').disabled = true;
     editingProductId = null;
     
@@ -1420,13 +1096,14 @@ function setupProducts() {
     saveData();
     renderProducts();
     updateDashboardStats();
+    populateProductSelects();
     
     // Reset form
     document.getElementById('productName').value = '';
     document.getElementById('productCost').value = '0';
     document.getElementById('productPrice').value = '0';
-    document.getElementById('productStock').value = '0';
-    document.getElementById('productMinStock').value = '5';
+    document.getElementById('productOpeningStock').value = '0';
+    document.getElementById('productMinStock').value = '10';
     document.getElementById('btnDeleteProduct').disabled = true;
     editingProductId = null;
     
@@ -1438,203 +1115,46 @@ function setupProducts() {
   document.getElementById('productSort').addEventListener('change', renderProducts);
 }
 
-// ================ PURCHASES MANAGEMENT ================
-let purchaseItems = [];
-
-function renderPurchases() {
-  // Set today's date
-  const today = todayStr();
-  document.getElementById('purchaseDate').value = today;
-  document.getElementById('purchaseFrom').value = today;
-  document.getElementById('purchaseTo').value = today;
-  
-  // Reset purchase form
-  purchaseItems = [];
-  document.getElementById('purchaseSupplier').value = '';
-  document.getElementById('purchaseReceiptNo').value = '';
-  document.getElementById('purchaseQty').value = '1';
-  document.getElementById('purchasePrice').value = '';
-  updatePurchaseTotal();
-  
-  // Load recent purchases
-  loadRecentPurchases();
-}
-
-function updatePurchaseTotal() {
-  const total = purchaseItems.reduce((sum, item) => sum + (item.total || 0), 0);
-  document.getElementById('purchaseTotal').textContent = UGX(total);
-  
-  const tbody = document.querySelector('#purchaseItemsTable tbody');
-  if (tbody) {
-    tbody.innerHTML = purchaseItems.map((item, index) => {
-      const product = getProductById(item.productId);
-      return `
-      <tr>
-        <td>${product?.name || 'Unknown'}</td>
-        <td>${item.qty}</td>
-        <td>${UGX(item.unitPrice)}</td>
-        <td>${UGX(item.total)}</td>
-        <td><button class="btn bad" data-remove="${index}">×</button></td>
-      </tr>
-      `;
-    }).join('');
-  }
-}
-
-function loadRecentPurchases() {
-  const from = document.getElementById('purchaseFrom').value || todayStr();
-  const to = document.getElementById('purchaseTo').value || todayStr();
-  
-  const filtered = [];
-  for (const date in db.dailyRecords) {
-    if (date >= from && date <= to) {
-      const record = db.dailyRecords[date];
-      if (record.purchases.length > 0) {
-        filtered.push({
-          date,
-          purchases: record.purchases,
-          totalAmount: record.purchases.reduce((sum, p) => sum + (p.total || 0), 0)
-        });
-      }
-    }
-  }
-  
-  const tbody = document.querySelector('#purchasesTable tbody');
-  if (tbody) {
-    tbody.innerHTML = filtered
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .map(p => {
-        const itemCount = p.purchases.length;
-        return `
-        <tr>
-          <td>${p.date}</td>
-          <td>${p.purchases[0]?.supplier || '-'}</td>
-          <td>${itemCount} items</td>
-          <td>${UGX(p.totalAmount || 0)}</td>
-          <td><button class="btn" data-view="${p.date}">View</button></td>
-        </tr>
-        `;
-      }).join('');
-  }
-}
-
-function setupPurchases() {
-  // Add purchase item
-  document.getElementById('btnAddPurchaseItem').addEventListener('click', () => {
-    const productId = document.getElementById('purchaseProduct').value;
-    const qty = parseInt(document.getElementById('purchaseQty').value) || 1;
-    const unitPrice = parseInt(document.getElementById('purchasePrice').value) || 0;
-    
-    if (!productId) {
-      alert('Please select a product');
-      return;
-    }
-    if (qty <= 0) {
-      alert('Please enter a valid quantity');
-      return;
-    }
-    if (unitPrice <= 0) {
-      alert('Please enter a valid price');
-      return;
-    }
-    
-    const product = getProductById(productId);
-    if (!product) {
-      alert('Product not found');
-      return;
-    }
-    
-    purchaseItems.push({
-      productId,
-      qty,
-      unitPrice,
-      total: qty * unitPrice
-    });
-    
-    updatePurchaseTotal();
-    
-    // Reset form
-    document.getElementById('purchaseQty').value = '1';
-    document.getElementById('purchasePrice').value = '';
-  });
-  
-  // Remove purchase item
-  document.getElementById('purchaseItemsTable').addEventListener('click', (e) => {
-    const removeBtn = e.target.closest('[data-remove]');
-    if (!removeBtn) return;
-    
-    const index = parseInt(removeBtn.getAttribute('data-remove'));
-    purchaseItems.splice(index, 1);
-    updatePurchaseTotal();
-  });
-  
-  // Save purchase
-  document.getElementById('btnSavePurchase').addEventListener('click', () => {
-    if (purchaseItems.length === 0) {
-      alert('Please add items to the purchase');
-      return;
-    }
-    
-    const date = document.getElementById('purchaseDate').value || todayStr();
-    const supplier = document.getElementById('purchaseSupplier').value.trim() || 'Unknown Supplier';
-    const receiptNo = document.getElementById('purchaseReceiptNo').value.trim() || '';
-    
-    // Add supplier to each item
-    const purchaseItemsWithSupplier = purchaseItems.map(item => ({
-      ...item,
-      supplier,
-      receiptNo
-    }));
-    
-    saveDailyRecord(date, 'purchases', purchaseItemsWithSupplier);
-    
-    // Refresh display
-    renderPurchases();
-    renderProducts();
-    updateDashboardStats();
-    
-    alert('Purchase saved successfully! Stock updated.');
-  });
-  
-  // Filter purchases
-  document.getElementById('btnFilterPurchases').addEventListener('click', loadRecentPurchases);
-}
-
-// ================ ENHANCED SALES MANAGEMENT ================
-let saleItems = [];
+// ================ DAILY SALES MANAGEMENT ================
+let dailySaleItems = [];
 
 function renderSales() {
-  // Set today's date
   const today = todayStr();
   document.getElementById('saleDate').value = today;
   document.getElementById('saleFrom').value = today;
   document.getElementById('saleTo').value = today;
+  document.getElementById('productHistoryFrom').value = today;
+  document.getElementById('productHistoryTo').value = today;
+  document.getElementById('sheetDate').value = today;
   
-  // Reset sale form
-  saleItems = [];
-  document.getElementById('saleNotes').value = '';
+  // Reset form
+  dailySaleItems = [];
+  document.getElementById('sheetReference').value = '';
   document.getElementById('saleQty').value = '1';
   document.getElementById('salePrice').value = '';
-  updateSaleTotal();
+  updateDailySaleTotal();
   
   // Load recent sales
   loadRecentSales();
 }
 
-function updateSaleTotal() {
-  const total = saleItems.reduce((sum, item) => sum + (item.total || 0), 0);
-  document.getElementById('saleTotal').textContent = UGX(total);
+function updateDailySaleTotal() {
+  const totalSales = dailySaleItems.reduce((sum, item) => sum + (item.total || 0), 0);
+  const totalProfit = dailySaleItems.reduce((sum, item) => sum + (item.profit || 0), 0);
+  
+  document.getElementById('saleTotal').textContent = UGX(totalSales);
+  document.getElementById('saleProfit').textContent = UGX(totalProfit);
   
   const tbody = document.querySelector('#saleItemsTable tbody');
   if (tbody) {
-    tbody.innerHTML = saleItems.map((item, index) => {
-      const product = getProductById(item.productId);
+    tbody.innerHTML = dailySaleItems.map((item, index) => {
       return `
       <tr>
-        <td>${product?.name || 'Unknown'}</td>
-        <td>${item.qty}</td>
+        <td>${item.productName}</td>
+        <td>${item.quantity}</td>
         <td>${UGX(item.unitPrice)}</td>
         <td>${UGX(item.total)}</td>
+        <td>${UGX(item.profit)}</td>
         <td><button class="btn bad" data-remove-sale="${index}">×</button></td>
       </tr>
       `;
@@ -1646,105 +1166,139 @@ function loadRecentSales() {
   const from = document.getElementById('saleFrom').value || todayStr();
   const to = document.getElementById('saleTo').value || todayStr();
   
-  // Group sales by product and date
-  const salesByProduct = {};
-  let totalItems = 0;
-  let totalAmount = 0;
-  let dateCount = 0;
-  
-  for (const date in db.dailyRecords) {
+  // Filter sheets by date range
+  const filteredSheets = [];
+  for (const [date, sheet] of Object.entries(db.dailySheets)) {
     if (date >= from && date <= to) {
-      dateCount++;
-      const record = db.dailyRecords[date];
-      record.sales.forEach(sale => {
-        const product = getProductById(sale.productId);
-        const key = `${date}_${sale.productId}`;
-        
-        if (!salesByProduct[key]) {
-          salesByProduct[key] = {
-            date,
-            productName: product?.name || 'Unknown',
-            totalQty: 0,
-            totalAmount: 0
-          };
-        }
-        
-        salesByProduct[key].totalQty += (sale.qty || 0);
-        salesByProduct[key].totalAmount += (sale.total || (sale.qty * sale.unitPrice) || 0);
-        
-        totalItems += (sale.qty || 0);
-        totalAmount += (sale.total || (sale.qty * sale.unitPrice) || 0);
-      });
+      filteredSheets.push({ date, ...sheet });
     }
   }
   
+  // Sort by date descending
+  filteredSheets.sort((a, b) => new Date(b.date) - new Date(a.date));
+  
   const tbody = document.querySelector('#salesHistoryTable tbody');
   if (tbody) {
-    tbody.innerHTML = Object.values(salesByProduct)
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .map(sale => `
-        <tr>
-          <td>${sale.date}</td>
-          <td>${sale.productName}</td>
-          <td>${sale.totalQty}</td>
-          <td>${UGX(sale.totalAmount)}</td>
-        </tr>
-      `).join('');
+    tbody.innerHTML = filteredSheets.map(sheet => {
+      const itemCount = sheet.items?.length || 0;
+      return `
+      <tr>
+        <td>${sheet.date}</td>
+        <td>${itemCount} items</td>
+        <td>${UGX(sheet.totalSales || 0)}</td>
+        <td>${UGX(sheet.totalProfit || 0)}</td>
+        <td>${sheet.source || 'manual'}</td>
+      </tr>
+      `;
+    }).join('');
+  }
+}
+
+function loadProductHistory() {
+  const productId = document.getElementById('productHistorySelect').value;
+  const from = document.getElementById('productHistoryFrom').value;
+  const to = document.getElementById('productHistoryTo').value;
+  
+  if (!productId) return;
+  
+  const product = db.products.find(p => p.id === productId);
+  if (!product) return;
+  
+  // Find all sales for this product in date range
+  const productSales = [];
+  for (const [date, sheet] of Object.entries(db.dailySheets)) {
+    if (date >= from && date <= to) {
+      const productItems = sheet.items.filter(item => item.productName === product.name);
+      if (productItems.length > 0) {
+        const totalQty = productItems.reduce((sum, item) => sum + item.quantity, 0);
+        const totalSales = productItems.reduce((sum, item) => sum + item.total, 0);
+        const totalProfit = productItems.reduce((sum, item) => sum + item.profit, 0);
+        const avgPrice = totalQty > 0 ? totalSales / totalQty : 0;
+        
+        productSales.push({
+          date,
+          qty: totalQty,
+          totalSales,
+          totalProfit,
+          avgPrice
+        });
+      }
+    }
   }
   
-  // Update summary stats
-  document.getElementById('totalItemsSold').textContent = totalItems;
-  document.getElementById('totalSalesAmount').textContent = UGX(totalAmount);
-  document.getElementById('avgDailySales').textContent = UGX(dateCount > 0 ? totalAmount / dateCount : 0);
+  // Sort by date
+  productSales.sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  const tbody = document.querySelector('#productHistoryTable tbody');
+  if (tbody) {
+    tbody.innerHTML = productSales.map(sale => `
+      <tr>
+        <td>${sale.date}</td>
+        <td>${sale.qty}</td>
+        <td>${UGX(sale.totalSales)}</td>
+        <td>${UGX(sale.totalProfit)}</td>
+        <td>${UGX(sale.avgPrice)}</td>
+      </tr>
+    `).join('');
+  }
 }
 
 function setupSales() {
+  // Auto-fill price when product selected
+  document.getElementById('saleProduct').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    if (selectedOption && selectedOption.value) {
+      const salePrice = selectedOption.getAttribute('data-price');
+      document.getElementById('salePrice').value = salePrice || '';
+    }
+  });
+  
   // Add sale item
   document.getElementById('btnAddSaleItem').addEventListener('click', () => {
     const productId = document.getElementById('saleProduct').value;
-    const qty = parseInt(document.getElementById('saleQty').value) || 1;
-    let unitPrice = parseInt(document.getElementById('salePrice').value) || 0;
+    const quantity = parseInt(document.getElementById('saleQty').value) || 1;
+    const unitPrice = parseInt(document.getElementById('salePrice').value) || 0;
     
     if (!productId) {
       alert('Please select a product');
       return;
     }
-    if (qty <= 0) {
+    if (quantity <= 0) {
       alert('Please enter a valid quantity');
       return;
     }
-    
-    const product = getProductById(productId);
-    if (!product) {
-      alert('Product not found');
-      return;
-    }
-    
-    // Use product selling price if not specified
-    if (unitPrice <= 0) {
-      unitPrice = product.sellingPrice || 0;
-    }
-    
     if (unitPrice <= 0) {
       alert('Please enter a valid price');
       return;
     }
     
+    const product = db.products.find(p => p.id === productId);
+    if (!product) {
+      alert('Product not found');
+      return;
+    }
+    
     // Check stock
-    if ((product.currentStock || 0) < qty) {
-      if (!confirm(`Only ${product.currentStock || 0} items in stock. Continue anyway?`)) {
+    const currentStock = product.currentStock || product.openingStock || 0;
+    if (currentStock < quantity) {
+      if (!confirm(`Only ${currentStock} items in stock. Continue anyway?`)) {
         return;
       }
     }
     
-    saleItems.push({
+    const total = quantity * unitPrice;
+    const profit = quantity * (unitPrice - product.purchasePrice);
+    
+    dailySaleItems.push({
       productId,
-      qty,
+      productName: product.name,
+      quantity,
       unitPrice,
-      total: qty * unitPrice
+      total,
+      profit
     });
     
-    updateSaleTotal();
+    updateDailySaleTotal();
     
     // Reset form
     document.getElementById('saleQty').value = '1';
@@ -1757,217 +1311,108 @@ function setupSales() {
     if (!removeBtn) return;
     
     const index = parseInt(removeBtn.getAttribute('data-remove-sale'));
-    saleItems.splice(index, 1);
-    updateSaleTotal();
+    dailySaleItems.splice(index, 1);
+    updateDailySaleTotal();
   });
   
-  // Save sale
-  document.getElementById('btnSaveSale').addEventListener('click', () => {
-    if (saleItems.length === 0) {
-      alert('Please add items to the sale');
+  // Save daily sales
+  document.getElementById('btnSaveDailySales').addEventListener('click', () => {
+    if (dailySaleItems.length === 0) {
+      alert('Please add items to the daily sales');
       return;
     }
     
-    // Check stock availability
-    for (const item of saleItems) {
-      const product = getProductById(item.productId);
-      if (product && (product.currentStock || 0) < item.qty) {
-        alert(`Not enough stock for ${product.name}. Available: ${product.currentStock || 0}`);
-        return;
-      }
+    const date = document.getElementById('saleDate').value || todayStr();
+    const sheetReference = document.getElementById('sheetReference').value.trim() || 'manual';
+    const recordType = document.getElementById('recordType').value;
+    
+    // Check if sheet for this date already exists
+    const existingSheet = db.dailySheets[date];
+    if (existingSheet && !confirm(`Sheet already exists for ${date}. Overwrite?`)) {
+      return;
     }
     
-    const date = document.getElementById('saleDate').value || todayStr();
-    const notes = document.getElementById('saleNotes').value.trim();
-    const saleType = document.getElementById('saleType').value;
+    // Calculate totals
+    const totalSales = dailySaleItems.reduce((sum, item) => sum + item.total, 0);
+    const totalProfit = dailySaleItems.reduce((sum, item) => sum + item.profit, 0);
     
-    // Add metadata to each item
-    const saleItemsWithMeta = saleItems.map(item => ({
-      ...item,
-      notes,
-      source: saleType
-    }));
+    // Update product stocks and counts
+    dailySaleItems.forEach(item => {
+      const product = db.products.find(p => p.id === item.productId);
+      if (product) {
+        product.currentStock = Math.max(0, (product.currentStock || product.openingStock || 0) - item.quantity);
+        product.soldCount = (product.soldCount || 0) + item.quantity;
+        product.totalProfit = (product.totalProfit || 0) + item.profit;
+      }
+    });
     
-    saveDailyRecord(date, 'sales', saleItemsWithMeta);
+    // Save daily sheet
+    db.dailySheets[date] = {
+      date,
+      items: [...dailySaleItems],
+      totalSales,
+      totalProfit,
+      source: recordType === 'excel' ? 'excel' : 'manual',
+      sheetReference,
+      recordedAt: new Date().toISOString()
+    };
     
-    // Reset form
-    saleItems = [];
-    updateSaleTotal();
-    document.getElementById('saleNotes').value = '';
+    saveData();
     
     // Refresh display
     renderSales();
     renderProducts();
+    renderInventory();
     updateDashboardStats();
     
-    alert(`Sales recorded for ${date}!`);
+    alert(`Daily sales saved for ${date}! Total: ${UGX(totalSales)}, Profit: ${UGX(totalProfit)}`);
   });
   
   // Filter sales
   document.getElementById('btnFilterSales').addEventListener('click', loadRecentSales);
   
-  // Export sales
-  document.getElementById('btnExportSales').addEventListener('click', exportSalesReport);
+  // Product history
+  document.getElementById('productHistorySelect').addEventListener('change', loadProductHistory);
+  document.getElementById('productHistoryFrom').addEventListener('change', loadProductHistory);
+  document.getElementById('productHistoryTo').addEventListener('change', loadProductHistory);
 }
 
-// ================ EXPENSES MANAGEMENT ================
-function renderExpenses() {
-  const from = document.getElementById('expenseFrom').value || todayStr();
-  const to = document.getElementById('expenseTo').value || todayStr();
-  
-  const tbody = document.querySelector('#expensesTable tbody');
-  if (tbody) {
-    // Get all expenses within date range
-    let allExpenses = [];
-    
-    // Daily record expenses
-    for (const date in db.dailyRecords) {
-      if (date >= from && date <= to) {
-        const record = db.dailyRecords[date];
-        record.expenses.forEach(exp => {
-          allExpenses.push({
-            date,
-            category: exp.category,
-            description: exp.description,
-            amount: exp.amount
-          });
-        });
-      }
-    }
-    
-    // Standalone expenses
-    db.expenses.forEach(exp => {
-      if (exp.date >= from && exp.date <= to) {
-        allExpenses.push(exp);
-      }
-    });
-    
-    tbody.innerHTML = allExpenses
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .map(exp => `
-        <tr>
-          <td>${exp.date}</td>
-          <td><span class="pill">${exp.category}</span></td>
-          <td>${exp.description}</td>
-          <td>${UGX(exp.amount)}</td>
-          <td><button class="btn bad" data-delete-expense="${exp.date}|${exp.category}|${exp.amount}">×</button></td>
-        </tr>
-      `).join('');
-    
-    // Update expense total
-    const totalExpenses = allExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
-    document.getElementById('expenseTotal').textContent = UGX(totalExpenses);
-  }
-}
-
-function setupExpenses() {
-  // Add expense
-  document.getElementById('btnAddExpense').addEventListener('click', () => {
-    const date = document.getElementById('expenseDate').value || todayStr();
-    const category = document.getElementById('expenseCategory').value;
-    const description = document.getElementById('expenseDescription').value.trim();
-    const amount = parseInt(document.getElementById('expenseAmount').value) || 0;
-    
-    if (!description) {
-      alert('Please enter expense description');
-      return;
-    }
-    
-    if (amount <= 0) {
-      alert('Please enter a valid amount');
-      return;
-    }
-    
-    // Check if we should add to daily record or standalone
-    const record = getDailyRecord(date);
-    record.expenses.push({
-      category,
-      description,
-      amount,
-      timestamp: new Date().toISOString()
-    });
-    
-    saveData();
-    
-    // Reset form
-    document.getElementById('expenseDescription').value = '';
-    document.getElementById('expenseAmount').value = '0';
-    
-    // Refresh display
-    renderExpenses();
-    updateDashboardStats();
-    
-    alert('Expense recorded successfully!');
-  });
-  
-  // Delete expense
-  document.getElementById('expensesTable').addEventListener('click', (e) => {
-    const deleteBtn = e.target.closest('[data-delete-expense]');
-    if (!deleteBtn) return;
-    
-    if (!confirm('Are you sure you want to delete this expense?')) {
-      return;
-    }
-    
-    const [date, category, amount] = deleteBtn.getAttribute('data-delete-expense').split('|');
-    
-    // Remove from daily records
-    const record = db.dailyRecords[date];
-    if (record) {
-      record.expenses = record.expenses.filter(exp => 
-        !(exp.category === category && exp.amount === parseFloat(amount))
-      );
-    }
-    
-    // Remove from standalone expenses
-    db.expenses = db.expenses.filter(exp => 
-      !(exp.date === date && exp.category === category && exp.amount === parseFloat(amount))
-    );
-    
-    saveData();
-    renderExpenses();
-    updateDashboardStats();
-  });
-  
-  // Filter expenses
-  document.getElementById('btnFilterExpenses').addEventListener('click', renderExpenses);
-}
-
-// ================ ENHANCED INVENTORY ================
+// ================ INVENTORY MANAGEMENT ================
 function renderInventory() {
   const date = document.getElementById('inventoryDate').value || todayStr();
   const category = document.getElementById('filterCategory').value;
-  const record = getDailyRecord(date);
   
-  let productsToShow = db.products;
+  let filtered = db.products;
   if (category) {
-    productsToShow = productsToShow.filter(p => p.category === category);
+    filtered = filtered.filter(p => p.category === category);
   }
   
   const tbody = document.querySelector('#inventoryTable tbody');
   if (tbody) {
-    tbody.innerHTML = productsToShow.map(product => {
-      // Get sales for this product on this date
-      const productSales = record.sales.filter(s => s.productId === product.id);
-      const totalSold = productSales.reduce((sum, s) => sum + (s.qty || 0), 0);
+    tbody.innerHTML = filtered.map(product => {
+      // Calculate sold from daily sheets
+      let totalSold = 0;
+      for (const [sheetDate, sheet] of Object.entries(db.dailySheets)) {
+        if (sheetDate <= date) {
+          const productItems = sheet.items.filter(item => item.productName === product.name);
+          totalSold += productItems.reduce((sum, item) => sum + item.quantity, 0);
+        }
+      }
       
-      // Get purchases for this product on this date
-      const productPurchases = record.purchases.filter(p => p.productId === product.id);
-      const totalPurchased = productPurchases.reduce((sum, p) => sum + (p.qty || 0), 0);
-      
-      const openingStock = (product.currentStock || 0) + totalSold - totalPurchased;
-      const closingStock = openingStock + totalPurchased - totalSold;
-      const stockValue = closingStock * (product.costPrice || 0);
+      const openingStock = product.openingStock || 0;
+      const currentStock = Math.max(0, openingStock - totalSold);
+      const stockValue = currentStock * (product.purchasePrice || 0);
       
       return `
-      <tr ${closingStock <= (product.minStockLevel || 5) ? 'style="background:#fff7ed"' : ''}>
+      <tr ${currentStock <= (product.minStockLevel || 5) ? 'style="background:#fff7ed"' : ''}>
         <td><strong>${product.name}</strong></td>
         <td><span class="pill">${product.category || 'other'}</span></td>
         <td>${openingStock}</td>
-        <td>${totalPurchased}</td>
+        <td>0</td> <!-- Purchased today - would need purchase tracking -->
         <td>${totalSold}</td>
-        <td><strong>${closingStock}</strong></td>
-        <td>${UGX(product.costPrice || 0)}</td>
+        <td><strong>${currentStock}</strong></td>
+        <td>${UGX(product.purchasePrice || 0)}</td>
+        <td>${UGX(product.salePrice || 0)}</td>
         <td>${UGX(stockValue)}</td>
       </tr>
       `;
@@ -1981,373 +1426,105 @@ function setupInventory() {
   document.getElementById('btnUpdateInventory').addEventListener('click', renderInventory);
 }
 
-// ================ ENHANCED REPORTS ================
-function initReports() {
+// ================ EXPENSES MANAGEMENT ================
+function renderExpenses() {
   const today = todayStr();
-  document.getElementById('reportDate').value = today;
-  document.getElementById('compareDate').value = '';
-  document.getElementById('periodStart').value = today;
-  document.getElementById('periodEnd').value = today;
+  document.getElementById('expenseDate').value = today;
+  document.getElementById('expenseFrom').value = today;
+  document.getElementById('expenseTo').value = today;
+  
+  // Reset form
+  document.getElementById('expenseDescription').value = '';
+  document.getElementById('expenseAmount').value = '0';
+  
+  // Load expenses
+  loadExpenses();
 }
 
-function setupReports() {
-  document.getElementById('btnGenerateDaily').addEventListener('click', generateDailyReport);
-  document.getElementById('btnAnalyzePeriod').addEventListener('click', analyzePeriod);
+function loadExpenses() {
+  const from = document.getElementById('expenseFrom').value || todayStr();
+  const to = document.getElementById('expenseTo').value || todayStr();
+  
+  const filtered = db.expenses.filter(e => e.date >= from && e.date <= to)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  const tbody = document.querySelector('#expensesTable tbody');
+  if (tbody) {
+    tbody.innerHTML = filtered.map((expense, index) => {
+      return `
+      <tr>
+        <td>${expense.date}</td>
+        <td><span class="pill">${expense.type}</span></td>
+        <td>${expense.description || ''}</td>
+        <td>${UGX(expense.amount)}</td>
+        <td><button class="btn bad" data-remove-expense="${index}">×</button></td>
+      </tr>
+      `;
+    }).join('');
+  }
+  
+  // Update total expenses
+  const totalExpenses = filtered.reduce((sum, e) => sum + (e.amount || 0), 0);
+  document.getElementById('totalExpenses').textContent = UGX(totalExpenses);
 }
 
-function generateDailyReport() {
-  const date = document.getElementById('reportDate').value || todayStr();
-  const compareDate = document.getElementById('compareDate').value;
-  const record = getDailyRecord(date);
+function setupExpenses() {
+  // Save expense
+  document.getElementById('btnSaveExpense').addEventListener('click', () => {
+    const date = document.getElementById('expenseDate').value || todayStr();
+    const type = document.getElementById('expenseType').value;
+    const description = document.getElementById('expenseDescription').value.trim();
+    const amount = parseInt(document.getElementById('expenseAmount').value) || 0;
+    
+    if (!description) {
+      alert('Please enter expense description');
+      return;
+    }
+    
+    if (amount <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+    
+    const newExpense = {
+      id: 'exp_' + Date.now(),
+      date,
+      type,
+      description,
+      amount,
+      recordedAt: new Date().toISOString()
+    };
+    
+    db.expenses.push(newExpense);
+    saveData();
+    
+    // Refresh display
+    renderExpenses();
+    updateDashboardStats();
+    
+    alert('Expense saved successfully!');
+  });
   
-  const salesTotal = record.sales.reduce((sum, s) => sum + (s.total || 0), 0);
-  const purchasesTotal = record.purchases.reduce((sum, p) => sum + (p.total || 0), 0);
-  const expensesTotal = record.expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-  
-  // Calculate profit
-  let grossProfit = 0;
-  record.sales.forEach(sale => {
-    const product = getProductById(sale.productId);
-    if (product) {
-      const cost = product.costPrice || 0;
-      grossProfit += (sale.unitPrice - cost) * (sale.qty || 0);
+  // Remove expense
+  document.getElementById('expensesTable').addEventListener('click', (e) => {
+    const removeBtn = e.target.closest('[data-remove-expense]');
+    if (!removeBtn) return;
+    
+    const index = parseInt(removeBtn.getAttribute('data-remove-expense'));
+    if (confirm('Delete this expense?')) {
+      db.expenses.splice(index, 1);
+      saveData();
+      renderExpenses();
+      updateDashboardStats();
     }
   });
   
-  const netProfit = grossProfit - expensesTotal;
-  
-  let html = `
-    <div class="grid-4">
-      <div class="stat"><span class="muted">Date</span><b>${date}</b></div>
-      <div class="stat"><span class="muted">Total Sales</span><b>${UGX(salesTotal)}</b></div>
-      <div class="stat"><span class="muted">Total Purchases</span><b>${UGX(purchasesTotal)}</b></div>
-      <div class="stat"><span class="muted">Total Expenses</span><b>${UGX(expensesTotal)}</b></div>
-    </div>
-    
-    <div class="grid-3" style="margin-top:20px;">
-      <div class="stat ${grossProfit >= 0 ? 'goodmsg' : 'warnmsg'}">
-        <span class="muted">Gross Profit</span>
-        <b>${UGX(grossProfit)}</b>
-      </div>
-      <div class="stat ${expensesTotal > 0 ? 'warnmsg' : ''}">
-        <span class="muted">Total Expenses</span>
-        <b>${UGX(expensesTotal)}</b>
-      </div>
-      <div class="stat ${netProfit >= 0 ? 'goodmsg' : 'warnmsg'}">
-        <span class="muted">Net Profit/Loss</span>
-        <b>${UGX(netProfit)}</b>
-      </div>
-    </div>
-    
-    <h4 style="margin-top:20px;">Sales Breakdown</h4>
-    <table class="table compact-table">
-      <thead><tr><th>Product</th><th>Quantity</th><th>Unit Price</th><th>Total Amount</th><th>Profit</th></tr></thead>
-      <tbody>
-        ${record.sales.map(sale => {
-          const product = getProductById(sale.productId);
-          const profitPerUnit = product ? (sale.unitPrice - (product.costPrice || 0)) : 0;
-          const totalProfit = profitPerUnit * (sale.qty || 0);
-          
-          return `
-            <tr>
-              <td>${product?.name || 'Unknown'}</td>
-              <td>${sale.qty || 0}</td>
-              <td>${UGX(sale.unitPrice || 0)}</td>
-              <td>${UGX(sale.total || 0)}</td>
-              <td class="${totalProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${UGX(totalProfit)}</td>
-            </tr>
-          `;
-        }).join('')}
-      </tbody>
-    </table>
-  `;
-  
-  if (record.expenses.length > 0) {
-    html += `
-      <h4 style="margin-top:20px;">Expenses Breakdown</h4>
-      <table class="table compact-table">
-        <thead><tr><th>Category</th><th>Description</th><th>Amount</th></tr></thead>
-        <tbody>
-          ${record.expenses.map(exp => `
-            <tr>
-              <td><span class="pill">${exp.category}</span></td>
-              <td>${exp.description}</td>
-              <td>${UGX(exp.amount)}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    `;
-  }
-  
-  if (compareDate) {
-    const compareRecord = getDailyRecord(compareDate);
-    const compareSales = compareRecord.sales.reduce((sum, s) => sum + (s.total || 0), 0);
-    const compareProfit = calculateProfit(compareDate, compareDate);
-    const compareExpenses = compareRecord.expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-    const compareNetProfit = compareProfit - compareExpenses;
-    
-    const salesDiff = salesTotal - compareSales;
-    const profitDiff = netProfit - compareNetProfit;
-    
-    html += `
-      <div class="hr"></div>
-      <h4>Comparison with ${compareDate}</h4>
-      <div class="grid-2">
-        <div class="stat">
-          <span class="muted">Sales Difference</span>
-          <b class="${salesDiff >= 0 ? 'profit-positive' : 'profit-negative'}">${salesDiff >= 0 ? '+' : ''}${UGX(salesDiff)}</b>
-        </div>
-        <div class="stat">
-          <span class="muted">Profit Difference</span>
-          <b class="${profitDiff >= 0 ? 'profit-positive' : 'profit-negative'}">${profitDiff >= 0 ? '+' : ''}${UGX(profitDiff)}</b>
-        </div>
-      </div>
-    `;
-  }
-  
-  document.getElementById('dailyReportOut').innerHTML = html;
-}
-
-function analyzePeriod() {
-  const periodType = document.getElementById('periodType').value;
-  const start = document.getElementById('periodStart').value || todayStr();
-  const end = document.getElementById('periodEnd').value || todayStr();
-  
-  const sales = calculatePeriodSales(start, end);
-  const expenses = calculateExpenses(start, end);
-  const profit = calculateProfit(start, end);
-  const netProfit = profit - expenses;
-  
-  // Update display
-  document.getElementById('periodSales').textContent = UGX(sales);
-  document.getElementById('periodExpenses').textContent = UGX(expenses);
-  document.getElementById('periodProfit').textContent = UGX(netProfit);
-  
-  // Update profitability status
-  const statusEl = document.getElementById('profitabilityStatus');
-  if (netProfit > 0) {
-    statusEl.className = 'goodmsg';
-    statusEl.innerHTML = `<strong>✅ PROFITABLE:</strong> Business made a profit of ${UGX(netProfit)}`;
-  } else if (netProfit < 0) {
-    statusEl.className = 'warnmsg';
-    statusEl.innerHTML = `<strong>⚠️ LOSS:</strong> Business incurred a loss of ${UGX(Math.abs(netProfit))}`;
-  } else {
-    statusEl.className = 'warnmsg';
-    statusEl.innerHTML = `<strong>⚖️ BREAK-EVEN:</strong> Business neither made profit nor loss`;
-  }
-  
-  // Calculate metrics
-  const grossMargin = sales > 0 ? ((profit / sales) * 100).toFixed(1) : 0;
-  const expenseRatio = sales > 0 ? ((expenses / sales) * 100).toFixed(1) : 0;
-  const netProfitMargin = sales > 0 ? ((netProfit / sales) * 100).toFixed(1) : 0;
-  
-  document.getElementById('grossMargin').textContent = `${grossMargin}%`;
-  document.getElementById('expenseRatio').textContent = `${expenseRatio}%`;
-  document.getElementById('netProfitMargin').textContent = `${netProfitMargin}%`;
-  
-  // Update status indicators
-  updateMetricStatus('grossMargin', grossMargin, 40);
-  updateMetricStatus('expenseRatio', expenseRatio, 30, true); // Lower is better
-  updateMetricStatus('netProfitMargin', netProfitMargin, 10);
-}
-
-function calculatePeriodSales(start, end) {
-  let total = 0;
-  
-  for (const date in db.dailyRecords) {
-    if (date >= start && date <= end) {
-      const record = db.dailyRecords[date];
-      total += record.sales.reduce((sum, s) => sum + (s.total || 0), 0);
-    }
-  }
-  
-  return total;
-}
-
-function updateMetricStatus(metricId, value, target, lowerIsBetter = false) {
-  const rows = document.querySelectorAll('#periodAnalysisOut tbody tr');
-  rows.forEach(row => {
-    if (row.cells[0].textContent.includes(metricId.replace(/([A-Z])/g, ' $1').trim())) {
-      const statusCell = row.cells[3];
-      const pill = statusCell.querySelector('.pill');
-      
-      if ((!lowerIsBetter && value >= target) || (lowerIsBetter && value <= target)) {
-        pill.textContent = 'Good';
-        pill.style.background = '#16a34a';
-        pill.style.color = 'white';
-      } else if (Math.abs(value - target) <= target * 0.2) {
-        pill.textContent = 'Fair';
-        pill.style.background = '#f59e0b';
-        pill.style.color = 'white';
-      } else {
-        pill.textContent = 'Poor';
-        pill.style.background = '#ef4444';
-        pill.style.color = 'white';
-      }
-    }
-  });
-}
-
-// ================ EXPENSE ANALYSIS ================
-function initializeExpenseAnalysis() {
-  const today = todayStr();
-  const weekStart = getDateRange('weekly').start;
-  const monthStart = getDateRange('monthly').start;
-  
-  // Calculate expenses for different periods
-  const todayExp = calculateExpenses(today, today);
-  const weekExp = calculateExpenses(weekStart, today);
-  const monthExp = calculateExpenses(monthStart, today);
-  
-  document.getElementById('todayExpenses').textContent = UGX(todayExp);
-  document.getElementById('weekExpenses').textContent = UGX(weekExp);
-  document.getElementById('monthExpenses').textContent = UGX(monthExp);
-  
-  // Update days recorded
-  const daysRecorded = Object.keys(db.dailyRecords).length;
-  document.getElementById('daysRecorded').textContent = daysRecorded;
-  
-  // Update last import
-  let lastImport = 'Never';
-  for (const date in db.dailyRecords) {
-    if (db.dailyRecords[date].imported) {
-      lastImport = date;
-      break;
-    }
-  }
-  document.getElementById('lastImportDate').textContent = lastImport;
-  
-  // Update total expenses dash
-  document.getElementById('totalExpensesDash').textContent = UGX(monthExp);
-  
-  // Update expense chart
-  updateExpenseChart();
-}
-
-function updateExpenseChart() {
-  const expenseBars = document.getElementById('expenseBars');
-  if (!expenseBars) return;
-  
-  // Calculate expenses by category for current month
-  const monthStart = getDateRange('monthly').start;
-  const today = todayStr();
-  
-  const categoryExpenses = {};
-  for (const date in db.dailyRecords) {
-    if (date >= monthStart && date <= today) {
-      const record = db.dailyRecords[date];
-      record.expenses.forEach(exp => {
-        categoryExpenses[exp.category] = (categoryExpenses[exp.category] || 0) + (exp.amount || 0);
-      });
-    }
-  }
-  
-  // Also include standalone expenses
-  db.expenses.forEach(exp => {
-    if (exp.date >= monthStart && exp.date <= today) {
-      categoryExpenses[exp.category] = (categoryExpenses[exp.category] || 0) + (exp.amount || 0);
-    }
-  });
-  
-  // Find max for scaling
-  const maxExpense = Math.max(...Object.values(categoryExpenses), 1000);
-  
-  // Clear and rebuild chart
-  expenseBars.innerHTML = '';
-  
-  const colors = ['var(--bad)', 'var(--warn)', 'var(--muted)', 'var(--brand)', 'var(--ok)'];
-  let colorIndex = 0;
-  
-  for (const [category, amount] of Object.entries(categoryExpenses)) {
-    const height = Math.max(20, (amount / maxExpense) * 100);
-    const color = colors[colorIndex % colors.length];
-    
-    expenseBars.innerHTML += `
-      <div style="text-align: center; flex: 1;">
-        <div style="background: ${color}; height: ${height}px; border-radius: 4px;"></div>
-        <div style="font-size: 11px; margin-top: 4px;">${category}</div>
-        <div style="font-size: 10px; color: var(--muted);">${UGX(amount)}</div>
-      </div>
-    `;
-    
-    colorIndex++;
-  }
+  // Filter expenses
+  document.getElementById('btnFilterExpenses').addEventListener('click', loadExpenses);
 }
 
 // ================ EXCEL AUTOMATION ================
-function generateExcelTemplate(type) {
-  let data, filename;
-  
-  switch(type) {
-    case 'sales':
-      data = [
-        ["DAILY SALES REPORT", "", "", "", "", ""],
-        ["Date:", todayStr(), "", "", "", ""],
-        ["", "", "", "", "", ""],
-        ["Product", "Quantity", "Unit Price (UGX)", "Total Amount (UGX)", "Customer", "Payment Method"],
-        ["Gilbeys (s)", "5", "12000", "60000", "Walk-in", "Cash"],
-        ["Ug Plastic", "3", "7000", "21000", "Regular", "Mobile Money"],
-        ["CLUB Beer", "10", "4000", "40000", "Walk-in", "Cash"]
-      ];
-      filename = `Daily_Sales_${todayStr()}.xlsx`;
-      break;
-      
-    case 'purchases':
-      data = [
-        ["DAILY PURCHASES REPORT", "", "", "", "", ""],
-        ["Date:", todayStr(), "", "", "", ""],
-        ["Supplier:", "Example Supplier", "", "", "", ""],
-        ["", "", "", "", "", ""],
-        ["Product", "Quantity", "Unit Cost (UGX)", "Total Cost (UGX)", "Supplier", "Receipt No"],
-        ["Gilbeys (s)", "12", "8500", "102000", "Distributor", "REC-001"],
-        ["Ug Plastic", "24", "5000", "120000", "Wholesaler", "REC-002"],
-        ["HIGH 5", "48", "2083", "100000", "Energy Co", "REC-003"]
-      ];
-      filename = `Daily_Purchases_${todayStr()}.xlsx`;
-      break;
-      
-    case 'inventory':
-      data = [
-        ["DAILY INVENTORY CHECK", "", "", "", "", "", ""],
-        ["Date:", todayStr(), "", "", "", "", ""],
-        ["", "", "", "", "", "", ""],
-        ["Product", "Category", "Opening Stock", "Purchased Today", "Sold Today", "Closing Stock", "Notes"],
-        ["Gilbeys (s)", "Spirits", "15", "0", "5", "10", "Stock good"],
-        ["Ug Plastic", "Spirits", "10", "0", "3", "7", "Reorder"],
-        ["CLUB Beer", "Beer", "20", "10", "15", "15", ""]
-      ];
-      filename = `Inventory_${todayStr()}.xlsx`;
-      break;
-  }
-  
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-  
-  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
-  
-  function s2ab(s) {
-    const buf = new ArrayBuffer(s.length);
-    const view = new Uint8Array(buf);
-    for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-    return buf;
-  }
-  
-  download(filename, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
-}
-
-function extractDateFromFileName(filename) {
-  // Try to extract date from filename patterns
-  const datePattern = /\d{4}[-_]\d{2}[-_]\d{2}/;
-  const match = filename.match(datePattern);
-  if (match) {
-    return match[0].replace(/_/g, '-');
-  }
-  return null;
-}
-
-function processExcelFile(file, date = null) {
+function processExcelFile(file, sheetDate) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -2355,36 +1532,33 @@ function processExcelFile(file, date = null) {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
         
-        // Use provided date or extract from sheet name
-        const sheetDate = date || extractDateFromFileName(file.name) || todayStr();
-        
         const result = {
           fileName: file.name,
           date: sheetDate,
-          products: [],
-          sales: [],
-          purchases: []
+          items: [],
+          totalRecords: 0,
+          totalSales: 0,
+          totalProfit: 0
         };
         
         workbook.SheetNames.forEach(sheetName => {
           const worksheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
           
-          // Process data based on your Excel structure
-          // Assuming structure: ITEM | CATEGORY | purchase price | sale price | OPENING STOCK | RECEIVED | TOTAL | CLOSING STOCK | SOLD | profit
-          for (let i = 2; i < jsonData.length; i++) { // Start from row 3
+          // Parse Excel data (based on provided sheet structure)
+          for (let i = 2; i < jsonData.length; i++) {
             const row = jsonData[i];
-            if (row && row[0]) { // If ITEM column has data
-              const productName = String(row[0] || '').trim();
-              const category = String(row[1] || '').trim().toLowerCase();
-              const purchasePrice = parseInt(row[2]) || 0;
-              const salePrice = parseInt(row[3]) || 0;
-              const openingStock = parseInt(row[4]) || 0;
-              const received = parseInt(row[5]) || 0;
-              const sold = parseInt(row[7]) || 0;
-              const profit = parseInt(row[9]) || 0;
+            if (row && row[1] && row[1].trim() !== '') {
+              const productName = String(row[1] || '').trim();
+              const category = String(row[2] || '').trim();
+              const purchasePrice = parseInt(row[3]) || 0;
+              const salePrice = parseInt(row[4]) || 0;
+              const openingStock = parseInt(row[5]) || 0;
+              const received = parseInt(row[6]) || 0;
+              const sold = parseInt(row[9]) || 0;
+              const profit = parseInt(row[10]) || 0;
               
-              if (productName) {
+              if (productName && sold > 0) {
                 // Find or create product
                 let product = db.products.find(p => 
                   p.name.toLowerCase() === productName.toLowerCase()
@@ -2394,49 +1568,56 @@ function processExcelFile(file, date = null) {
                   product = {
                     id: 'prod_import_' + Date.now() + Math.random(),
                     name: productName,
-                    category: category || 'uncategorized',
-                    costPrice: purchasePrice,
-                    sellingPrice: salePrice,
+                    category,
+                    purchasePrice,
+                    salePrice,
+                    openingStock,
                     currentStock: openingStock,
-                    minStockLevel: 5
+                    minStockLevel: 10,
+                    soldCount: 0,
+                    totalProfit: 0
                   };
                   db.products.push(product);
                 }
                 
-                // Record sale if sold > 0
-                if (sold > 0) {
-                  result.sales.push({
-                    productId: product.id,
-                    qty: sold,
-                    unitPrice: salePrice,
-                    total: sold * salePrice,
-                    imported: true
-                  });
-                }
+                const total = sold * salePrice;
+                const itemProfit = sold * (salePrice - purchasePrice);
                 
-                // Record purchase if received > 0
-                if (received > 0) {
-                  result.purchases.push({
-                    productId: product.id,
-                    qty: received,
-                    unitPrice: purchasePrice,
-                    total: received * purchasePrice,
-                    imported: true
-                  });
-                }
+                result.items.push({
+                  productId: product.id,
+                  productName,
+                  quantity: sold,
+                  unitPrice: salePrice,
+                  total,
+                  profit: itemProfit
+                });
+                
+                result.totalRecords++;
+                result.totalSales += total;
+                result.totalProfit += itemProfit;
+                
+                // Update product
+                product.currentStock = Math.max(0, (product.currentStock || product.openingStock) - sold);
+                product.soldCount = (product.soldCount || 0) + sold;
+                product.totalProfit = (product.totalProfit || 0) + itemProfit;
               }
             }
           }
         });
         
-        // Save to daily records
-        const dailyRecord = getDailyRecord(sheetDate);
-        dailyRecord.sales.push(...result.sales);
-        dailyRecord.purchases.push(...result.purchases);
-        dailyRecord.imported = true;
+        // Save daily sheet
+        db.dailySheets[sheetDate] = {
+          date: sheetDate,
+          items: result.items,
+          totalSales: result.totalSales,
+          totalProfit: result.totalProfit,
+          source: 'excel',
+          fileName: file.name,
+          recordedAt: new Date().toISOString()
+        };
         
         saveData();
-        logImport(`Imported ${file.name} for ${sheetDate}: ${result.sales.length} sales, ${result.purchases.length} purchases`);
+        logImport(`Processed ${file.name} for ${sheetDate}: ${result.totalRecords} records, Sales: ${UGX(result.totalSales)}, Profit: ${UGX(result.totalProfit)}`);
         
         resolve(result);
       } catch (error) {
@@ -2448,107 +1629,366 @@ function processExcelFile(file, date = null) {
   });
 }
 
-async function processBatchExcelFiles(files) {
-  showLoading(true);
-  let totalProcessed = 0;
-  
-  for (let i = 0; i < files.length; i++) {
-    try {
-      const result = await processExcelFile(files[i]);
-      totalProcessed += result.sales.length + result.purchases.length;
-      logImport(`✓ ${files[i].name}: ${result.sales.length} sales, ${result.purchases.length} purchases`);
-    } catch (error) {
-      logImport(`✗ ${files[i].name}: ${error.message}`);
+function setupAutomation() {
+  // Process daily sheet
+  document.getElementById('btnProcessDailySheet').addEventListener('click', async () => {
+    const fileInput = document.getElementById('dailyExcelFile');
+    if (!fileInput.files || fileInput.files.length === 0) {
+      alert('Please select an Excel file');
+      return;
     }
-  }
+    
+    const sheetDate = document.getElementById('sheetDate').value || todayStr();
+    const overwriteOption = document.getElementById('overwriteOption').value;
+    
+    // Check if sheet already exists
+    if (db.dailySheets[sheetDate] && overwriteOption === 'no') {
+      alert(`Sheet already exists for ${sheetDate}. Change overwrite option or select a different date.`);
+      return;
+    }
+    
+    showLoading(true);
+    
+    try {
+      const result = await processExcelFile(fileInput.files[0], sheetDate);
+      
+      // Refresh display
+      renderProducts();
+      renderSales();
+      renderInventory();
+      updateDashboardStats();
+      renderAutomation();
+      
+      showLoading(false);
+      
+      alert(`Excel sheet processed successfully!\nDate: ${sheetDate}\nRecords: ${result.totalRecords}\nTotal Sales: ${UGX(result.totalSales)}\nTotal Profit: ${UGX(result.totalProfit)}`);
+      
+      // Clear file input
+      fileInput.value = '';
+    } catch (error) {
+      showLoading(false);
+      console.error('Error processing Excel:', error);
+      alert('Error processing Excel file: ' + error.message);
+    }
+  });
   
-  showLoading(false);
-  
-  // Refresh data
-  renderProducts();
-  updateDashboardStats();
-  renderAutomation();
-  renderDataSection();
-  
-  alert(`Processed ${files.length} files with ${totalProcessed} total records.`);
+  // File input click
+  document.getElementById('dailyExcelFile').addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+      // Auto-set date from filename if possible
+      const fileName = this.files[0].name.toLowerCase();
+      const dateMatch = fileName.match(/(\d{4}[-_]\d{2}[-_]\d{2})|(\d{8})/);
+      if (dateMatch) {
+        let dateStr = dateMatch[0];
+        // Convert 20231231 to 2023-12-31
+        if (dateStr.length === 8 && !dateStr.includes('-') && !dateStr.includes('_')) {
+          dateStr = `${dateStr.substring(0,4)}-${dateStr.substring(4,6)}-${dateStr.substring(6,8)}`;
+        }
+        // Replace underscores with dashes
+        dateStr = dateStr.replace(/_/g, '-');
+        document.getElementById('sheetDate').value = dateStr;
+      }
+    }
+  });
 }
 
 function renderAutomation() {
-  const importedDates = Object.keys(db.dailyRecords).filter(date => db.dailyRecords[date].imported);
-  document.getElementById('processedSheetsCount').textContent = importedDates.length;
-  document.getElementById('autoImportDays').textContent = importedDates.length;
+  const sheetCount = Object.keys(db.dailySheets).length;
+  document.getElementById('processedSheetsCount').textContent = sheetCount;
+  document.getElementById('uniqueDatesCount').textContent = sheetCount;
   
-  if (importedDates.length > 0) {
-    document.getElementById('lastAutoRun').textContent = importedDates[importedDates.length - 1];
+  if (sheetCount > 0) {
+    const dates = Object.keys(db.dailySheets).sort();
+    const lastDate = dates[dates.length - 1];
+    const lastSheet = db.dailySheets[lastDate];
+    document.getElementById('lastAutoRun').textContent = new Date(lastSheet.recordedAt).toLocaleDateString();
   }
 }
 
-function setupAutomation() {
-  // Excel template buttons
-  document.getElementById('btnTemplateDailySales').addEventListener('click', () => generateExcelTemplate('sales'));
-  document.getElementById('btnTemplateDailyPurchases').addEventListener('click', () => generateExcelTemplate('purchases'));
-  document.getElementById('btnTemplateInventory').addEventListener('click', () => generateExcelTemplate('inventory'));
-  document.getElementById('btnGenerateBlankExcel').addEventListener('click', () => generateExcelTemplate('sales'));
+// ================ REPORTS ================
+function initReports() {
+  const today = todayStr();
+  const firstDay = today.substring(0, 7) + '-01';
   
-  // Batch processing
-  document.getElementById('batchExcelFiles').addEventListener('change', function(e) {
-    if (this.files.length > 0) {
-      processBatchExcelFiles(Array.from(this.files));
-      this.value = '';
+  document.getElementById('reportStart').value = firstDay;
+  document.getElementById('reportEnd').value = today;
+}
+
+function generateReport() {
+  const startDate = document.getElementById('reportStart').value;
+  const endDate = document.getElementById('reportEnd').value;
+  const comparePeriod = document.getElementById('comparePeriod').value;
+  
+  if (!startDate || !endDate) {
+    alert('Please select report period');
+    return;
+  }
+  
+  // Calculate report data
+  let totalSales = 0;
+  let totalProfit = 0;
+  let totalExpenses = 0;
+  const categoryBreakdown = {};
+  const dailyBreakdown = [];
+  
+  // Get sheets for period
+  for (const [date, sheet] of Object.entries(db.dailySheets)) {
+    if (date >= startDate && date <= endDate) {
+      totalSales += sheet.totalSales || 0;
+      totalProfit += sheet.totalProfit || 0;
+      
+      // Daily breakdown
+      dailyBreakdown.push({
+        date,
+        sales: sheet.totalSales || 0,
+        profit: sheet.totalProfit || 0
+      });
+      
+      // Category breakdown
+      sheet.items.forEach(item => {
+        const product = db.products.find(p => p.name === item.productName);
+        if (product) {
+          const category = product.category || 'other';
+          if (!categoryBreakdown[category]) {
+            categoryBreakdown[category] = {
+              sales: 0,
+              profit: 0,
+              items: 0
+            };
+          }
+          categoryBreakdown[category].sales += item.total;
+          categoryBreakdown[category].profit += item.profit;
+          categoryBreakdown[category].items += item.quantity;
+        }
+      });
+    }
+  }
+  
+  // Get expenses for period
+  db.expenses.forEach(expense => {
+    if (expense.date >= startDate && expense.date <= endDate) {
+      totalExpenses += expense.amount || 0;
     }
   });
   
-  document.getElementById('btnProcessBatch').addEventListener('click', () => {
-    document.getElementById('batchExcelFiles').click();
+  const netProfit = totalProfit - totalExpenses;
+  const profitMargin = totalSales > 0 ? (totalProfit / totalSales * 100).toFixed(1) : 0;
+  
+  // Generate report HTML
+  let html = `
+    <div class="grid-4">
+      <div class="stat">
+        <span class="muted">Report Period</span>
+        <b>${startDate} to ${endDate}</b>
+      </div>
+      <div class="stat">
+        <span class="muted">Total Sales</span>
+        <b>${UGX(totalSales)}</b>
+      </div>
+      <div class="stat">
+        <span class="muted">Gross Profit</span>
+        <b>${UGX(totalProfit)}</b>
+      </div>
+      <div class="stat">
+        <span class="muted">Profit Margin</span>
+        <b>${profitMargin}%</b>
+      </div>
+    </div>
+    
+    <div class="grid-3" style="margin-top:16px;">
+      <div class="stat">
+        <span class="muted">Total Expenses</span>
+        <b>${UGX(totalExpenses)}</b>
+      </div>
+      <div class="stat">
+        <span class="muted">Net Profit/Loss</span>
+        <b style="color: ${netProfit >= 0 ? '#16a34a' : '#ef4444'}">${UGX(netProfit)}</b>
+      </div>
+      <div class="stat ${netProfit >= 0 ? 'goodmsg' : 'badmsg'}">
+        <span class="muted">Status</span>
+        <b>${netProfit >= 0 ? 'PROFITABLE' : 'LOSS MAKING'}</b>
+      </div>
+    </div>
+    
+    <div class="hr"></div>
+    
+    <h4>Category Breakdown</h4>
+    <table class="table" style="margin-bottom:20px;">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Items Sold</th>
+          <th>Total Sales</th>
+          <th>Gross Profit</th>
+          <th>Profit Margin</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  for (const [category, data] of Object.entries(categoryBreakdown)) {
+    const categoryMargin = data.sales > 0 ? (data.profit / data.sales * 100).toFixed(1) : 0;
+    html += `
+      <tr>
+        <td><strong>${category}</strong></td>
+        <td>${data.items}</td>
+        <td>${UGX(data.sales)}</td>
+        <td>${UGX(data.profit)}</td>
+        <td>${categoryMargin}%</td>
+      </tr>
+    `;
+  }
+  
+  html += `
+      </tbody>
+    </table>
+    
+    <h4>Expenses Breakdown</h4>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Expense Type</th>
+          <th>Count</th>
+          <th>Total Amount</th>
+          <th>% of Expenses</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  const expenseTypes = {};
+  db.expenses.forEach(expense => {
+    if (expense.date >= startDate && expense.date <= endDate) {
+      expenseTypes[expense.type] = (expenseTypes[expense.type] || 0) + (expense.amount || 0);
+    }
   });
   
-  // Clear log
-  document.getElementById('btnClearLog').addEventListener('click', () => {
-    if (confirm('Clear import log?')) {
-      document.getElementById('importLog').textContent = 'Log cleared.';
-      document.getElementById('importLog2').textContent = 'Log cleared.';
+  for (const [type, amount] of Object.entries(expenseTypes)) {
+    const percentage = totalExpenses > 0 ? ((amount / totalExpenses) * 100).toFixed(1) : 0;
+    html += `
+      <tr>
+        <td><span class="pill">${type}</span></td>
+        <td>${db.expenses.filter(e => e.type === type && e.date >= startDate && e.date <= endDate).length}</td>
+        <td>${UGX(amount)}</td>
+        <td>${percentage}%</td>
+      </tr>
+    `;
+  }
+  
+  html += `
+      </tbody>
+    </table>
+  `;
+  
+  document.getElementById('reportOutput').innerHTML = html;
+}
+
+function setupReports() {
+  document.getElementById('btnGenerateReport').addEventListener('click', generateReport);
+  
+  // Export report
+  document.getElementById('btnExportReport').addEventListener('click', () => {
+    const startDate = document.getElementById('reportStart').value;
+    const endDate = document.getElementById('reportEnd').value;
+    
+    if (!startDate || !endDate) {
+      alert('Please select report period first');
+      return;
     }
+    
+    // Generate Excel report
+    const reportData = [
+      ["BAR MANAGEMENT SYSTEM - PROFIT & LOSS REPORT"],
+      ["Period:", `${startDate} to ${endDate}`],
+      ["Generated:", new Date().toLocaleString()],
+      [],
+      ["SUMMARY"],
+      ["Total Sales", "Total Expenses", "Gross Profit", "Net Profit", "Profit Margin"],
+    ];
+    
+    // Calculate totals
+    let totalSales = 0;
+    let totalProfit = 0;
+    let totalExpenses = 0;
+    
+    for (const [date, sheet] of Object.entries(db.dailySheets)) {
+      if (date >= startDate && date <= endDate) {
+        totalSales += sheet.totalSales || 0;
+        totalProfit += sheet.totalProfit || 0;
+      }
+    }
+    
+    db.expenses.forEach(expense => {
+      if (expense.date >= startDate && expense.date <= endDate) {
+        totalExpenses += expense.amount || 0;
+      }
+    });
+    
+    const netProfit = totalProfit - totalExpenses;
+    const profitMargin = totalSales > 0 ? (totalProfit / totalSales * 100).toFixed(1) : 0;
+    
+    reportData.push([
+      UGX(totalSales).replace('UGX', '').trim(),
+      UGX(totalExpenses).replace('UGX', '').trim(),
+      UGX(totalProfit).replace('UGX', '').trim(),
+      UGX(netProfit).replace('UGX', '').trim(),
+      `${profitMargin}%`
+    ]);
+    
+    reportData.push([], ["DAILY BREAKDOWN"]);
+    reportData.push(["Date", "Sales", "Profit", "Expenses", "Net"]);
+    
+    for (const [date, sheet] of Object.entries(db.dailySheets)) {
+      if (date >= startDate && date <= endDate) {
+        const dailyExpenses = db.expenses
+          .filter(e => e.date === date)
+          .reduce((sum, e) => sum + (e.amount || 0), 0);
+        const dailyNet = (sheet.totalProfit || 0) - dailyExpenses;
+        
+        reportData.push([
+          date,
+          UGX(sheet.totalSales || 0).replace('UGX', '').trim(),
+          UGX(sheet.totalProfit || 0).replace('UGX', '').trim(),
+          UGX(dailyExpenses).replace('UGX', '').trim(),
+          UGX(dailyNet).replace('UGX', '').trim()
+        ]);
+      }
+    }
+    
+    const ws = XLSX.utils.aoa_to_sheet(reportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "P&L Report");
+    
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+    
+    function s2ab(s) {
+      const buf = new ArrayBuffer(s.length);
+      const view = new Uint8Array(buf);
+      for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+      return buf;
+    }
+    
+    download(`profit-loss-report-${startDate}-to-${endDate}.xlsx`, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
   });
 }
 
-// ================ ENHANCED DATA MANAGEMENT ================
-function setupEnhancedDataManagement() {
-  // Template buttons in Data section
-  document.getElementById('btnTemplateDailySales2').addEventListener('click', () => generateExcelTemplate('sales'));
-  document.getElementById('btnTemplateDailyPurchases2').addEventListener('click', () => generateExcelTemplate('purchases'));
-  document.getElementById('btnTemplateInventory2').addEventListener('click', () => generateExcelTemplate('inventory'));
-  document.getElementById('btnGenerateBlankExcel2').addEventListener('click', () => {
-    generateExcelTemplate('sales');
-    setTimeout(() => generateExcelTemplate('purchases'), 100);
-    setTimeout(() => generateExcelTemplate('inventory'), 200);
-    alert('All templates generated! Check your downloads.');
+// ================ DATA SECTION ================
+function renderDataSection() {
+  updateLastSaveTime();
+}
+
+function setupDataManagement() {
+  // Backup data
+  document.getElementById('btnBackup').addEventListener('click', () => {
+    const dataStr = JSON.stringify(db, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    download(`bar-backup-${todayStr()}.json`, blob);
   });
   
-  // Batch processing in Data section
-  document.getElementById('batchExcelFiles2').addEventListener('change', function(e) {
-    if (this.files.length > 0) {
-      processBatchExcelFiles(Array.from(this.files));
-      this.value = '';
-    }
-  });
-  
-  document.getElementById('btnProcessBatch2').addEventListener('click', () => {
-    document.getElementById('batchExcelFiles2').click();
-  });
-  
-  // Clear log in Data section
-  document.getElementById('btnClearLog2').addEventListener('click', () => {
-    if (confirm('Clear import log?')) {
-      document.getElementById('importLog').textContent = 'Log cleared.';
-      document.getElementById('importLog2').textContent = 'Log cleared.';
-    }
-  });
-  
-  // Enhanced backup/restore
-  document.getElementById('btnBackup2').addEventListener('click', backupData);
-  document.getElementById('btnSaveNow2').addEventListener('click', () => {
+  // Save data
+  document.getElementById('btnSaveNow').addEventListener('click', () => {
     if (saveData()) {
-      const btn = document.getElementById('btnSaveNow2');
+      const btn = document.getElementById('btnSaveNow');
       const originalText = btn.textContent;
       btn.textContent = "✓ Saved!";
       btn.style.background = '#16a34a';
@@ -2558,103 +1998,9 @@ function setupEnhancedDataManagement() {
       }, 1500);
     }
   });
-
-  // Enhanced Excel export
-  document.getElementById('btnExportXLSX').addEventListener('click', exportAllDataToExcel);
-  document.getElementById('btnExportFilledLedger').addEventListener('click', exportFilledLedgerToExcel);
-  document.getElementById('btnExportLedgerXLSX').addEventListener('click', exportBlankLedgerTemplate);
-
-  // Self-test
-  document.getElementById('btnSelfTest').addEventListener('click', runSelfTest);
-  document.getElementById('btnValidateData').addEventListener('click', validateData);
-
-  // Clear transactions
-  document.getElementById('btnClearTransactions').addEventListener('click', () => {
-    if (confirm('Clear ALL transactions (purchases and sales)? This cannot be undone!')) {
-      db.dailyRecords = {};
-      saveData();
-      updateDashboardStats();
-      alert('All transactions cleared!');
-    }
-  });
-
-  // Reset products
-  document.getElementById('btnResetProducts').addEventListener('click', () => {
-    if (confirm('Reset all products to default values? Current stock will be lost.')) {
-      const defaultProducts = [
-        { name: "gilbeys (s)", category: "spirits", costPrice: 8500, sellingPrice: 12000, currentStock: 15, minStockLevel: 5 },
-        { name: "gilbeys (b)", category: "spirits", costPrice: 33000, sellingPrice: 45000, currentStock: 5, minStockLevel: 3 },
-        { name: "Ug Plastic", category: "spirits", costPrice: 5000, sellingPrice: 7000, currentStock: 10, minStockLevel: 5 },
-        { name: "HIGH 5", category: "energy", costPrice: 2083, sellingPrice: 3000, currentStock: 12, minStockLevel: 10 },
-        { name: "4 COUSINS", category: "wine", costPrice: 33000, sellingPrice: 50000, currentStock: 4, minStockLevel: 2 },
-        { name: "CLUB", category: "beer", costPrice: 3100, sellingPrice: 4000, currentStock: 20, minStockLevel: 10 },
-        { name: "LITE", category: "beer", costPrice: 3000, sellingPrice: 4000, currentStock: 20, minStockLevel: 10 },
-        { name: "GUINESS", category: "beer", costPrice: 3000, sellingPrice: 4000, currentStock: 20, minStockLevel: 10 },
-        { name: "REDBULL", category: "energy", costPrice: 6500, sellingPrice: 10000, currentStock: 8, minStockLevel: 5 },
-        { name: "NILE", category: "beer", costPrice: 3500, sellingPrice: 5000, currentStock: 20, minStockLevel: 10 }
-      ];
-      
-      db.products = defaultProducts.map((p, i) => ({
-        id: 'prod_' + (i + 1),
-        ...p
-      }));
-      
-      saveData();
-      renderProducts();
-      updateDashboardStats();
-      alert('Products reset to defaults!');
-    }
-  });
-
-  // Initialize from Excel
-  document.getElementById('btnInitFromExcel').addEventListener('click', () => {
-    const sampleProducts = [
-      { name: "gilbeys (s)", category: "spirits", costPrice: 8500, sellingPrice: 12000, currentStock: 15, minStockLevel: 5 },
-      { name: "gilbeys (b)", category: "spirits", costPrice: 33000, sellingPrice: 45000, currentStock: 5, minStockLevel: 3 },
-      { name: "Ug Plastic", category: "spirits", costPrice: 5000, sellingPrice: 7000, currentStock: 10, minStockLevel: 5 },
-      { name: "HIGH 5", category: "energy", costPrice: 2083, sellingPrice: 3000, currentStock: 12, minStockLevel: 10 },
-      { name: "4 COUSINS", category: "wine", costPrice: 33000, sellingPrice: 50000, currentStock: 4, minStockLevel: 2 },
-      { name: "CLUB", category: "beer", costPrice: 3100, sellingPrice: 4000, currentStock: 20, minStockLevel: 10 },
-      { name: "LITE", category: "beer", costPrice: 3000, sellingPrice: 4000, currentStock: 20, minStockLevel: 10 },
-      { name: "GUINESS", category: "beer", costPrice: 3000, sellingPrice: 4000, currentStock: 20, minStockLevel: 10 },
-      { name: "REDBULL", category: "energy", costPrice: 6500, sellingPrice: 10000, currentStock: 8, minStockLevel: 5 },
-      { name: "NILE", category: "beer", costPrice: 3500, sellingPrice: 5000, currentStock: 20, minStockLevel: 10 }
-    ];
-    
-    if (db.products.length > 0 && !confirm('Replace existing products?')) {
-      return;
-    }
-    
-    db.products = sampleProducts.map((p, i) => ({
-      id: 'prod_' + (i + 1),
-      ...p
-    }));
-    
-    saveData();
-    renderProducts();
-    updateDashboardStats();
-    
-    alert(`${sampleProducts.length} sample products initialized!`);
-  });
-
-  // Gmail check
-  document.getElementById('btnCheckGmail2').addEventListener('click', () => {
-    alert('Gmail integration requires additional setup. For now, use the "Upload Excel Files" option.');
-  });
-
-  // Import Excel
-  document.getElementById('importXLSX').addEventListener('change', handleExcelImport);
-  
-  // Wipe data
-  document.getElementById('btnWipe').addEventListener('click', () => {
-    if (confirm('ARE YOU SURE? This will delete ALL data and cannot be undone!')) {
-      localStorage.removeItem(STORAGE_KEY);
-      location.reload();
-    }
-  });
   
   // Restore data
-  document.getElementById('restoreFile2').addEventListener('change', function(e) {
+  document.getElementById('restoreFile').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
     
@@ -2674,476 +2020,102 @@ function setupEnhancedDataManagement() {
     reader.readAsText(file);
     this.value = '';
   });
-}
-
-// ================ ENHANCED EXCEL EXPORT ================
-function exportAllDataToExcel() {
-  try {
-    // Create workbook
-    const wb = XLSX.utils.book_new();
-    
-    // Products sheet
-    const productsData = db.products.map(p => ({
-      'ID': p.id,
-      'Name': p.name,
-      'Category': p.category || 'other',
-      'Cost Price (UGX)': p.costPrice || 0,
-      'Selling Price (UGX)': p.sellingPrice || 0,
-      'Current Stock': p.currentStock || 0,
-      'Min Stock Level': p.minStockLevel || 5,
-      'Stock Value (UGX)': (p.currentStock || 0) * (p.costPrice || 0)
-    }));
-    
-    const wsProducts = XLSX.utils.json_to_sheet(productsData);
-    XLSX.utils.book_append_sheet(wb, wsProducts, 'Products');
-    
-    // Daily records sheet
-    const dailyRecordsData = [];
-    for (const date in db.dailyRecords) {
-      const record = db.dailyRecords[date];
-      record.sales.forEach(sale => {
-        const product = getProductById(sale.productId);
-        dailyRecordsData.push({
-          'Date': date,
-          'Type': 'Sale',
-          'Product': product?.name || 'Unknown',
-          'Quantity': sale.qty || 0,
-          'Unit Price (UGX)': sale.unitPrice || 0,
-          'Total (UGX)': sale.total || 0
-        });
-      });
-      
-      record.purchases.forEach(purchase => {
-        const product = getProductById(purchase.productId);
-        dailyRecordsData.push({
-          'Date': date,
-          'Type': 'Purchase',
-          'Product': product?.name || 'Unknown',
-          'Quantity': purchase.qty || 0,
-          'Unit Price (UGX)': purchase.unitPrice || 0,
-          'Total (UGX)': purchase.total || 0
-        });
-      });
-      
-      record.expenses.forEach(expense => {
-        dailyRecordsData.push({
-          'Date': date,
-          'Type': 'Expense',
-          'Category': expense.category,
-          'Description': expense.description,
-          'Amount (UGX)': expense.amount || 0
-        });
-      });
-    }
-    
-    const wsDaily = XLSX.utils.json_to_sheet(dailyRecordsData);
-    XLSX.utils.book_append_sheet(wb, wsDaily, 'Daily Records');
-    
-    // Summary sheet
-    const summaryData = [
-      ['BAR MANAGEMENT SYSTEM - DATA EXPORT'],
-      ['Export Date:', new Date().toLocaleString()],
-      ['Total Products:', db.products.length],
-      ['Days Recorded:', Object.keys(db.dailyRecords).length],
-      ['Total Sales:', UGX(calculatePeriodSales('2000-01-01', '2100-01-01'))],
-      ['Total Expenses:', UGX(calculateExpenses('2000-01-01', '2100-01-01'))],
-      ['Total Profit:', UGX(calculateProfit('2000-01-01', '2100-01-01') - calculateExpenses('2000-01-01', '2100-01-01'))]
-    ];
-    
-    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
-    
-    // Download
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
-    
-    function s2ab(s) {
-      const buf = new ArrayBuffer(s.length);
-      const view = new Uint8Array(buf);
-      for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-      return buf;
-    }
-    
-    download(`bar-export-${todayStr()}.xlsx`, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
-    
-    alert('All data exported to Excel successfully!');
-  } catch (error) {
-    console.error('Excel export error:', error);
-    alert('Error exporting to Excel: ' + error.message);
-  }
-}
-
-function exportBlankLedgerTemplate() {
-  try {
-    const data = [
-      ["BAR MANAGEMENT SYSTEM - LEDGER TEMPLATE"],
-      ["Date:", todayStr()],
-      ["", "", "", "", "", "", ""],
-      ["Date", "Product", "Category", "Purchases", "Sales", "Opening Stock", "Closing Stock", "Stock Value (UGX)"],
-      [todayStr(), "Gilbeys (s)", "Spirits", "5", "3", "15", "17", "144500"],
-      [todayStr(), "Ug Plastic", "Spirits", "10", "5", "20", "25", "125000"],
-      [todayStr(), "CLUB Beer", "Beer", "24", "15", "30", "39", "120900"]
-    ];
-    
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Ledger");
-    
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
-    
-    function s2ab(s) {
-      const buf = new ArrayBuffer(s.length);
-      const view = new Uint8Array(buf);
-      for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-      return buf;
-    }
-    
-    download(`bar-ledger-template-${todayStr()}.xlsx`, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
-    
-    alert('Blank ledger template exported!');
-  } catch (error) {
-    console.error('Template export error:', error);
-    alert('Error exporting template: ' + error.message);
-  }
-}
-
-function exportFilledLedgerToExcel() {
-  const from = document.getElementById('exportFrom').value || todayStr();
-  const to = document.getElementById('exportTo').value || todayStr();
   
-  try {
-    // Create ledger data
-    const ledgerData = [];
-    
-    // Headers
-    ledgerData.push(['Date', 'Product', 'Category', 'Purchases', 'Sales', 'Opening Stock', 'Closing Stock', 'Stock Value (UGX)']);
-    
-    // For each date in range
-    const dateRange = getDateRangeArray(from, to);
-    
-    dateRange.forEach(date => {
-      const record = getDailyRecord(date);
+  // Export all data
+  document.getElementById('btnExportAllData').addEventListener('click', () => {
+    try {
+      // Create workbook with multiple sheets
+      const wb = XLSX.utils.book_new();
       
-      // Get unique products for this date
-      const productIds = new Set();
-      record.sales.forEach(s => productIds.add(s.productId));
-      record.purchases.forEach(p => productIds.add(p.productId));
+      // Products sheet
+      const productsData = db.products.map(p => ({
+        'Name': p.name,
+        'Category': p.category,
+        'Purchase Price': p.purchasePrice,
+        'Sale Price': p.salePrice,
+        'Opening Stock': p.openingStock,
+        'Current Stock': p.currentStock || p.openingStock,
+        'Sold Count': p.soldCount || 0,
+        'Total Profit': p.totalProfit || 0,
+        'Min Stock Level': p.minStockLevel || 10
+      }));
       
-      // For each product
-      productIds.forEach(productId => {
-        const product = getProductById(productId);
-        if (product) {
-          const purchases = record.purchases
-            .filter(item => item.productId === productId)
-            .reduce((sum, item) => sum + (item.qty || 0), 0);
-          
-          const sales = record.sales
-            .filter(item => item.productId === productId)
-            .reduce((sum, item) => sum + (item.qty || 0), 0);
-          
-          if (purchases > 0 || sales > 0) {
-            // Calculate opening and closing stock
-            const openingStock = (product.currentStock || 0) + sales - purchases;
-            const closingStock = openingStock + purchases - sales;
-            const stockValue = closingStock * (product.costPrice || 0);
-            
-            ledgerData.push([
-              date,
-              product.name,
-              product.category || 'other',
-              purchases,
-              sales,
-              openingStock,
-              closingStock,
-              stockValue
-            ]);
-          }
-        }
-      });
-    });
-    
-    // Create workbook
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(ledgerData);
-    
-    XLSX.utils.book_append_sheet(wb, ws, 'Ledger');
-    
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
-    
-    function s2ab(s) {
-      const buf = new ArrayBuffer(s.length);
-      const view = new Uint8Array(buf);
-      for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-      return buf;
-    }
-    
-    download(`bar-ledger-${from}-to-${to}.xlsx`, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
-    
-    alert(`Ledger exported from ${from} to ${to}!`);
-  } catch (error) {
-    console.error('Ledger export error:', error);
-    alert('Error exporting ledger: ' + error.message);
-  }
-}
-
-function exportSalesReport() {
-  const from = document.getElementById('saleFrom').value || todayStr();
-  const to = document.getElementById('saleTo').value || todayStr();
-  
-  try {
-    let salesData = [];
-    
-    for (const date in db.dailyRecords) {
-      if (date >= from && date <= to) {
-        const record = db.dailyRecords[date];
-        record.sales.forEach(sale => {
-          const product = getProductById(sale.productId);
-          salesData.push({
-            Date: date,
-            Product: product?.name || 'Unknown',
-            Category: product?.category || '',
-            Quantity: sale.qty || 0,
-            'Unit Price': sale.unitPrice || 0,
-            'Total Amount': sale.total || 0,
-            'Cost Price': product?.costPrice || 0,
-            'Profit': product ? (sale.unitPrice - product.costPrice) * (sale.qty || 0) : 0
-          });
+      const wsProducts = XLSX.utils.json_to_sheet(productsData);
+      XLSX.utils.book_append_sheet(wb, wsProducts, 'Products');
+      
+      // Daily sheets summary
+      const dailyData = [];
+      for (const [date, sheet] of Object.entries(db.dailySheets)) {
+        dailyData.push({
+          'Date': date,
+          'Items Count': sheet.items.length,
+          'Total Sales': sheet.totalSales || 0,
+          'Total Profit': sheet.totalProfit || 0,
+          'Source': sheet.source || 'manual',
+          'Recorded At': sheet.recordedAt ? new Date(sheet.recordedAt).toLocaleString() : ''
         });
       }
-    }
-    
-    // Create workbook
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(salesData);
-    
-    XLSX.utils.book_append_sheet(wb, ws, 'Sales Report');
-    
-    // Add summary sheet
-    const summaryData = [
-      ['SALES REPORT SUMMARY'],
-      [`Period: ${from} to ${to}`],
-      [''],
-      ['Total Sales:', salesData.reduce((sum, row) => sum + row['Total Amount'], 0)],
-      ['Total Profit:', salesData.reduce((sum, row) => sum + row.Profit, 0)],
-      ['Total Items Sold:', salesData.reduce((sum, row) => sum + row.Quantity, 0)]
-    ];
-    
-    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
-    
-    // Download
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
-    
-    function s2ab(s) {
-      const buf = new ArrayBuffer(s.length);
-      const view = new Uint8Array(buf);
-      for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-      return buf;
-    }
-    
-    download(`sales-report-${from}-to-${to}.xlsx`, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
-    
-    alert(`Sales report exported from ${from} to ${to}!`);
-  } catch (error) {
-    console.error('Sales export error:', error);
-    alert('Error exporting sales report: ' + error.message);
-  }
-}
-
-function getDateRangeArray(start, end) {
-  const dates = [];
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  
-  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-    dates.push(d.toISOString().split('T')[0]);
-  }
-  
-  return dates;
-}
-
-// ================ EXCEL IMPORT ================
-async function handleExcelImport(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  
-  showLoading(true);
-  
-  try {
-    const result = await processExcelFile(file);
-    logImport(`Imported ${file.name}: ${result.sales.length} sales, ${result.purchases.length} purchases`);
-    alert(`Excel file imported successfully! ${result.sales.length + result.purchases.length} records processed.`);
-  } catch (error) {
-    console.error('Import error:', error);
-    alert('Error importing Excel file: ' + error.message);
-  } finally {
-    showLoading(false);
-    e.target.value = '';
-  }
-}
-
-// ================ SELF-TEST & DIAGNOSTICS ================
-function runSelfTest() {
-  const diagOut = document.getElementById('diagOut');
-  diagOut.innerHTML = '';
-  
-  const tests = [
-    { name: 'Data Structure', test: testDataStructure },
-    { name: 'Products Validation', test: testProducts },
-    { name: 'Daily Records', test: testDailyRecords },
-    { name: 'Stock Consistency', test: testStockConsistency },
-    { name: 'Date Formats', test: testDateFormats }
-  ];
-  
-  let passed = 0;
-  let failed = 0;
-  
-  tests.forEach(test => {
-    const result = test.test();
-    const line = document.createElement('div');
-    
-    if (result.passed) {
-      line.innerHTML = `✅ ${test.name}: ${result.message}`;
-      passed++;
-    } else {
-      line.innerHTML = `❌ ${test.name}: ${result.message}`;
-      failed++;
-    }
-    
-    diagOut.appendChild(line);
-  });
-  
-  const summary = document.createElement('div');
-  summary.innerHTML = `<br><strong>Results:</strong> ${passed} passed, ${failed} failed`;
-  diagOut.appendChild(summary);
-}
-
-function validateData() {
-  const issues = [];
-  
-  // Check for negative stock
-  db.products.forEach(p => {
-    if (p.currentStock < 0) {
-      issues.push(`Negative stock for ${p.name}: ${p.currentStock}`);
-    }
-  });
-  
-  // Check for invalid prices
-  db.products.forEach(p => {
-    if (p.costPrice < 0 || p.sellingPrice < 0) {
-      issues.push(`Invalid price for ${p.name}`);
-    }
-  });
-  
-  // Check for missing product IDs in transactions
-  for (const date in db.dailyRecords) {
-    const record = db.dailyRecords[date];
-    record.sales.forEach(sale => {
-      if (!getProductById(sale.productId)) {
-        issues.push(`Sale on ${date} references missing product: ${sale.productId}`);
+      
+      if (dailyData.length > 0) {
+        const wsDaily = XLSX.utils.json_to_sheet(dailyData);
+        XLSX.utils.book_append_sheet(wb, wsDaily, 'Daily Sheets');
       }
-    });
-    record.purchases.forEach(purchase => {
-      if (!getProductById(purchase.productId)) {
-        issues.push(`Purchase on ${date} references missing product: ${purchase.productId}`);
+      
+      // Expenses sheet
+      if (db.expenses.length > 0) {
+        const wsExpenses = XLSX.utils.json_to_sheet(db.expenses);
+        XLSX.utils.book_append_sheet(wb, wsExpenses, 'Expenses');
       }
-    });
-  }
-  
-  const diagOut = document.getElementById('diagOut');
-  diagOut.innerHTML = '';
-  
-  if (issues.length === 0) {
-    diagOut.innerHTML = '✅ All data validation checks passed!';
-  } else {
-    diagOut.innerHTML = '⚠️ Found issues:<br>' + issues.map(i => `• ${i}`).join('<br>');
-  }
-}
-
-function testDataStructure() {
-  if (!db.products || !db.dailyRecords) {
-    return { passed: false, message: 'Missing core data structures' };
-  }
-  return { passed: true, message: 'OK' };
-}
-
-function testProducts() {
-  if (db.products.length === 0) {
-    return { passed: false, message: 'No products defined' };
-  }
-  
-  const invalid = db.products.filter(p => !p.name || !p.category);
-  if (invalid.length > 0) {
-    return { passed: false, message: `${invalid.length} products missing required fields` };
-  }
-  
-  return { passed: true, message: `${db.products.length} products OK` };
-}
-
-function testDailyRecords() {
-  const totalDates = Object.keys(db.dailyRecords).length;
-  let totalTransactions = 0;
-  
-  for (const date in db.dailyRecords) {
-    const record = db.dailyRecords[date];
-    totalTransactions += record.sales.length + record.purchases.length + record.expenses.length;
-  }
-  
-  return {
-    passed: true,
-    message: `${totalDates} days, ${totalTransactions} transactions`
-  };
-}
-
-function testStockConsistency() {
-  // Simple check for negative stock
-  const negativeStock = db.products.filter(p => p.currentStock < 0);
-  if (negativeStock.length > 0) {
-    return { passed: false, message: `${negativeStock.length} products have negative stock` };
-  }
-  
-  return { passed: true, message: 'Stock levels consistent' };
-}
-
-function testDateFormats() {
-  const invalidDates = [];
-  
-  for (const date in db.dailyRecords) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      invalidDates.push(date);
-    }
-  }
-  
-  if (invalidDates.length > 0) {
-    return { passed: false, message: `${invalidDates.length} invalid date formats` };
-  }
-  
-  return { passed: true, message: 'All dates valid' };
-}
-
-// ================ DATA MANAGEMENT ================
-function setupDataManagement() {
-  // Backup data
-  document.getElementById('btnBackup').addEventListener('click', backupData);
-  
-  // Save data
-  document.getElementById('btnSaveNow').addEventListener('click', () => {
-    if (saveData()) {
-      const btn = document.getElementById('btnSaveNow');
-      const originalText = btn.textContent;
-      btn.textContent = "✓ Saved!";
-      btn.style.background = '#16a34a';
-      setTimeout(() => {
-        btn.textContent = originalText;
-        btn.style.background = '';
-      }, 1500);
+      
+      // Download
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+      
+      function s2ab(s) {
+        const buf = new ArrayBuffer(s.length);
+        const view = new Uint8Array(buf);
+        for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+        return buf;
+      }
+      
+      download(`bar-data-export-${todayStr()}.xlsx`, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
+      
+      alert('All data exported to Excel successfully!');
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Error exporting data: ' + error.message);
     }
   });
-}
-
-function backupData() {
-  const dataStr = JSON.stringify(db, null, 2);
-  const blob = new Blob([dataStr], { type: 'application/json' });
-  download(`bar-backup-${todayStr()}.json`, blob);
+  
+  // Wipe data
+  document.getElementById('btnWipe').addEventListener('click', () => {
+    if (confirm('ARE YOU SURE? This will delete ALL data and cannot be undone!')) {
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    }
+  });
+  
+  // Clear sheets
+  document.getElementById('btnClearSheets').addEventListener('click', () => {
+    if (confirm('Clear all daily sheets? This cannot be undone!')) {
+      db.dailySheets = {};
+      saveData();
+      renderSales();
+      renderProducts();
+      updateDashboardStats();
+      alert('All daily sheets cleared!');
+    }
+  });
+  
+  // Clear expenses
+  document.getElementById('btnClearExpenses').addEventListener('click', () => {
+    if (confirm('Clear all expenses? This cannot be undone!')) {
+      db.expenses = [];
+      saveData();
+      renderExpenses();
+      updateDashboardStats();
+      alert('All expenses cleared!');
+    }
+  });
 }
 
 // ================ GOOGLE DRIVE INTEGRATION ================
@@ -3155,38 +2127,15 @@ let driveTokenClient = null;
 
 function setCloudStatus(text, good = false) {
   const el = document.getElementById('cloudStatus');
-  const dashEl = document.getElementById('cloudStatusText');
   if (el) {
     el.textContent = text;
     el.style.background = good ? '#16a34a' : '#64748b';
     el.style.color = 'white';
   }
-  if (dashEl) dashEl.textContent = text;
-}
-
-function setCloudButtons(enabled) {
-  ['btnCloudSave', 'btnCloudLoad', 'btnGSignOut'].forEach(id => {
-    const btn = document.getElementById(id);
-    if (btn) btn.disabled = !enabled;
-  });
-}
-
-function setCloudFileInfo(text) {
-  const el = document.getElementById('cloudFileInfo');
-  if (el) el.textContent = text;
-}
-
-function updateLastCloudBackup(time) {
-  const el = document.getElementById('lastCloudBackup');
-  if (el && time) {
-    const date = new Date(time);
-    el.textContent = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-  }
 }
 
 async function initGoogleDrive() {
   return new Promise((resolve) => {
-    // Check if Google Identity Services is loaded
     if (typeof google === 'undefined' || !google.accounts) {
       setTimeout(() => initGoogleDrive().then(resolve), 100);
       return;
@@ -3199,33 +2148,105 @@ async function initGoogleDrive() {
         callback: async (tokenResponse) => {
           if (tokenResponse && tokenResponse.access_token) {
             driveAccessToken = tokenResponse.access_token;
-            setCloudStatus("✓ Signed in to Google Drive", true);
-            setCloudButtons(true);
+            setCloudStatus("✓ Signed in", true);
+            document.getElementById('btnCloudSave').disabled = false;
+            document.getElementById('btnCloudLoad').disabled = false;
             document.getElementById('btnGSignIn').disabled = true;
-            document.getElementById('btnGSignOut').disabled = false;
-            
-            // Check for existing backup
-            await checkForExistingBackup();
           }
         }
       });
       
-      // Try to get token silently first
-      const token = google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID,
-        scope: DRIVE_SCOPE,
-        callback: () => {}
-      });
-      
-      token.requestAccessToken({prompt: ''});
-      
       resolve();
     } catch (error) {
       console.error('Google Drive init error:', error);
-      setCloudStatus("✗ Google Drive not available", false);
+      setCloudStatus("✗ Not available", false);
       resolve();
     }
   });
+}
+
+async function driveSave() {
+  const ok = await driveEnsureToken(true);
+  if (!ok) {
+    alert("Please sign in to Google first.");
+    return;
+  }
+  
+  const btn = document.getElementById('btnCloudSave');
+  const originalText = btn.textContent;
+  
+  try {
+    btn.textContent = "Saving...";
+    btn.disabled = true;
+    
+    const jsonData = JSON.stringify(db, null, 2);
+    const existing = await driveFindBackup();
+    
+    if (existing) {
+      await driveUpdateBackup(existing.id, jsonData);
+    } else {
+      await driveCreateBackup(jsonData);
+    }
+    
+    const now = new Date().toISOString();
+    document.getElementById('lastCloudBackup').textContent = new Date(now).toLocaleString();
+    setCloudStatus(`✓ Saved: ${new Date().toLocaleTimeString()}`, true);
+    
+    btn.textContent = "✓ Saved!";
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }, 2000);
+    
+    alert("✅ Backup saved to Google Drive!");
+  } catch (error) {
+    console.error('Google Drive save error:', error);
+    btn.textContent = originalText;
+    btn.disabled = false;
+    alert("Error saving to Google Drive: " + error.message);
+  }
+}
+
+async function driveLoad() {
+  const ok = await driveEnsureToken(true);
+  if (!ok) {
+    alert("Please sign in to Google first.");
+    return;
+  }
+  
+  try {
+    const existing = await driveFindBackup();
+    if (!existing) {
+      alert("No backup file found in Google Drive.");
+      return;
+    }
+    
+    if (!confirm(`Load backup from ${new Date(existing.modifiedTime).toLocaleString()}?`)) {
+      return;
+    }
+    
+    const jsonText = await driveDownloadFile(existing.id);
+    const backupData = JSON.parse(jsonText);
+    
+    if (confirm("This will replace ALL current data. Continue?")) {
+      db = backupData;
+      saveData();
+      
+      const btn = document.getElementById('btnCloudLoad');
+      const originalText = btn.textContent;
+      btn.textContent = "✓ Loaded!";
+      btn.disabled = true;
+      
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+        location.reload();
+      }, 1000);
+    }
+  } catch (error) {
+    console.error('Google Drive load error:', error);
+    alert("Error loading from Google Drive: " + error.message);
+  }
 }
 
 async function driveEnsureToken(interactive = true) {
@@ -3244,10 +2265,10 @@ async function driveEnsureToken(interactive = true) {
     driveTokenClient.callback = (resp) => {
       if (resp && resp.access_token) {
         driveAccessToken = resp.access_token;
-        setCloudStatus("✓ Signed in to Google Drive", true);
-        setCloudButtons(true);
+        setCloudStatus("✓ Signed in", true);
+        document.getElementById('btnCloudSave').disabled = false;
+        document.getElementById('btnCloudLoad').disabled = false;
         document.getElementById('btnGSignIn').disabled = true;
-        document.getElementById('btnGSignOut').disabled = false;
         resolve(true);
       } else {
         resolve(false);
@@ -3276,24 +2297,6 @@ async function driveFindBackup() {
   } catch (error) {
     console.error('Error finding backup:', error);
     return null;
-  }
-}
-
-async function checkForExistingBackup() {
-  if (!driveAccessToken) return;
-  
-  try {
-    const existing = await driveFindBackup();
-    if (existing) {
-      const modified = new Date(existing.modifiedTime);
-      setCloudFileInfo(`File: ${existing.name} (${(existing.size / 1024).toFixed(1)}KB)`);
-      updateLastCloudBackup(existing.modifiedTime);
-      setCloudStatus(`✓ Backup found (${modified.toLocaleDateString()})`, true);
-    } else {
-      setCloudFileInfo('No backup file found');
-    }
-  } catch (error) {
-    console.error('Error checking for backup:', error);
   }
 }
 
@@ -3372,176 +2375,16 @@ async function driveUpdateBackup(fileId, jsonStr) {
   return response.json();
 }
 
-async function driveSave() {
-  const ok = await driveEnsureToken(true);
-  if (!ok) {
-    alert("Please sign in to Google first.");
-    return;
-  }
-  
-  const btn = document.getElementById('btnCloudSave');
-  const originalText = btn.textContent;
-  
-  try {
-    btn.textContent = "Saving...";
-    btn.disabled = true;
-    
-    const jsonData = JSON.stringify(db, null, 2);
-    const existing = await driveFindBackup();
-    
-    if (existing) {
-      await driveUpdateBackup(existing.id, jsonData);
-    } else {
-      await driveCreateBackup(jsonData);
-    }
-    
-    const now = new Date().toISOString();
-    updateLastCloudBackup(now);
-    setCloudStatus(`✓ Saved: ${new Date().toLocaleTimeString()}`, true);
-    
-    btn.textContent = "✓ Saved!";
-    setTimeout(() => {
-      btn.textContent = originalText;
-      btn.disabled = false;
-    }, 2000);
-    
-    await checkForExistingBackup();
-    alert("✅ Backup saved to Google Drive!");
-  } catch (error) {
-    console.error('Google Drive save error:', error);
-    btn.textContent = originalText;
-    btn.disabled = false;
-    alert("Error saving to Google Drive: " + error.message);
-  }
-}
-
-async function driveLoad() {
-  const ok = await driveEnsureToken(true);
-  if (!ok) {
-    alert("Please sign in to Google first.");
-    return;
-  }
-  
-  try {
-    const existing = await driveFindBackup();
-    if (!existing) {
-      alert("No backup file found in Google Drive.");
-      return;
-    }
-    
-    if (!confirm(`Load backup from ${new Date(existing.modifiedTime).toLocaleString()}?`)) {
-      return;
-    }
-    
-    const jsonText = await driveDownloadFile(existing.id);
-    const backupData = JSON.parse(jsonText);
-    
-    if (!backupData.products || !backupData.dailyRecords) {
-      throw new Error("Invalid backup format");
-    }
-    
-    if (confirm("This will replace ALL current data. Continue?")) {
-      db = backupData;
-      saveData();
-      
-      const btn = document.getElementById('btnCloudLoad');
-      const originalText = btn.textContent;
-      btn.textContent = "✓ Loaded!";
-      btn.disabled = true;
-      
-      setTimeout(() => {
-        btn.textContent = originalText;
-        btn.disabled = false;
-        location.reload();
-      }, 1000);
-    }
-  } catch (error) {
-    console.error('Google Drive load error:', error);
-    alert("Error loading from Google Drive: " + error.message);
-  }
-}
-
-function driveSignOut() {
-  if (driveAccessToken) {
-    google.accounts.oauth2.revoke(driveAccessToken);
-  }
-  
-  driveAccessToken = null;
-  setCloudButtons(false);
-  setCloudStatus("Signed out");
-  setCloudFileInfo("");
-  document.getElementById('btnGSignIn').disabled = false;
-  document.getElementById('btnGSignOut').disabled = true;
-  document.getElementById('lastCloudBackup').textContent = "Never";
-}
-
 function setupGoogleDrive() {
-  // Sign in button
   document.getElementById('btnGSignIn').addEventListener('click', async () => {
     const ok = await driveEnsureToken(true);
     if (ok) {
-      await checkForExistingBackup();
+      setCloudStatus("✓ Signed in", true);
     }
   });
   
-  // Sign out button
-  document.getElementById('btnGSignOut').addEventListener('click', driveSignOut);
-  
-  // Save to Google Drive
   document.getElementById('btnCloudSave').addEventListener('click', driveSave);
-  
-  // Load from Google Drive
   document.getElementById('btnCloudLoad').addEventListener('click', driveLoad);
-}
-
-// ================ QUICK ACTIONS ================
-function setupQuickActions() {
-  document.getElementById('btnNewPurchase').addEventListener('click', () => {
-    document.querySelector('[data-tab="purchases"]').click();
-  });
-  
-  document.getElementById('btnNewSale').addEventListener('click', () => {
-    document.querySelector('[data-tab="sales"]').click();
-  });
-  
-  document.getElementById('btnNewExpense').addEventListener('click', () => {
-    document.querySelector('[data-tab="expenses"]').click();
-  });
-  
-  document.getElementById('btnUploadSheet').addEventListener('click', function() {
-    // Create file input dynamically
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.xlsx,.xls';
-    input.onchange = async function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      // Ask for date
-      const date = prompt('Enter date for this sheet (YYYY-MM-DD):', todayStr());
-      if (!date) return;
-      
-      showLoading(true);
-      try {
-        await processExcelFile(file, date);
-        alert(`Sheet imported for ${date}!`);
-        updateDashboardStats();
-        initializeExpenseAnalysis();
-      } catch (error) {
-        alert('Error importing sheet: ' + error.message);
-      } finally {
-        showLoading(false);
-      }
-    };
-    input.click();
-  });
-  
-  // Set up accounting period selector
-  document.getElementById('accountingPeriod').addEventListener('change', function() {
-    db.settings.accountingPeriod = this.value;
-    saveData();
-    updateDashboardStats();
-  });
 }
 
 // ================ INITIALIZATION ================
@@ -3552,21 +2395,18 @@ async function initializeApp() {
     if (!input.value) input.value = today;
   });
   
-  // Set accounting period
-  document.getElementById('accountingPeriod').value = db.settings.accountingPeriod || 'monthly';
+  // Initialize products from Excel if empty
+  initializeProductsFromExcel();
   
-  // Initialize all components
+  // Setup all components
   setupTabs();
   setupProducts();
-  setupPurchases();
   setupSales();
-  setupExpenses();
   setupInventory();
+  setupExpenses();
   setupReports();
   setupAutomation();
   setupDataManagement();
-  setupQuickActions();
-  setupEnhancedDataManagement();
   
   // Initialize Google Drive
   await initGoogleDrive();
@@ -3574,17 +2414,14 @@ async function initializeApp() {
   
   // Initial render
   renderProducts();
-  populateProductSelects();
   updateDashboardStats();
-  renderExpenses();
   renderAutomation();
   updateLastSaveTime();
-  initializeExpenseAnalysis();
   
   console.log('Enhanced Bar Management System initialized successfully!');
 }
 
-// Start the application when DOM is loaded
+// Start the application
 document.addEventListener('DOMContentLoaded', initializeApp);
 </script>
 </body>
