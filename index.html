@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BAR MANAGEMENT SYSTEM - Complete with Automated Inventory</title>
-<meta name="description" content="Bar management system with automated inventory, purchases, and stock balancing">
+<title>BAR MANAGEMENT SYSTEM - Enhanced with Purchases & Daily Sheets</title>
+<meta name="description" content="Fully functional bar stock management system with purchases and daily sheet tracking">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <!-- Google Identity Services -->
@@ -60,15 +60,15 @@
   .badmsg{background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;padding:12px;border-radius:10px;margin:12px 0;}
   .section-tools{display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
   .compact-table th,.compact-table td{padding:8px 10px;font-size:13px;}
+  .modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;}
+  .modal-content{background:#fff;padding:24px;border-radius:12px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto;box-shadow:0 10px 25px rgba(0,0,0,0.2);}
+  .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+  .close-modal{cursor:pointer;font-size:28px;color:var(--muted);}
+  .close-modal:hover{color:var(--ink);}
   .loading{display:none;position:fixed;z-index:2000;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.9);justify-content:center;align-items:center;flex-direction:column;gap:16px;}
   .loading-spinner{width:40px;height:40px;border:4px solid #f3f3f3;border-top:4px solid var(--brand);border-radius:50%;animation:spin 1s linear infinite;}
   @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
   .mono{font-family:ui-monospace, Menlo, Consolas, "Courier New", monospace; white-space: pre-wrap;}
-  .positive{color:#16a34a;font-weight:600;}
-  .negative{color:#ef4444;font-weight:600;}
-  .stock-low{background:#fff7ed !important;}
-  .stock-out{background:#fee2e2 !important;}
-  .stock-good{background:#ecfdf5 !important;}
   @media (max-width: 1200px){.grid-4{grid-template-columns:repeat(2,1fr);}}
   @media (max-width: 768px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}.row{grid-template-columns:1fr;}.card{padding:16px;}.nav{flex-direction:column;gap:16px;}.tabs{width:100%;justify-content:center;}}
 </style>
@@ -80,11 +80,12 @@
       <div class="tabs" id="tabs">
         <button class="tab active" data-tab="dashboard">Dashboard</button>
         <button class="tab" data-tab="inventory">Inventory</button>
-        <button class="tab" data-tab="purchases">Purchases</button>
         <button class="tab" data-tab="sales">Daily Sales</button>
+        <button class="tab" data-tab="purchases">Purchases</button>
         <button class="tab" data-tab="expenses">Expenses</button>
         <button class="tab" data-tab="reports">Reports</button>
         <button class="tab" data-tab="products">Products</button>
+        <button class="tab" data-tab="automation">Automation</button>
         <button class="tab" data-tab="data">Data</button>
       </div>
     </div>
@@ -120,30 +121,10 @@
       
       <div class="hr"></div>
       
-      <div class="grid-3">
-        <div class="stat">
-          <span class="muted">Inventory Investment</span>
-          <b id="statInventoryInvestment">UGX 0</b>
-        </div>
-        <div class="stat">
-          <span class="muted">COGS (Cost of Goods Sold)</span>
-          <b id="statCOGS">UGX 0</b>
-        </div>
-        <div class="stat">
-          <span class="muted">Return on Investment</span>
-          <b id="statROI">0%</b>
-        </div>
-      </div>
-      
-      <div class="hr"></div>
-      
       <div class="card" id="profitStatusCard">
         <h3>Profitability Status</h3>
         <div id="profitStatus" class="goodmsg">
           <strong>Status:</strong> Calculating profitability...
-        </div>
-        <div id="inventoryStatus" class="warnmsg" style="margin-top:12px;">
-          <strong>Inventory Status:</strong> Calculating stock levels...
         </div>
       </div>
     </section>
@@ -152,15 +133,14 @@
     <section id="inventory" class="tabpanel" style="display:none;">
       <div class="card">
         <div class="section-tools">
-          <h3 style="margin-right:auto">Real-Time Inventory Management</h3>
+          <h3 style="margin-right:auto">Inventory Management</h3>
           <button class="btn" id="btnPrintInventory">Print</button>
           <button class="btn" id="btnExportInventory">Export CSV</button>
-          <button class="btn primary" id="btnAutoUpdateInventory">Auto-Update</button>
         </div>
         
-        <div class="grid-4">
+        <div class="grid-3">
           <div>
-            <label>As of Date</label>
+            <label>Stock Date</label>
             <input type="date" id="inventoryDate" value="">
           </div>
           <div>
@@ -174,17 +154,8 @@
               <option value="wine">Wine</option>
             </select>
           </div>
-          <div>
-            <label>Stock Status</label>
-            <select id="filterStockStatus">
-              <option value="">All</option>
-              <option value="low">Low Stock</option>
-              <option value="out">Out of Stock</option>
-              <option value="good">Good Stock</option>
-            </select>
-          </div>
           <div class="right">
-            <button class="btn ok" id="btnUpdateInventory">Update View</button>
+            <button class="btn primary" id="btnUpdateInventory">Update</button>
           </div>
         </div>
         
@@ -199,206 +170,13 @@
               <th>Purchased</th>
               <th>Sold</th>
               <th>Current Stock</th>
-              <th>Min Level</th>
               <th>Cost Price</th>
               <th>Sale Price</th>
               <th>Stock Value</th>
-              <th>Status</th>
             </tr>
           </thead>
           <tbody></tbody>
         </table>
-      </div>
-      
-      <div class="hr"></div>
-      
-      <div class="grid-2">
-        <div class="card">
-          <h3>Stock Replenishment Suggestions</h3>
-          <table class="table compact-table" id="replenishmentTable">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Current</th>
-                <th>Min</th>
-                <th>Suggested Qty</th>
-                <th>Cost</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        
-        <div class="card">
-          <h3>Inventory Value Summary</h3>
-          <div id="inventorySummary">
-            <div class="stat" style="margin-bottom:12px;">
-              <span class="muted">Total Inventory Value</span>
-              <b id="totalInventoryValue">UGX 0</b>
-            </div>
-            <div class="stat" style="margin-bottom:12px;">
-              <span class="muted">Items Needing Reorder</span>
-              <b id="itemsNeedingReorder">0</b>
-            </div>
-            <div class="stat">
-              <span class="muted">Average Stock Days</span>
-              <b id="avgStockDays">0</b>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Purchases -->
-    <section id="purchases" class="tabpanel" style="display:none;">
-      <div class="grid-2">
-        <div class="card">
-          <h3>Record New Purchase</h3>
-          <div class="grid-3">
-            <div>
-              <label>Purchase Date</label>
-              <input type="date" id="purchaseDate" value="">
-            </div>
-            <div>
-              <label>Supplier</label>
-              <input type="text" id="purchaseSupplier" placeholder="Supplier name">
-            </div>
-            <div>
-              <label>Invoice No.</label>
-              <input type="text" id="purchaseInvoice" placeholder="Invoice number">
-            </div>
-          </div>
-          
-          <div class="grid-3">
-            <div>
-              <label>Payment Method</label>
-              <select id="purchasePaymentMethod">
-                <option value="cash">Cash</option>
-                <option value="mobile">Mobile Money</option>
-                <option value="bank">Bank Transfer</option>
-                <option value="credit">Credit</option>
-              </select>
-            </div>
-            <div>
-              <label>Delivery Date</label>
-              <input type="date" id="purchaseDeliveryDate">
-            </div>
-            <div>
-              <label>Status</label>
-              <select id="purchaseStatus">
-                <option value="pending">Pending</option>
-                <option value="received">Received</option>
-                <option value="partially">Partially Received</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-          </div>
-          
-          <div class="hr"></div>
-          
-          <h4>Purchase Items</h4>
-          <div class="grid-4" style="margin-bottom:12px;">
-            <div>
-              <label>Product</label>
-              <select id="purchaseProduct"></select>
-            </div>
-            <div>
-              <label>Quantity</label>
-              <input type="number" id="purchaseQty" min="1" value="1">
-            </div>
-            <div>
-              <label>Unit Cost (UGX)</label>
-              <input type="number" id="purchaseCost" min="0" value="0">
-            </div>
-            <div style="align-self:flex-end;">
-              <button class="btn" id="btnAddPurchaseItem">Add Item</button>
-            </div>
-          </div>
-          
-          <table class="table compact-table" id="purchaseItemsTable">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Qty</th>
-                <th>Unit Cost</th>
-                <th>Total</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-          
-          <div class="right" style="margin-top:16px;">
-            <div class="stat">
-              <span class="muted">Subtotal</span>
-              <b id="purchaseSubtotal">UGX 0</b>
-            </div>
-            <div class="grid-2" style="gap:8px; margin-right:16px;">
-              <div>
-                <label>Tax/VAT (%)</label>
-                <input type="number" id="purchaseTax" min="0" max="100" value="0" style="width:100px;">
-              </div>
-              <div>
-                <label>Other Charges</label>
-                <input type="number" id="purchaseOtherCharges" min="0" value="0" style="width:100px;">
-              </div>
-            </div>
-            <div class="stat">
-              <span class="muted">Total Purchase</span>
-              <b id="purchaseTotal">UGX 0</b>
-            </div>
-            <button class="btn ok" id="btnSavePurchase">Save Purchase</button>
-          </div>
-        </div>
-        
-        <div class="card">
-          <h3>Recent Purchases</h3>
-          <div class="grid-3" style="margin-bottom:16px;">
-            <div>
-              <label>From Date</label>
-              <input type="date" id="purchaseFrom">
-            </div>
-            <div>
-              <label>To Date</label>
-              <input type="date" id="purchaseTo">
-            </div>
-            <div style="align-self:flex-end;">
-              <button class="btn" id="btnFilterPurchases">Filter</button>
-            </div>
-          </div>
-          
-          <table class="table compact-table" id="purchasesTable">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Supplier</th>
-                <th>Items</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-          
-          <div class="hr"></div>
-          
-          <h4>Purchase Analysis</h4>
-          <div class="grid-3">
-            <div class="stat">
-              <span class="muted">Total This Month</span>
-              <b id="purchasesThisMonth">UGX 0</b>
-            </div>
-            <div class="stat">
-              <span class="muted">Avg. Purchase</span>
-              <b id="avgPurchase">UGX 0</b>
-            </div>
-            <div class="stat">
-              <span class="muted">Top Supplier</span>
-              <b id="topSupplier">-</b>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -413,14 +191,8 @@
               <input type="date" id="saleDate" value="">
             </div>
             <div>
-              <label>Shift</label>
-              <select id="saleShift">
-                <option value="morning">Morning</option>
-                <option value="afternoon">Afternoon</option>
-                <option value="evening">Evening</option>
-                <option value="night">Night</option>
-                <option value="full">Full Day</option>
-              </select>
+              <label>Sheet Reference</label>
+              <input type="text" id="sheetReference" placeholder="e.g., Sheet1">
             </div>
             <div>
               <label>Record Type</label>
@@ -453,17 +225,7 @@
           </div>
           
           <table class="table compact-table" id="saleItemsTable">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Qty</th>
-                <th>Unit Price</th>
-                <th>Total</th>
-                <th>Cost</th>
-                <th>Profit</th>
-                <th></th>
-              </tr>
-            </thead>
+            <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Profit</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
           
@@ -471,10 +233,6 @@
             <div class="stat">
               <span class="muted">Total Sales</span>
               <b id="saleTotal">UGX 0</b>
-            </div>
-            <div class="stat">
-              <span class="muted">Total Cost</span>
-              <b id="saleCost">UGX 0</b>
             </div>
             <div class="stat">
               <span class="muted">Total Profit</span>
@@ -504,11 +262,10 @@
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Shift</th>
                 <th>Items Sold</th>
                 <th>Total Sales</th>
                 <th>Total Profit</th>
-                <th>Margin</th>
+                <th>Source</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -519,8 +276,8 @@
       <div class="hr"></div>
       
       <div class="card">
-        <h3>Product Sales Analysis</h3>
-        <div class="grid-4" style="margin-bottom:16px;">
+        <h3>Product Sales History</h3>
+        <div class="grid-3" style="margin-bottom:16px;">
           <div>
             <label>Product</label>
             <select id="productHistorySelect"></select>
@@ -533,26 +290,160 @@
             <label>To Date</label>
             <input type="date" id="productHistoryTo">
           </div>
-          <div>
-            <label>Analysis Type</label>
-            <select id="analysisType">
-              <option value="daily">Daily Sales</option>
-              <option value="weekly">Weekly Summary</option>
-              <option value="monthly">Monthly Summary</option>
-            </select>
-          </div>
         </div>
         
         <table class="table compact-table" id="productHistoryTable">
           <thead>
             <tr>
-              <th>Period</th>
+              <th>Date</th>
               <th>Quantity Sold</th>
-              <th>Avg Price</th>
               <th>Total Sales</th>
-              <th>Total Cost</th>
               <th>Total Profit</th>
-              <th>Profit Margin</th>
+              <th>Avg Price</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PURCHASES SECTION - NEW -->
+    <section id="purchases" class="tabpanel" style="display:none;">
+      <div class="grid-2">
+        <div class="card">
+          <h3>Record Purchase (Restocking)</h3>
+          <div class="grid-3">
+            <div>
+              <label>Purchase Date</label>
+              <input type="date" id="purchaseDate" value="">
+            </div>
+            <div>
+              <label>Supplier</label>
+              <input type="text" id="purchaseSupplier" placeholder="Supplier name">
+            </div>
+            <div>
+              <label>Invoice Number</label>
+              <input type="text" id="purchaseInvoice" placeholder="Optional">
+            </div>
+          </div>
+          
+          <div class="hr"></div>
+          
+          <h4>Purchase Items</h4>
+          <div class="grid-4" style="margin-bottom:12px;">
+            <div>
+              <label>Product</label>
+              <select id="purchaseProduct"></select>
+            </div>
+            <div>
+              <label>Quantity</label>
+              <input type="number" id="purchaseQty" min="1" value="1">
+            </div>
+            <div>
+              <label>Unit Cost (UGX)</label>
+              <input type="number" id="purchaseCost" min="0" value="0">
+            </div>
+            <div style="align-self:flex-end;">
+              <button class="btn" id="btnAddPurchaseItem">Add Item</button>
+            </div>
+          </div>
+          
+          <table class="table compact-table" id="purchaseItemsTable">
+            <thead><tr><th>Product</th><th>Qty</th><th>Unit Cost</th><th>Total Cost</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+          
+          <div class="right" style="margin-top:16px;">
+            <div class="stat">
+              <span class="muted">Total Purchase</span>
+              <b id="purchaseTotal">UGX 0</b>
+            </div>
+            <button class="btn primary" id="btnSavePurchase">Save Purchase</button>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h3>Recent Purchases</h3>
+          <div class="grid-3" style="margin-bottom:16px;">
+            <div>
+              <label>From Date</label>
+              <input type="date" id="purchaseFrom">
+            </div>
+            <div>
+              <label>To Date</label>
+              <input type="date" id="purchaseTo">
+            </div>
+            <div style="align-self:flex-end;">
+              <button class="btn" id="btnFilterPurchases">Filter</button>
+            </div>
+          </div>
+          
+          <table class="table compact-table" id="purchasesTable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Supplier</th>
+                <th>Items</th>
+                <th>Total Cost</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          
+          <div class="right" style="margin-top:16px;">
+            <div class="stat">
+              <span class="muted">Total Purchases</span>
+              <b id="totalPurchases">UGX 0</b>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="hr"></div>
+      
+      <div class="card">
+        <h3>Purchase Analysis</h3>
+        <div class="grid-3" style="margin-bottom:16px;">
+          <div>
+            <label>Product</label>
+            <select id="purchaseAnalysisProduct">
+              <option value="">All Products</option>
+            </select>
+          </div>
+          <div>
+            <label>From Date</label>
+            <input type="date" id="purchaseAnalysisFrom">
+          </div>
+          <div>
+            <label>To Date</label>
+            <input type="date" id="purchaseAnalysisTo">
+          </div>
+        </div>
+        
+        <div class="grid-3">
+          <div class="stat">
+            <span class="muted">Total Purchased Value</span>
+            <b id="analysisTotalValue">UGX 0</b>
+          </div>
+          <div class="stat">
+            <span class="muted">Average Cost</span>
+            <b id="analysisAvgCost">UGX 0</b>
+          </div>
+          <div class="stat">
+            <span class="muted">Reorder Frequency</span>
+            <b id="analysisReorderFreq">-</b>
+          </div>
+        </div>
+        
+        <table class="table compact-table" id="purchaseAnalysisTable">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Total Purchased</th>
+              <th>Total Cost</th>
+              <th>Avg Unit Cost</th>
+              <th>Last Purchase Date</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -574,41 +465,16 @@
               <label>Expense Type</label>
               <select id="expenseType">
                 <option value="rent">Rent</option>
-                <option value="utilities">Utilities (Water, Electricity)</option>
-                <option value="salaries">Salaries & Wages</option>
-                <option value="supplies">Bar Supplies</option>
-                <option value="maintenance">Maintenance & Repairs</option>
-                <option value="marketing">Marketing & Advertising</option>
-                <option value="transport">Transport & Delivery</option>
-                <option value="insurance">Insurance</option>
-                <option value="taxes">Taxes & Licenses</option>
+                <option value="utilities">Utilities</option>
+                <option value="salaries">Salaries</option>
+                <option value="supplies">Supplies</option>
+                <option value="maintenance">Maintenance</option>
                 <option value="other">Other</option>
               </select>
             </div>
             <div>
               <label>Amount (UGX)</label>
               <input type="number" id="expenseAmount" min="0" value="0">
-            </div>
-          </div>
-          
-          <div class="grid-2">
-            <div>
-              <label>Payment Method</label>
-              <select id="expensePaymentMethod">
-                <option value="cash">Cash</option>
-                <option value="mobile">Mobile Money</option>
-                <option value="bank">Bank Transfer</option>
-                <option value="credit">Credit Card</option>
-              </select>
-            </div>
-            <div>
-              <label>Recurring</label>
-              <select id="expenseRecurring">
-                <option value="no">One-time</option>
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
             </div>
           </div>
           
@@ -645,7 +511,6 @@
                 <th>Type</th>
                 <th>Description</th>
                 <th>Amount</th>
-                <th>Method</th>
                 <th></th>
               </tr>
             </thead>
@@ -660,37 +525,13 @@
           </div>
         </div>
       </div>
-      
-      <div class="hr"></div>
-      
-      <div class="card">
-        <h3>Expense Analysis</h3>
-        <div class="grid-4">
-          <div class="stat">
-            <span class="muted">This Month</span>
-            <b id="expensesThisMonth">UGX 0</b>
-          </div>
-          <div class="stat">
-            <span class="muted">Avg Daily</span>
-            <b id="avgDailyExpense">UGX 0</b>
-          </div>
-          <div class="stat">
-            <span class="muted">Largest Category</span>
-            <b id="largestExpenseCategory">-</b>
-          </div>
-          <div class="stat">
-            <span class="muted">Expense Ratio</span>
-            <b id="expenseRatio">0%</b>
-          </div>
-        </div>
-      </div>
     </section>
 
     <!-- Reports -->
     <section id="reports" class="tabpanel" style="display:none;">
       <div class="card">
         <div class="section-tools">
-          <h3 style="margin-right:auto">Comprehensive Profit & Loss Report</h3>
+          <h3 style="margin-right:auto">Profit & Loss Report</h3>
           <button class="btn" id="btnPrintReport">Print</button>
           <button class="btn" id="btnExportReport">Export Excel</button>
         </div>
@@ -705,12 +546,12 @@
             <input type="date" id="reportEnd" value="">
           </div>
           <div>
-            <label>Compare With</label>
-            <select id="comparePeriod">
-              <option value="none">No Comparison</option>
-              <option value="previous">Previous Period</option>
-              <option value="same_last_month">Same Period Last Month</option>
-              <option value="budget">Budget</option>
+            <label>Report Type</label>
+            <select id="reportType">
+              <option value="profitloss">Profit & Loss</option>
+              <option value="purchases">Purchases Summary</option>
+              <option value="inventory">Inventory Valuation</option>
+              <option value="combined">Combined Report</option>
             </select>
           </div>
           <div class="right">
@@ -730,7 +571,7 @@
     <section id="products" class="tabpanel" style="display:none;">
       <div class="row">
         <div class="card" style="grid-column:span 4;">
-          <h3>Product Management</h3>
+          <h3>Add/Edit Product</h3>
           <div>
             <label>Product Name</label>
             <input id="productName" type="text" placeholder="e.g., NILE Beer">
@@ -757,39 +598,23 @@
           </div>
           <div class="grid-2" style="margin-top:12px;gap:12px;">
             <div>
-              <label>Current Stock</label>
-              <input id="productStock" type="number" min="0" value="0">
-              <small class="help">Auto-updates with purchases/sales</small>
+              <label>Opening Stock</label>
+              <input id="productOpeningStock" type="number" min="0" value="0">
             </div>
             <div>
               <label>Reorder Level</label>
-              <input id="productMinStock" type="number" min="0" value="10">
-            </div>
-          </div>
-          <div class="grid-2" style="margin-top:12px;gap:12px;">
-            <div>
-              <label>Target Stock</label>
-              <input id="productTargetStock" type="number" min="0" value="30">
-            </div>
-            <div>
-              <label>Unit</label>
-              <select id="productUnit">
-                <option value="bottle">Bottle</option>
-                <option value="can">Can</option>
-                <option value="pack">Pack</option>
-                <option value="crate">Crate</option>
-              </select>
+              <input id="productReorderLevel" type="number" min="0" value="10">
             </div>
           </div>
           <div class="stack" style="margin-top:20px;">
             <button class="btn primary" id="btnSaveProduct">Save Product</button>
             <button class="btn bad" id="btnDeleteProduct" disabled>Delete</button>
           </div>
-          <p class="help">Stock automatically updates with purchases and sales</p>
+          <p class="help">Products are saved automatically</p>
         </div>
         
         <div class="card" style="grid-column:span 8;">
-          <h3>Product List with Performance Metrics</h3>
+          <h3>Product List (From Excel Sheet)</h3>
           <div class="section-tools" style="margin-bottom:16px;">
             <input type="text" id="productSearch" placeholder="Search products..." style="flex:1;">
             <select id="productSort">
@@ -797,7 +622,7 @@
               <option value="category">Sort by Category</option>
               <option value="stock">Sort by Stock</option>
               <option value="profit">Sort by Profit Margin</option>
-              <option value="sales">Sort by Sales Volume</option>
+              <option value="needReorder">Needs Reorder</option>
             </select>
           </div>
           
@@ -806,13 +631,13 @@
               <tr>
                 <th>Product</th>
                 <th>Category</th>
-                <th>Cost Price</th>
+                <th>Purchase Price</th>
                 <th>Sale Price</th>
                 <th>Profit Margin</th>
-                <th>Current Stock</th>
+                <th>Opening Stock</th>
+                <th>Purchased</th>
                 <th>Sold</th>
-                <th>Turnover Rate</th>
-                <th>Value</th>
+                <th>Current Stock</th>
                 <th></th>
               </tr>
             </thead>
@@ -822,7 +647,86 @@
       </div>
     </section>
 
-    <!-- Data Section -->
+    <!-- Automation -->
+    <section id="automation" class="tabpanel" style="display:none;">
+      <div class="card">
+        <h3>Excel Sheet Processor</h3>
+        <div class="grid-3">
+          <div class="stat">
+            <span class="muted">Sheets Processed</span>
+            <b id="processedSheetsCount">0</b>
+          </div>
+          <div class="stat">
+            <span class="muted">Unique Dates</span>
+            <b id="uniqueDatesCount">0</b>
+          </div>
+          <div class="stat">
+            <span class="muted">Last Import</span>
+            <b id="lastAutoRun">Never</b>
+          </div>
+        </div>
+        
+        <div class="hr"></div>
+        
+        <h4>Import Excel Daily Sheet</h4>
+        <div class="stack">
+          <label class="btn">
+            <input type="file" id="dailyExcelFile" accept=".xlsx,.xls" style="display:none">
+            Upload Daily Sheet
+          </label>
+          <button class="btn ok" id="btnProcessDailySheet">Process Sheet</button>
+        </div>
+        
+        <div class="grid-3" style="margin-top:12px;">
+          <div>
+            <label>Sheet Date</label>
+            <input type="date" id="sheetDate" value="">
+          </div>
+          <div>
+            <label>Overwrite Existing</label>
+            <select id="overwriteOption">
+              <option value="no">Keep Existing</option>
+              <option value="yes">Overwrite</option>
+            </select>
+          </div>
+        </div>
+        
+        <p class="help">Each sheet must have a unique date. Uploaded sheets will create/update daily sales records.</p>
+        
+        <div class="hr"></div>
+        
+        <h4>Import Purchases Excel</h4>
+        <div class="stack">
+          <label class="btn">
+            <input type="file" id="purchaseExcelFile" accept=".xlsx,.xls" style="display:none">
+            Upload Purchases Sheet
+          </label>
+          <button class="btn ok" id="btnProcessPurchaseSheet">Process Purchases</button>
+        </div>
+        
+        <div class="grid-3" style="margin-top:12px;">
+          <div>
+            <label>Purchase Date</label>
+            <input type="date" id="purchaseSheetDate" value="">
+          </div>
+          <div>
+            <label>Supplier</label>
+            <input type="text" id="purchaseSheetSupplier" placeholder="Supplier name">
+          </div>
+        </div>
+        
+        <p class="help">Upload purchases sheet to automatically update inventory and record purchases.</p>
+        
+        <div class="hr"></div>
+        
+        <h4>Import Log</h4>
+        <div style="max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:12px;background:#f8fafc;">
+          <pre id="importLog" style="margin:0;font-size:12px;white-space:pre-wrap;">No import activity yet.</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data -->
     <section id="data" class="tabpanel" style="display:none;">
       <div class="row">
         <!-- Backup / Restore -->
@@ -840,7 +744,7 @@
             <span class="muted">Last Saved</span>
             <b id="lastSaveTime">Never</b>
           </div>
-          <p class="help">Exports all data including purchases, sales, expenses</p>
+          <p class="help">Exports all daily sheets, products, purchases and expenses to a JSON file.</p>
         </div>
 
         <!-- Excel Export -->
@@ -849,6 +753,7 @@
           <div class="stack section-tools">
             <button class="btn" id="btnExportAllData">Export All Data</button>
             <button class="btn" id="btnExportProfitLoss">Export P&L Report</button>
+            <button class="btn" id="btnExportPurchases">Export Purchases</button>
           </div>
           
           <div class="grid-2" style="margin-top:12px; gap:8px;">
@@ -862,9 +767,7 @@
             </div>
           </div>
           
-          <div class="right" style="margin-top:12px;">
-            <button class="btn ok" id="btnExportInventoryExcel">Export Inventory</button>
-          </div>
+          <p class="help">Export data for specific date ranges.</p>
         </div>
 
         <!-- Google Drive Sync -->
@@ -889,37 +792,17 @@
       </div>
 
       <div class="row" style="margin-top:16px;">
-        <!-- Data Management -->
-        <div class="card" style="grid-column: span 8;">
-          <h3>Data Management & Tools</h3>
-          <div class="grid-3">
-            <button class="btn" id="btnRecalculateInventory">Recalculate All Inventory</button>
-            <button class="btn" id="btnFixStockLevels">Fix Stock Discrepancies</button>
-            <button class="btn" id="btnGenerateTestData">Generate Test Data</button>
-          </div>
-          
-          <div class="grid-3" style="margin-top:12px;">
-            <button class="btn" id="btnImportExcel">Import Excel Data</button>
-            <button class="btn" id="btnExportTransactions">Export Transactions</button>
-            <button class="btn" id="btnDataAudit">Run Data Audit</button>
-          </div>
-          
-          <div id="dataAuditResults" style="margin-top:12px; padding:12px; border:1px solid var(--line); border-radius:8px; display:none;">
-            <h4>Data Audit Results</h4>
-            <pre id="auditResultsText" style="font-size:12px; max-height:200px; overflow:auto;"></pre>
-          </div>
-        </div>
-
         <!-- Danger Zone -->
-        <div class="card" style="grid-column: span 4;">
+        <div class="card" style="grid-column: span 12;">
           <h3 style="color: var(--bad);">Danger Zone</h3>
           <div class="warnmsg">
-            <strong>Warning:</strong> These actions are irreversible.
+            <strong>Warning:</strong> These actions are irreversible. Make sure you have a backup.
           </div>
           <div class="stack" style="margin-top:16px;">
             <button class="btn bad" id="btnWipe">Reset ALL Data</button>
-            <button class="btn bad" id="btnClearPurchases">Clear Purchases</button>
-            <button class="btn bad" id="btnClearExpenses">Clear Expenses</button>
+            <button class="btn bad" id="btnClearSheets">Clear All Daily Sheets</button>
+            <button class="btn bad" id="btnClearPurchases">Clear All Purchases</button>
+            <button class="btn bad" id="btnClearExpenses">Clear All Expenses</button>
           </div>
         </div>
       </div>
@@ -929,7 +812,7 @@
   <!-- Loading Modal -->
   <div id="loading" class="loading">
     <div class="loading-spinner"></div>
-    <p>Processing...</p>
+    <p>Processing Excel files...</p>
   </div>
 
 <script>
@@ -962,27 +845,31 @@ function showLoading(show) {
   document.getElementById('loading').style.display = show ? 'flex' : 'none';
 }
 
-// ================ ENHANCED DATA STRUCTURE ================
-const STORAGE_KEY = 'bar_management_complete_v3';
+function logImport(message) {
+  const logEl = document.getElementById('importLog');
+  const timestamp = new Date().toLocaleTimeString();
+  const logMessage = `[${timestamp}] ${message}`;
+  
+  if (logEl) logEl.textContent = logMessage + '\n' + logEl.textContent;
+}
+
+// ================ ENHANCED DATA MANAGEMENT ================
+const STORAGE_KEY = 'bar_management_enhanced_v3';
 let db = {
-  // Products with full inventory tracking
+  // Products from the Excel sheet
   products: [],
-  // Purchases with inventory tracking
-  purchases: [], // { id, date, supplier, invoiceNo, items: [], total, status, paymentMethod }
-  // Daily sales sheets
-  dailySheets: {}, // key: date, value: { date, shift, items: [], totalSales, totalCost, totalProfit }
+  // Daily sheets - each with unique date
+  dailySheets: {}, // key: date, value: { date, items: [], totalSales, totalProfit }
+  // Purchases - new section
+  purchases: [], // { id, date, supplier, invoice, items: [], total, recordedAt }
   // Expenses
-  expenses: [], // { date, type, description, amount, paymentMethod, recurring }
-  // Stock adjustments (for manual corrections)
-  adjustments: [], // { date, productId, previousQty, newQty, reason }
+  expenses: [], // { date, type, description, amount }
   // Settings
   settings: { 
     lastSave: new Date().toISOString(),
-    accountingPeriod: 'monthly',
-    taxRate: 18,
-    defaultProfitMargin: 40,
-    autoReorder: true,
-    lowStockThreshold: 20 // percentage
+    accountingPeriod: 'monthly', // monthly, weekly, custom
+    periodStart: todayStr().substring(0, 7) + '-01', // First day of current month
+    periodEnd: todayStr()
   }
 };
 
@@ -1016,152 +903,9 @@ function updateLastSaveTime() {
   }
 }
 
-// ================ INVENTORY MANAGEMENT SYSTEM ================
-class InventorySystem {
-  static getProductById(id) {
-    return db.products.find(p => p.id === id);
-  }
-
-  static getProductByName(name) {
-    return db.products.find(p => p.name.toLowerCase() === name.toLowerCase());
-  }
-
-  // Calculate current stock for a product based on all transactions
-  static calculateCurrentStock(productId, upToDate = null) {
-    const product = this.getProductById(productId);
-    if (!product) return 0;
-    
-    // Start with opening stock
-    let stock = product.openingStock || 0;
-    
-    // Add purchases up to date
-    db.purchases.forEach(purchase => {
-      if (upToDate && purchase.date > upToDate) return;
-      if (purchase.status !== 'received' && purchase.status !== 'partially') return;
-      
-      purchase.items.forEach(item => {
-        if (item.productId === productId) {
-          stock += item.quantity || 0;
-        }
-      });
-    });
-    
-    // Subtract sales up to date
-    Object.values(db.dailySheets).forEach(sheet => {
-      if (upToDate && sheet.date > upToDate) return;
-      
-      sheet.items.forEach(item => {
-        if (item.productId === productId) {
-          stock -= item.quantity || 0;
-        }
-      });
-    });
-    
-    // Apply adjustments
-    db.adjustments.forEach(adj => {
-      if (upToDate && adj.date > upToDate) return;
-      if (adj.productId === productId) {
-        stock = adj.newQty; // Adjustments set absolute value
-      }
-    });
-    
-    return Math.max(0, stock);
-  }
-
-  // Update product stock based on all transactions
-  static updateProductStock(productId) {
-    const product = this.getProductById(productId);
-    if (!product) return;
-    
-    product.currentStock = this.calculateCurrentStock(productId);
-    product.lastStockUpdate = new Date().toISOString();
-    
-    // Update stock status
-    const reorderLevel = product.reorderLevel || product.minStockLevel || 10;
-    const targetLevel = product.targetStock || 30;
-    
-    if (product.currentStock === 0) {
-      product.stockStatus = 'out';
-    } else if (product.currentStock <= reorderLevel) {
-      product.stockStatus = 'low';
-    } else if (product.currentStock > targetLevel) {
-      product.stockStatus = 'excess';
-    } else {
-      product.stockStatus = 'good';
-    }
-    
-    return product.currentStock;
-  }
-
-  // Update all products stock
-  static updateAllStocks() {
-    db.products.forEach(product => {
-      this.updateProductStock(product.id);
-    });
-    saveData();
-  }
-
-  // Get total inventory value
-  static getInventoryValue(asOfDate = null) {
-    return db.products.reduce((total, product) => {
-      const stock = asOfDate ? 
-        this.calculateCurrentStock(product.id, asOfDate) : 
-        (product.currentStock || 0);
-      return total + (stock * (product.purchasePrice || 0));
-    }, 0);
-  }
-
-  // Get cost of goods sold for period
-  static getCOGS(startDate, endDate) {
-    let cogs = 0;
-    
-    Object.values(db.dailySheets).forEach(sheet => {
-      if (sheet.date >= startDate && sheet.date <= endDate) {
-        cogs += sheet.totalCost || 0;
-      }
-    });
-    
-    return cogs;
-  }
-
-  // Get items needing reorder
-  static getItemsNeedingReorder() {
-    return db.products.filter(product => {
-      const reorderLevel = product.reorderLevel || product.minStockLevel || 10;
-      return (product.currentStock || 0) <= reorderLevel;
-    });
-  }
-
-  // Get stock turnover rate for product
-  static getStockTurnover(productId, periodDays = 30) {
-    const product = this.getProductById(productId);
-    if (!product) return 0;
-    
-    const endDate = todayStr();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - periodDays);
-    const startDateStr = startDate.toISOString().split('T')[0];
-    
-    let totalSold = 0;
-    Object.values(db.dailySheets).forEach(sheet => {
-      if (sheet.date >= startDateStr && sheet.date <= endDate) {
-        sheet.items.forEach(item => {
-          if (item.productId === productId) {
-            totalSold += item.quantity || 0;
-          }
-        });
-      }
-    });
-    
-    const avgStock = (product.currentStock || 0 + (product.openingStock || 0)) / 2;
-    return avgStock > 0 ? totalSold / avgStock : 0;
-  }
-}
-
-// Initialize products from Excel data if empty
+// Initialize products from the Excel sheet data
 function initializeProductsFromExcel() {
-  if (db.products.length > 0) return;
-  
+  // This is the data from the provided Excel sheet
   const excelProducts = [
     { name: "NILE", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
     { name: "LITE", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
@@ -1201,7 +945,7 @@ function initializeProductsFromExcel() {
     { name: "Grands", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
     { name: "Ondavit", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
     { name: "C.Morgan", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Scount", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Scout", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
     { name: "Antonious", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
     { name: "Robertson", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
     { name: "Ballanties", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
@@ -1218,25 +962,24 @@ function initializeProductsFromExcel() {
     { name: "High 5", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 }
   ];
   
-  db.products = excelProducts.map((p, index) => ({
-    id: 'prod_' + (index + 1),
-    name: p.name,
-    category: p.category,
-    purchasePrice: p.purchasePrice,
-    salePrice: p.salePrice,
-    openingStock: p.openingStock,
-    currentStock: p.openingStock,
-    reorderLevel: 5,
-    targetStock: 20,
-    minStockLevel: 5,
-    unit: 'bottle',
-    stockStatus: 'good',
-    soldCount: 0,
-    totalProfit: 0,
-    totalSales: 0
-  }));
-  
-  saveData();
+  // Only initialize if no products exist
+  if (db.products.length === 0) {
+    db.products = excelProducts.map((p, index) => ({
+      id: 'prod_' + (index + 1),
+      name: p.name,
+      category: p.category,
+      purchasePrice: p.purchasePrice,
+      salePrice: p.salePrice,
+      openingStock: p.openingStock,
+      reorderLevel: 10,
+      purchasedQuantity: 0, // Track purchased quantity separately
+      soldCount: 0,
+      totalProfit: 0,
+      lastPurchaseDate: null,
+      lastPurchasePrice: p.purchasePrice
+    }));
+    saveData();
+  }
 }
 
 // ================ DASHBOARD FUNCTIONS ================
@@ -1244,22 +987,28 @@ function updateDashboardStats() {
   // Total products
   document.getElementById('statProducts').textContent = db.products.length;
   
-  // Stock value
-  const stockValue = InventorySystem.getInventoryValue();
+  // Stock value (based on purchase price)
+  const stockValue = db.products.reduce((sum, p) => {
+    const currentStock = calculateCurrentStock(p);
+    return sum + currentStock * (p.purchasePrice || 0);
+  }, 0);
   document.getElementById('statStockValue').textContent = UGX(stockValue);
   
-  // Monthly purchases
-  const currentMonth = todayStr().substring(0, 7);
-  const monthlyPurchases = db.purchases
-    .filter(p => p.date && p.date.startsWith(currentMonth) && p.status !== 'cancelled')
-    .reduce((sum, p) => sum + (p.total || 0), 0);
+  // Monthly purchases (calculate from purchases array)
+  const currentMonth = todayStr().substring(0, 7); // YYYY-MM
+  const monthlyPurchases = db.purchases.reduce((sum, purchase) => {
+    if (purchase.date && purchase.date.substring(0, 7) === currentMonth) {
+      return sum + (purchase.total || 0);
+    }
+    return sum;
+  }, 0);
   document.getElementById('statMonthPurchases').textContent = UGX(monthlyPurchases);
   
   // Most moving category
   const categorySales = {};
   Object.values(db.dailySheets).forEach(sheet => {
     sheet.items.forEach(item => {
-      const product = InventorySystem.getProductById(item.productId);
+      const product = db.products.find(p => p.name === item.productName);
       if (product) {
         const cat = product.category || 'other';
         categorySales[cat] = (categorySales[cat] || 0) + item.quantity;
@@ -1277,19 +1026,25 @@ function updateDashboardStats() {
   }
   document.getElementById('statMostMoving').textContent = mostMovingCategory;
   
-  // Calculate profits for accounting period
+  // Calculate profits for the accounting period
   const periodStart = db.settings.periodStart || todayStr().substring(0, 7) + '-01';
   const periodEnd = db.settings.periodEnd || todayStr();
   
   let grossProfit = 0;
   let totalExpenses = 0;
-  let totalSales = 0;
+  let totalPurchases = 0;
   
-  // Calculate gross profit and total sales from daily sheets
+  // Calculate gross profit from daily sheets
   Object.values(db.dailySheets).forEach(sheet => {
     if (sheet.date >= periodStart && sheet.date <= periodEnd) {
       grossProfit += sheet.totalProfit || 0;
-      totalSales += sheet.totalSales || 0;
+    }
+  });
+  
+  // Calculate total purchases for period
+  db.purchases.forEach(purchase => {
+    if (purchase.date >= periodStart && purchase.date <= periodEnd) {
+      totalPurchases += purchase.total || 0;
     }
   });
   
@@ -1300,50 +1055,28 @@ function updateDashboardStats() {
     }
   });
   
-  const netProfit = grossProfit - totalExpenses;
-  const cogs = InventorySystem.getCOGS(periodStart, periodEnd);
-  const inventoryValue = InventorySystem.getInventoryValue();
-  
-  // Calculate ROI (Return on Investment)
-  const totalInvestment = inventoryValue + cogs;
-  const roi = totalInvestment > 0 ? (netProfit / totalInvestment * 100).toFixed(1) : 0;
+  const netProfit = grossProfit - totalExpenses - totalPurchases;
   
   document.getElementById('statGrossProfit').textContent = UGX(grossProfit);
   document.getElementById('statTotalExpenses').textContent = UGX(totalExpenses);
   document.getElementById('statNetProfit').textContent = UGX(netProfit);
-  document.getElementById('statInventoryInvestment').textContent = UGX(inventoryValue);
-  document.getElementById('statCOGS').textContent = UGX(cogs);
-  document.getElementById('statROI').textContent = roi + '%';
   
   // Update profitability status
   const profitStatusEl = document.getElementById('profitStatus');
   const profitStatusCard = document.getElementById('profitStatusCard');
-  const inventoryStatusEl = document.getElementById('inventoryStatus');
   
   if (netProfit > 0) {
-    profitStatusEl.innerHTML = `<strong>✅ PROFITABLE:</strong> Net profit of ${UGX(netProfit)} (ROI: ${roi}%)`;
+    profitStatusEl.innerHTML = `<strong>✅ PROFITABLE:</strong> Business is making a net profit of ${UGX(netProfit)}`;
     profitStatusEl.className = 'goodmsg';
+    profitStatusCard.style.borderLeft = '4px solid #16a34a';
   } else if (netProfit < 0) {
-    profitStatusEl.innerHTML = `<strong>⚠️ LOSS MAKING:</strong> Net loss of ${UGX(Math.abs(netProfit))}`;
+    profitStatusEl.innerHTML = `<strong>⚠️ LOSS MAKING:</strong> Business is making a net loss of ${UGX(Math.abs(netProfit))}`;
     profitStatusEl.className = 'badmsg';
+    profitStatusCard.style.borderLeft = '4px solid #ef4444';
   } else {
     profitStatusEl.innerHTML = `<strong>⚖️ BREAK EVEN:</strong> Business is breaking even`;
     profitStatusEl.className = 'warnmsg';
-  }
-  
-  // Update inventory status
-  const lowStockItems = InventorySystem.getItemsNeedingReorder();
-  const outOfStockItems = db.products.filter(p => (p.currentStock || 0) === 0);
-  
-  if (outOfStockItems.length > 0) {
-    inventoryStatusEl.innerHTML = `<strong>❌ CRITICAL:</strong> ${outOfStockItems.length} products out of stock`;
-    inventoryStatusEl.className = 'badmsg';
-  } else if (lowStockItems.length > 0) {
-    inventoryStatusEl.innerHTML = `<strong>⚠️ WARNING:</strong> ${lowStockItems.length} products need reorder`;
-    inventoryStatusEl.className = 'warnmsg';
-  } else {
-    inventoryStatusEl.innerHTML = `<strong>✅ GOOD:</strong> All products have sufficient stock`;
-    inventoryStatusEl.className = 'goodmsg';
+    profitStatusCard.style.borderLeft = '4px solid #f59e0b';
   }
 }
 
@@ -1354,21 +1087,27 @@ function setupTabs() {
   
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
+      // Remove active class from all tabs
       tabs.forEach(t => t.classList.remove('active'));
+      // Hide all panels
       panels.forEach(p => p.style.display = 'none');
       
+      // Add active class to clicked tab
       tab.classList.add('active');
+      // Show corresponding panel
       const tabId = tab.getAttribute('data-tab');
       const panel = document.getElementById(tabId);
       if (panel) {
         panel.style.display = 'block';
         
+        // Initialize panel if needed
         if (tabId === 'products') renderProducts();
-        if (tabId === 'purchases') renderPurchases();
         if (tabId === 'sales') renderSales();
+        if (tabId === 'purchases') renderPurchases();
         if (tabId === 'inventory') renderInventory();
         if (tabId === 'expenses') renderExpenses();
         if (tabId === 'reports') initReports();
+        if (tabId === 'automation') renderAutomation();
         if (tabId === 'data') renderDataSection();
       }
     });
@@ -1377,6 +1116,14 @@ function setupTabs() {
 
 // ================ PRODUCTS MANAGEMENT ================
 let editingProductId = null;
+
+// Calculate current stock for a product
+function calculateCurrentStock(product) {
+  const openingStock = product.openingStock || 0;
+  const purchased = product.purchasedQuantity || 0;
+  const sold = product.soldCount || 0;
+  return Math.max(0, openingStock + purchased - sold);
+}
 
 function renderProducts() {
   const searchTerm = document.getElementById('productSearch').value.toLowerCase();
@@ -1391,17 +1138,24 @@ function renderProducts() {
     );
   }
   
+  // Filter by reorder needs
+  if (sortBy === 'needReorder') {
+    filtered = filtered.filter(p => {
+      const currentStock = calculateCurrentStock(p);
+      return currentStock <= (p.reorderLevel || 10);
+    });
+  }
+  
   // Sort products
   filtered.sort((a, b) => {
     if (sortBy === 'name') return a.name.localeCompare(b.name);
     if (sortBy === 'category') return (a.category || '').localeCompare(b.category || '');
-    if (sortBy === 'stock') return (b.currentStock || 0) - (a.currentStock || 0);
+    if (sortBy === 'stock') return calculateCurrentStock(b) - calculateCurrentStock(a);
     if (sortBy === 'profit') {
-      const marginA = a.purchasePrice > 0 ? ((a.salePrice - a.purchasePrice) / a.purchasePrice * 100) : 0;
-      const marginB = b.purchasePrice > 0 ? ((b.salePrice - b.purchasePrice) / b.purchasePrice * 100) : 0;
+      const marginA = (a.salePrice - a.purchasePrice) / a.purchasePrice * 100;
+      const marginB = (b.salePrice - b.purchasePrice) / b.purchasePrice * 100;
       return marginB - marginA;
     }
-    if (sortBy === 'sales') return (b.soldCount || 0) - (a.soldCount || 0);
     return 0;
   });
   
@@ -1410,25 +1164,20 @@ function renderProducts() {
     tbody.innerHTML = filtered.map(p => {
       const profitMargin = p.purchasePrice > 0 ? 
         ((p.salePrice - p.purchasePrice) / p.purchasePrice * 100).toFixed(1) : 0;
-      const stockValue = (p.currentStock || 0) * (p.purchasePrice || 0);
-      const turnover = InventorySystem.getStockTurnover(p.id, 30).toFixed(2);
-      
-      let stockClass = '';
-      if (p.currentStock === 0) stockClass = 'stock-out';
-      else if (p.currentStock <= (p.reorderLevel || p.minStockLevel || 5)) stockClass = 'stock-low';
-      else if (p.currentStock > (p.targetStock || 30)) stockClass = 'stock-good';
+      const currentStock = calculateCurrentStock(p);
+      const needsReorder = currentStock <= (p.reorderLevel || 10);
       
       return `
-      <tr class="${stockClass}">
-        <td><strong>${p.name}</strong></td>
+      <tr ${needsReorder ? 'style="background:#fff7ed"' : ''}>
+        <td><strong>${p.name}</strong> ${needsReorder ? '⚠️' : ''}</td>
         <td><span class="pill">${p.category || 'other'}</span></td>
         <td>${UGX(p.purchasePrice || 0)}</td>
         <td>${UGX(p.salePrice || 0)}</td>
-        <td><span class="${profitMargin >= 0 ? 'positive' : 'negative'}">${profitMargin}%</span></td>
-        <td><strong>${p.currentStock || 0}</strong></td>
+        <td>${profitMargin}%</td>
+        <td>${p.openingStock || 0}</td>
+        <td>${p.purchasedQuantity || 0}</td>
         <td>${p.soldCount || 0}</td>
-        <td>${turnover}</td>
-        <td>${UGX(stockValue)}</td>
+        <td><strong>${currentStock}</strong></td>
         <td><button class="btn" data-edit="${p.id}">Edit</button></td>
       </tr>
       `;
@@ -1440,26 +1189,37 @@ function renderProducts() {
 }
 
 function populateProductSelects() {
-  const purchaseSelect = document.getElementById('purchaseProduct');
   const saleSelect = document.getElementById('saleProduct');
+  const purchaseSelect = document.getElementById('purchaseProduct');
   const historySelect = document.getElementById('productHistorySelect');
-  
-  if (purchaseSelect) {
-    purchaseSelect.innerHTML = '<option value="">Select Product</option>' +
-      db.products.map(p => 
-        `<option value="${p.id}" data-cost="${p.purchasePrice}">${p.name} (Stock: ${p.currentStock || 0})</option>`
-      ).join('');
-  }
+  const analysisSelect = document.getElementById('purchaseAnalysisProduct');
   
   if (saleSelect) {
     saleSelect.innerHTML = '<option value="">Select Product</option>' +
-      db.products.map(p => 
-        `<option value="${p.id}" data-price="${p.salePrice}">${p.name} (Stock: ${p.currentStock || 0})</option>`
-      ).join('');
+      db.products.map(p => {
+        const currentStock = calculateCurrentStock(p);
+        return `<option value="${p.id}" data-price="${p.salePrice}">${p.name} (Stock: ${currentStock})</option>`;
+      }).join('');
+  }
+  
+  if (purchaseSelect) {
+    purchaseSelect.innerHTML = '<option value="">Select Product</option>' +
+      db.products.map(p => {
+        const currentStock = calculateCurrentStock(p);
+        const needsReorder = currentStock <= (p.reorderLevel || 10);
+        return `<option value="${p.id}" data-cost="${p.purchasePrice}">${p.name} ${needsReorder ? '⚠️' : ''} (Stock: ${currentStock})</option>`;
+      }).join('');
   }
   
   if (historySelect) {
     historySelect.innerHTML = '<option value="">Select Product</option>' +
+      db.products.map(p => 
+        `<option value="${p.id}">${p.name}</option>`
+      ).join('');
+  }
+  
+  if (analysisSelect) {
+    analysisSelect.innerHTML = '<option value="">All Products</option>' +
       db.products.map(p => 
         `<option value="${p.id}">${p.name}</option>`
       ).join('');
@@ -1473,7 +1233,7 @@ function setupProducts() {
     if (!editBtn) return;
     
     const productId = editBtn.getAttribute('data-edit');
-    const product = InventorySystem.getProductById(productId);
+    const product = db.products.find(p => p.id === productId);
     if (!product) return;
     
     editingProductId = productId;
@@ -1481,10 +1241,8 @@ function setupProducts() {
     document.getElementById('productCategory').value = product.category || 'beer';
     document.getElementById('productCost').value = product.purchasePrice || 0;
     document.getElementById('productPrice').value = product.salePrice || 0;
-    document.getElementById('productStock').value = product.currentStock || 0;
-    document.getElementById('productMinStock').value = product.reorderLevel || product.minStockLevel || 5;
-    document.getElementById('productTargetStock').value = product.targetStock || 30;
-    document.getElementById('productUnit').value = product.unit || 'bottle';
+    document.getElementById('productOpeningStock').value = product.openingStock || 0;
+    document.getElementById('productReorderLevel').value = product.reorderLevel || 10;
     document.getElementById('btnDeleteProduct').disabled = false;
   });
   
@@ -1499,37 +1257,19 @@ function setupProducts() {
     const category = document.getElementById('productCategory').value;
     const purchasePrice = parseInt(document.getElementById('productCost').value) || 0;
     const salePrice = parseInt(document.getElementById('productPrice').value) || 0;
-    const currentStock = parseInt(document.getElementById('productStock').value) || 0;
-    const reorderLevel = parseInt(document.getElementById('productMinStock').value) || 5;
-    const targetStock = parseInt(document.getElementById('productTargetStock').value) || 30;
-    const unit = document.getElementById('productUnit').value;
+    const openingStock = parseInt(document.getElementById('productOpeningStock').value) || 0;
+    const reorderLevel = parseInt(document.getElementById('productReorderLevel').value) || 10;
     
     if (editingProductId) {
       // Update existing product
-      const product = InventorySystem.getProductById(editingProductId);
+      const product = db.products.find(p => p.id === editingProductId);
       if (product) {
         product.name = name;
         product.category = category;
         product.purchasePrice = purchasePrice;
         product.salePrice = salePrice;
+        product.openingStock = openingStock;
         product.reorderLevel = reorderLevel;
-        product.targetStock = targetStock;
-        product.unit = unit;
-        
-        // Record stock adjustment if changed
-        if (currentStock !== product.currentStock) {
-          const adjustment = {
-            id: 'adj_' + Date.now(),
-            date: todayStr(),
-            productId: product.id,
-            previousQty: product.currentStock,
-            newQty: currentStock,
-            reason: 'Manual adjustment',
-            recordedAt: new Date().toISOString()
-          };
-          db.adjustments.push(adjustment);
-          product.currentStock = currentStock;
-        }
       }
     } else {
       // Create new product
@@ -1539,16 +1279,13 @@ function setupProducts() {
         category,
         purchasePrice,
         salePrice,
-        openingStock: currentStock,
-        currentStock,
-        reorderLevel,
-        targetStock,
-        unit,
-        minStockLevel: reorderLevel,
-        stockStatus: 'good',
+        openingStock,
+        purchasedQuantity: 0,
         soldCount: 0,
         totalProfit: 0,
-        totalSales: 0
+        reorderLevel,
+        lastPurchaseDate: null,
+        lastPurchasePrice: purchasePrice
       };
       db.products.push(newProduct);
     }
@@ -1562,9 +1299,8 @@ function setupProducts() {
     document.getElementById('productName').value = '';
     document.getElementById('productCost').value = '0';
     document.getElementById('productPrice').value = '0';
-    document.getElementById('productStock').value = '0';
-    document.getElementById('productMinStock').value = '5';
-    document.getElementById('productTargetStock').value = '30';
+    document.getElementById('productOpeningStock').value = '0';
+    document.getElementById('productReorderLevel').value = '10';
     document.getElementById('btnDeleteProduct').disabled = true;
     editingProductId = null;
     
@@ -1587,21 +1323,20 @@ function setupProducts() {
     document.getElementById('productName').value = '';
     document.getElementById('productCost').value = '0';
     document.getElementById('productPrice').value = '0';
-    document.getElementById('productStock').value = '0';
-    document.getElementById('productMinStock').value = '5';
-    document.getElementById('productTargetStock').value = '30';
+    document.getElementById('productOpeningStock').value = '0';
+    document.getElementById('productReorderLevel').value = '10';
     document.getElementById('btnDeleteProduct').disabled = true;
     editingProductId = null;
     
     alert('Product deleted successfully!');
   });
   
-  // Search and sort
+  // Search products
   document.getElementById('productSearch').addEventListener('input', renderProducts);
   document.getElementById('productSort').addEventListener('change', renderProducts);
 }
 
-// ================ PURCHASES MANAGEMENT ================
+// ================ PURCHASES MANAGEMENT - NEW ================
 let purchaseItems = [];
 
 function renderPurchases() {
@@ -1609,7 +1344,9 @@ function renderPurchases() {
   document.getElementById('purchaseDate').value = today;
   document.getElementById('purchaseFrom').value = today;
   document.getElementById('purchaseTo').value = today;
-  document.getElementById('purchaseDeliveryDate').value = today;
+  document.getElementById('purchaseAnalysisFrom').value = today;
+  document.getElementById('purchaseAnalysisTo').value = today;
+  document.getElementById('purchaseSheetDate').value = today;
   
   // Reset form
   purchaseItems = [];
@@ -1617,8 +1354,6 @@ function renderPurchases() {
   document.getElementById('purchaseInvoice').value = '';
   document.getElementById('purchaseQty').value = '1';
   document.getElementById('purchaseCost').value = '';
-  document.getElementById('purchaseTax').value = '0';
-  document.getElementById('purchaseOtherCharges').value = '0';
   updatePurchaseTotal();
   
   // Load recent purchases
@@ -1627,25 +1362,18 @@ function renderPurchases() {
 }
 
 function updatePurchaseTotal() {
-  const subtotal = purchaseItems.reduce((sum, item) => sum + (item.total || 0), 0);
-  const taxRate = parseFloat(document.getElementById('purchaseTax').value) || 0;
-  const otherCharges = parseFloat(document.getElementById('purchaseOtherCharges').value) || 0;
-  const taxAmount = subtotal * (taxRate / 100);
-  const total = subtotal + taxAmount + otherCharges;
-  
-  document.getElementById('purchaseSubtotal').textContent = UGX(subtotal);
+  const total = purchaseItems.reduce((sum, item) => sum + (item.totalCost || 0), 0);
   document.getElementById('purchaseTotal').textContent = UGX(total);
   
   const tbody = document.querySelector('#purchaseItemsTable tbody');
   if (tbody) {
     tbody.innerHTML = purchaseItems.map((item, index) => {
-      const product = InventorySystem.getProductById(item.productId);
       return `
       <tr>
-        <td>${product?.name || 'Unknown'}</td>
+        <td>${item.productName}</td>
         <td>${item.quantity}</td>
         <td>${UGX(item.unitCost)}</td>
-        <td>${UGX(item.total)}</td>
+        <td>${UGX(item.totalCost)}</td>
         <td><button class="btn bad" data-remove-purchase="${index}">×</button></td>
       </tr>
       `;
@@ -1657,70 +1385,98 @@ function loadRecentPurchases() {
   const from = document.getElementById('purchaseFrom').value || todayStr();
   const to = document.getElementById('purchaseTo').value || todayStr();
   
-  const filtered = db.purchases
-    .filter(p => p.date >= from && p.date <= to)
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  // Filter purchases by date range
+  const filteredPurchases = db.purchases.filter(p => 
+    p.date >= from && p.date <= to
+  ).sort((a, b) => new Date(b.date) - new Date(a.date));
   
   const tbody = document.querySelector('#purchasesTable tbody');
   if (tbody) {
-    tbody.innerHTML = filtered.map((purchase, index) => {
+    tbody.innerHTML = filteredPurchases.map((purchase, index) => {
       const itemCount = purchase.items?.length || 0;
-      const statusColors = {
-        'pending': '#f59e0b',
-        'received': '#16a34a',
-        'partially': '#0ea5e9',
-        'cancelled': '#ef4444'
-      };
-      
       return `
       <tr>
         <td>${purchase.date}</td>
-        <td>${purchase.supplier || '-'}</td>
+        <td>${purchase.supplier || 'N/A'}</td>
         <td>${itemCount} items</td>
         <td>${UGX(purchase.total || 0)}</td>
-        <td>
-          <span class="pill" style="background:${statusColors[purchase.status || 'pending']}; color:white;">
-            ${purchase.status || 'pending'}
-          </span>
-        </td>
-        <td>
-          <button class="btn" data-view-purchase="${index}">View</button>
-          <button class="btn bad" data-delete-purchase="${index}">×</button>
-        </td>
+        <td><button class="btn" data-view-purchase="${index}">View</button></td>
       </tr>
       `;
     }).join('');
   }
+  
+  // Update total purchases
+  const totalPurchases = filteredPurchases.reduce((sum, p) => sum + (p.total || 0), 0);
+  document.getElementById('totalPurchases').textContent = UGX(totalPurchases);
 }
 
 function updatePurchaseAnalysis() {
-  const currentMonth = todayStr().substring(0, 7);
-  const monthPurchases = db.purchases.filter(p => 
-    p.date && p.date.startsWith(currentMonth) && p.status !== 'cancelled'
-  );
+  const productId = document.getElementById('purchaseAnalysisProduct').value;
+  const from = document.getElementById('purchaseAnalysisFrom').value || todayStr();
+  const to = document.getElementById('purchaseAnalysisTo').value || todayStr();
   
-  const totalMonth = monthPurchases.reduce((sum, p) => sum + (p.total || 0), 0);
-  const avgPurchase = monthPurchases.length > 0 ? totalMonth / monthPurchases.length : 0;
+  // Filter purchases
+  let relevantPurchases = db.purchases.filter(p => p.date >= from && p.date <= to);
   
-  // Find top supplier
-  const supplierTotals = {};
-  monthPurchases.forEach(p => {
-    const supplier = p.supplier || 'Unknown';
-    supplierTotals[supplier] = (supplierTotals[supplier] || 0) + (p.total || 0);
-  });
-  
-  let topSupplier = '-';
-  let maxSupplierTotal = 0;
-  for (const [supplier, total] of Object.entries(supplierTotals)) {
-    if (total > maxSupplierTotal) {
-      maxSupplierTotal = total;
-      topSupplier = supplier;
+  if (productId) {
+    const product = db.products.find(p => p.id === productId);
+    if (product) {
+      relevantPurchases = relevantPurchases.filter(p => 
+        p.items.some(item => item.productName === product.name)
+      );
     }
   }
   
-  document.getElementById('purchasesThisMonth').textContent = UGX(totalMonth);
-  document.getElementById('avgPurchase').textContent = UGX(avgPurchase);
-  document.getElementById('topSupplier').textContent = topSupplier;
+  // Calculate analysis
+  let totalValue = 0;
+  let totalQuantity = 0;
+  const productAnalysis = {};
+  
+  relevantPurchases.forEach(purchase => {
+    purchase.items.forEach(item => {
+      if (!productId || item.productName === db.products.find(p => p.id === productId)?.name) {
+        totalValue += item.totalCost;
+        totalQuantity += item.quantity;
+        
+        if (!productAnalysis[item.productName]) {
+          productAnalysis[item.productName] = {
+            totalQuantity: 0,
+            totalCost: 0,
+            lastDate: purchase.date
+          };
+        }
+        
+        productAnalysis[item.productName].totalQuantity += item.quantity;
+        productAnalysis[item.productName].totalCost += item.totalCost;
+        productAnalysis[item.productName].lastDate = purchase.date;
+      }
+    });
+  });
+  
+  const avgCost = totalQuantity > 0 ? totalValue / totalQuantity : 0;
+  
+  document.getElementById('analysisTotalValue').textContent = UGX(totalValue);
+  document.getElementById('analysisAvgCost').textContent = UGX(avgCost);
+  document.getElementById('analysisReorderFreq').textContent = relevantPurchases.length > 0 ? 
+    `${relevantPurchases.length} purchases` : '-';
+  
+  // Update analysis table
+  const tbody = document.querySelector('#purchaseAnalysisTable tbody');
+  if (tbody) {
+    tbody.innerHTML = Object.entries(productAnalysis).map(([productName, data]) => {
+      const avgUnitCost = data.totalQuantity > 0 ? data.totalCost / data.totalQuantity : 0;
+      return `
+      <tr>
+        <td>${productName}</td>
+        <td>${data.totalQuantity}</td>
+        <td>${UGX(data.totalCost)}</td>
+        <td>${UGX(avgUnitCost)}</td>
+        <td>${data.lastDate}</td>
+      </tr>
+      `;
+    }).join('');
+  }
 }
 
 function setupPurchases() {
@@ -1728,8 +1484,8 @@ function setupPurchases() {
   document.getElementById('purchaseProduct').addEventListener('change', function() {
     const selectedOption = this.options[this.selectedIndex];
     if (selectedOption && selectedOption.value) {
-      const costPrice = selectedOption.getAttribute('data-cost');
-      document.getElementById('purchaseCost').value = costPrice || '';
+      const purchaseCost = selectedOption.getAttribute('data-cost');
+      document.getElementById('purchaseCost').value = purchaseCost || '';
     }
   });
   
@@ -1752,18 +1508,20 @@ function setupPurchases() {
       return;
     }
     
-    const product = InventorySystem.getProductById(productId);
+    const product = db.products.find(p => p.id === productId);
     if (!product) {
       alert('Product not found');
       return;
     }
+    
+    const totalCost = quantity * unitCost;
     
     purchaseItems.push({
       productId,
       productName: product.name,
       quantity,
       unitCost,
-      total: quantity * unitCost
+      totalCost
     });
     
     updatePurchaseTotal();
@@ -1791,52 +1549,43 @@ function setupPurchases() {
     }
     
     const date = document.getElementById('purchaseDate').value || todayStr();
-    const supplier = document.getElementById('purchaseSupplier').value.trim() || 'Unknown Supplier';
-    const invoiceNo = document.getElementById('purchaseInvoice').value.trim() || '';
-    const paymentMethod = document.getElementById('purchasePaymentMethod').value;
-    const deliveryDate = document.getElementById('purchaseDeliveryDate').value || date;
-    const status = document.getElementById('purchaseStatus').value;
-    const taxRate = parseFloat(document.getElementById('purchaseTax').value) || 0;
-    const otherCharges = parseFloat(document.getElementById('purchaseOtherCharges').value) || 0;
+    const supplier = document.getElementById('purchaseSupplier').value.trim();
+    const invoice = document.getElementById('purchaseInvoice').value.trim();
     
-    const subtotal = purchaseItems.reduce((sum, item) => sum + item.total, 0);
-    const taxAmount = subtotal * (taxRate / 100);
-    const total = subtotal + taxAmount + otherCharges;
-    
-    // Update inventory if purchase is received
-    if (status === 'received' || status === 'partially') {
-      purchaseItems.forEach(item => {
-        const product = InventorySystem.getProductById(item.productId);
-        if (product) {
-          // Update purchase price if different (optional)
-          // product.purchasePrice = item.unitCost;
-          
-          // Stock will be updated by inventory system when we call updateAllStocks
-        }
-      });
+    if (!supplier) {
+      alert('Please enter supplier name');
+      return;
     }
     
+    const total = purchaseItems.reduce((sum, item) => sum + item.totalCost, 0);
+    
+    // Update product stocks and purchase counts
+    purchaseItems.forEach(item => {
+      const product = db.products.find(p => p.id === item.productId);
+      if (product) {
+        product.purchasedQuantity = (product.purchasedQuantity || 0) + item.quantity;
+        product.lastPurchaseDate = date;
+        product.lastPurchasePrice = item.unitCost;
+        
+        // Update purchase price if different
+        if (item.unitCost !== product.purchasePrice) {
+          product.purchasePrice = item.unitCost;
+        }
+      }
+    });
+    
+    // Save purchase record
     const newPurchase = {
       id: 'pur_' + Date.now(),
       date,
       supplier,
-      invoiceNo,
-      paymentMethod,
-      deliveryDate,
-      status,
+      invoice: invoice || null,
       items: [...purchaseItems],
-      subtotal,
-      taxRate,
-      taxAmount,
-      otherCharges,
       total,
       recordedAt: new Date().toISOString()
     };
     
     db.purchases.push(newPurchase);
-    
-    // Update inventory
-    InventorySystem.updateAllStocks();
     saveData();
     
     // Refresh display
@@ -1845,43 +1594,41 @@ function setupPurchases() {
     renderInventory();
     updateDashboardStats();
     
-    alert(`Purchase saved successfully! Total: ${UGX(total)}`);
+    alert(`Purchase saved for ${date}! Total: ${UGX(total)}`);
   });
   
   // Filter purchases
-  document.getElementById('btnFilterPurchases').addEventListener('click', () => {
-    loadRecentPurchases();
-    updatePurchaseAnalysis();
-  });
+  document.getElementById('btnFilterPurchases').addEventListener('click', loadRecentPurchases);
   
-  // Delete purchase
+  // View purchase details
   document.getElementById('purchasesTable').addEventListener('click', (e) => {
-    const deleteBtn = e.target.closest('[data-delete-purchase]');
-    if (!deleteBtn) return;
+    const viewBtn = e.target.closest('[data-view-purchase]');
+    if (!viewBtn) return;
     
-    const index = parseInt(deleteBtn.getAttribute('data-delete-purchase'));
-    if (confirm('Delete this purchase? This will also reverse inventory updates.')) {
-      const purchase = db.purchases[index];
+    const index = parseInt(viewBtn.getAttribute('data-view-purchase'));
+    const purchase = db.purchases[index];
+    
+    if (purchase) {
+      let details = `Purchase Date: ${purchase.date}\n`;
+      details += `Supplier: ${purchase.supplier}\n`;
+      details += `Invoice: ${purchase.invoice || 'N/A'}\n\n`;
+      details += 'Items:\n';
+      purchase.items.forEach(item => {
+        details += `- ${item.productName}: ${item.quantity} × ${UGX(item.unitCost)} = ${UGX(item.totalCost)}\n`;
+      });
+      details += `\nTotal: ${UGX(purchase.total)}`;
       
-      // Remove purchase
-      db.purchases.splice(index, 1);
-      
-      // Update inventory
-      InventorySystem.updateAllStocks();
-      saveData();
-      
-      // Refresh display
-      renderPurchases();
-      renderProducts();
-      renderInventory();
-      updateDashboardStats();
-      
-      alert('Purchase deleted successfully!');
+      alert(details);
     }
   });
+  
+  // Purchase analysis
+  document.getElementById('purchaseAnalysisProduct').addEventListener('change', updatePurchaseAnalysis);
+  document.getElementById('purchaseAnalysisFrom').addEventListener('change', updatePurchaseAnalysis);
+  document.getElementById('purchaseAnalysisTo').addEventListener('change', updatePurchaseAnalysis);
 }
 
-// ================ SALES MANAGEMENT ================
+// ================ DAILY SALES MANAGEMENT ================
 let dailySaleItems = [];
 
 function renderSales() {
@@ -1891,9 +1638,11 @@ function renderSales() {
   document.getElementById('saleTo').value = today;
   document.getElementById('productHistoryFrom').value = today;
   document.getElementById('productHistoryTo').value = today;
+  document.getElementById('sheetDate').value = today;
   
   // Reset form
   dailySaleItems = [];
+  document.getElementById('sheetReference').value = '';
   document.getElementById('saleQty').value = '1';
   document.getElementById('salePrice').value = '';
   updateDailySaleTotal();
@@ -1904,11 +1653,9 @@ function renderSales() {
 
 function updateDailySaleTotal() {
   const totalSales = dailySaleItems.reduce((sum, item) => sum + (item.total || 0), 0);
-  const totalCost = dailySaleItems.reduce((sum, item) => sum + (item.cost || 0), 0);
   const totalProfit = dailySaleItems.reduce((sum, item) => sum + (item.profit || 0), 0);
   
   document.getElementById('saleTotal').textContent = UGX(totalSales);
-  document.getElementById('saleCost').textContent = UGX(totalCost);
   document.getElementById('saleProfit').textContent = UGX(totalProfit);
   
   const tbody = document.querySelector('#saleItemsTable tbody');
@@ -1920,8 +1667,7 @@ function updateDailySaleTotal() {
         <td>${item.quantity}</td>
         <td>${UGX(item.unitPrice)}</td>
         <td>${UGX(item.total)}</td>
-        <td>${UGX(item.cost)}</td>
-        <td class="${item.profit >= 0 ? 'positive' : 'negative'}">${UGX(item.profit)}</td>
+        <td>${UGX(item.profit)}</td>
         <td><button class="btn bad" data-remove-sale="${index}">×</button></td>
       </tr>
       `;
@@ -1948,19 +1694,65 @@ function loadRecentSales() {
   if (tbody) {
     tbody.innerHTML = filteredSheets.map(sheet => {
       const itemCount = sheet.items?.length || 0;
-      const margin = sheet.totalSales > 0 ? ((sheet.totalProfit || 0) / sheet.totalSales * 100).toFixed(1) : 0;
-      
       return `
       <tr>
         <td>${sheet.date}</td>
-        <td><span class="pill">${sheet.shift || 'full'}</span></td>
         <td>${itemCount} items</td>
         <td>${UGX(sheet.totalSales || 0)}</td>
         <td>${UGX(sheet.totalProfit || 0)}</td>
-        <td>${margin}%</td>
+        <td>${sheet.source || 'manual'}</td>
       </tr>
       `;
     }).join('');
+  }
+}
+
+function loadProductHistory() {
+  const productId = document.getElementById('productHistorySelect').value;
+  const from = document.getElementById('productHistoryFrom').value;
+  const to = document.getElementById('productHistoryTo').value;
+  
+  if (!productId) return;
+  
+  const product = db.products.find(p => p.id === productId);
+  if (!product) return;
+  
+  // Find all sales for this product in date range
+  const productSales = [];
+  for (const [date, sheet] of Object.entries(db.dailySheets)) {
+    if (date >= from && date <= to) {
+      const productItems = sheet.items.filter(item => item.productName === product.name);
+      if (productItems.length > 0) {
+        const totalQty = productItems.reduce((sum, item) => sum + item.quantity, 0);
+        const totalSales = productItems.reduce((sum, item) => sum + item.total, 0);
+        const totalProfit = productItems.reduce((sum, item) => sum + item.profit, 0);
+        const avgPrice = totalQty > 0 ? totalSales / totalQty : 0;
+        
+        productSales.push({
+          date,
+          qty: totalQty,
+          totalSales,
+          totalProfit,
+          avgPrice
+        });
+      }
+    }
+  }
+  
+  // Sort by date
+  productSales.sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  const tbody = document.querySelector('#productHistoryTable tbody');
+  if (tbody) {
+    tbody.innerHTML = productSales.map(sale => `
+      <tr>
+        <td>${sale.date}</td>
+        <td>${sale.qty}</td>
+        <td>${UGX(sale.totalSales)}</td>
+        <td>${UGX(sale.totalProfit)}</td>
+        <td>${UGX(sale.avgPrice)}</td>
+      </tr>
+    `).join('');
   }
 }
 
@@ -1978,7 +1770,7 @@ function setupSales() {
   document.getElementById('btnAddSaleItem').addEventListener('click', () => {
     const productId = document.getElementById('saleProduct').value;
     const quantity = parseInt(document.getElementById('saleQty').value) || 1;
-    let unitPrice = parseInt(document.getElementById('salePrice').value) || 0;
+    const unitPrice = parseInt(document.getElementById('salePrice').value) || 0;
     
     if (!productId) {
       alert('Please select a product');
@@ -1988,25 +1780,19 @@ function setupSales() {
       alert('Please enter a valid quantity');
       return;
     }
-    
-    const product = InventorySystem.getProductById(productId);
-    if (!product) {
-      alert('Product not found');
-      return;
-    }
-    
-    // Use product selling price if not specified
-    if (unitPrice <= 0) {
-      unitPrice = product.salePrice || 0;
-    }
-    
     if (unitPrice <= 0) {
       alert('Please enter a valid price');
       return;
     }
     
+    const product = db.products.find(p => p.id === productId);
+    if (!product) {
+      alert('Product not found');
+      return;
+    }
+    
     // Check stock
-    const currentStock = product.currentStock || 0;
+    const currentStock = calculateCurrentStock(product);
     if (currentStock < quantity) {
       if (!confirm(`Only ${currentStock} items in stock. Continue anyway?`)) {
         return;
@@ -2014,8 +1800,7 @@ function setupSales() {
     }
     
     const total = quantity * unitPrice;
-    const cost = quantity * (product.purchasePrice || 0);
-    const profit = total - cost;
+    const profit = quantity * (unitPrice - product.purchasePrice);
     
     dailySaleItems.push({
       productId,
@@ -2023,7 +1808,6 @@ function setupSales() {
       quantity,
       unitPrice,
       total,
-      cost,
       profit
     });
     
@@ -2052,27 +1836,24 @@ function setupSales() {
     }
     
     const date = document.getElementById('saleDate').value || todayStr();
-    const shift = document.getElementById('saleShift').value;
+    const sheetReference = document.getElementById('sheetReference').value.trim() || 'manual';
     const recordType = document.getElementById('recordType').value;
     
     // Check if sheet for this date already exists
-    if (db.dailySheets[date]) {
-      if (!confirm(`Sheet already exists for ${date}. Overwrite?`)) {
-        return;
-      }
+    const existingSheet = db.dailySheets[date];
+    if (existingSheet && !confirm(`Sheet already exists for ${date}. Overwrite?`)) {
+      return;
     }
     
     // Calculate totals
     const totalSales = dailySaleItems.reduce((sum, item) => sum + item.total, 0);
-    const totalCost = dailySaleItems.reduce((sum, item) => sum + item.cost, 0);
     const totalProfit = dailySaleItems.reduce((sum, item) => sum + item.profit, 0);
     
-    // Update product sales counts
+    // Update product stocks and counts
     dailySaleItems.forEach(item => {
-      const product = InventorySystem.getProductById(item.productId);
+      const product = db.products.find(p => p.id === item.productId);
       if (product) {
         product.soldCount = (product.soldCount || 0) + item.quantity;
-        product.totalSales = (product.totalSales || 0) + item.total;
         product.totalProfit = (product.totalProfit || 0) + item.profit;
       }
     });
@@ -2080,17 +1861,14 @@ function setupSales() {
     // Save daily sheet
     db.dailySheets[date] = {
       date,
-      shift,
       items: [...dailySaleItems],
       totalSales,
-      totalCost,
       totalProfit,
       source: recordType === 'excel' ? 'excel' : 'manual',
+      sheetReference,
       recordedAt: new Date().toISOString()
     };
     
-    // Update inventory
-    InventorySystem.updateAllStocks();
     saveData();
     
     // Refresh display
@@ -2099,7 +1877,7 @@ function setupSales() {
     renderInventory();
     updateDashboardStats();
     
-    alert(`Daily sales saved for ${date}! Sales: ${UGX(totalSales)}, Profit: ${UGX(totalProfit)}`);
+    alert(`Daily sales saved for ${date}! Total: ${UGX(totalSales)}, Profit: ${UGX(totalProfit)}`);
   });
   
   // Filter sales
@@ -2109,242 +1887,65 @@ function setupSales() {
   document.getElementById('productHistorySelect').addEventListener('change', loadProductHistory);
   document.getElementById('productHistoryFrom').addEventListener('change', loadProductHistory);
   document.getElementById('productHistoryTo').addEventListener('change', loadProductHistory);
-  document.getElementById('analysisType').addEventListener('change', loadProductHistory);
-}
-
-function loadProductHistory() {
-  const productId = document.getElementById('productHistorySelect').value;
-  const from = document.getElementById('productHistoryFrom').value;
-  const to = document.getElementById('productHistoryTo').value;
-  const analysisType = document.getElementById('analysisType').value;
-  
-  if (!productId) return;
-  
-  const product = InventorySystem.getProductById(productId);
-  if (!product) return;
-  
-  // Group sales by period
-  const salesByPeriod = {};
-  
-  for (const [date, sheet] of Object.entries(db.dailySheets)) {
-    if (date >= from && date <= to) {
-      const productItems = sheet.items.filter(item => item.productId === productId);
-      if (productItems.length > 0) {
-        let periodKey;
-        
-        if (analysisType === 'daily') {
-          periodKey = date;
-        } else if (analysisType === 'weekly') {
-          const dateObj = new Date(date);
-          const weekStart = new Date(dateObj);
-          weekStart.setDate(dateObj.getDate() - dateObj.getDay());
-          periodKey = weekStart.toISOString().split('T')[0] + ' (Week)';
-        } else if (analysisType === 'monthly') {
-          periodKey = date.substring(0, 7) + ' (Month)';
-        }
-        
-        if (!salesByPeriod[periodKey]) {
-          salesByPeriod[periodKey] = {
-            qty: 0,
-            sales: 0,
-            cost: 0,
-            profit: 0
-          };
-        }
-        
-        productItems.forEach(item => {
-          salesByPeriod[periodKey].qty += item.quantity;
-          salesByPeriod[periodKey].sales += item.total;
-          salesByPeriod[periodKey].cost += item.cost || (item.quantity * product.purchasePrice);
-          salesByPeriod[periodKey].profit += item.profit || (item.total - (item.quantity * product.purchasePrice));
-        });
-      }
-    }
-  }
-  
-  // Convert to array and sort
-  const periodSales = Object.entries(salesByPeriod).map(([period, data]) => ({
-    period,
-    ...data,
-    avgPrice: data.qty > 0 ? data.sales / data.qty : 0,
-    margin: data.sales > 0 ? (data.profit / data.sales * 100) : 0
-  }));
-  
-  // Sort by period
-  periodSales.sort((a, b) => a.period.localeCompare(b.period));
-  
-  const tbody = document.querySelector('#productHistoryTable tbody');
-  if (tbody) {
-    tbody.innerHTML = periodSales.map(sale => `
-      <tr>
-        <td>${sale.period}</td>
-        <td>${sale.qty}</td>
-        <td>${UGX(sale.avgPrice)}</td>
-        <td>${UGX(sale.sales)}</td>
-        <td>${UGX(sale.cost)}</td>
-        <td class="${sale.profit >= 0 ? 'positive' : 'negative'}">${UGX(sale.profit)}</td>
-        <td>${sale.margin.toFixed(1)}%</td>
-      </tr>
-    `).join('');
-  }
 }
 
 // ================ INVENTORY MANAGEMENT ================
 function renderInventory() {
   const date = document.getElementById('inventoryDate').value || todayStr();
   const category = document.getElementById('filterCategory').value;
-  const stockStatus = document.getElementById('filterStockStatus').value;
-  
-  // Update inventory first
-  InventorySystem.updateAllStocks();
   
   let filtered = db.products;
-  
   if (category) {
     filtered = filtered.filter(p => p.category === category);
-  }
-  
-  if (stockStatus) {
-    filtered = filtered.filter(p => p.stockStatus === stockStatus);
   }
   
   const tbody = document.querySelector('#inventoryTable tbody');
   if (tbody) {
     tbody.innerHTML = filtered.map(product => {
-      // Calculate historical data
-      const openingStock = product.openingStock || 0;
-      const currentStock = product.currentStock || 0;
-      
       // Calculate purchased up to date
       let totalPurchased = 0;
-      db.purchases.forEach(purchase => {
-        if (purchase.date <= date && (purchase.status === 'received' || purchase.status === 'partially')) {
-          purchase.items.forEach(item => {
-            if (item.productId === product.id) {
-              totalPurchased += item.quantity || 0;
-            }
-          });
-        }
-      });
-      
-      // Calculate sold up to date
       let totalSold = 0;
-      Object.values(db.dailySheets).forEach(sheet => {
-        if (sheet.date <= date) {
-          sheet.items.forEach(item => {
-            if (item.productId === product.id) {
-              totalSold += item.quantity || 0;
-            }
-          });
+      
+      db.purchases.forEach(purchase => {
+        if (purchase.date <= date) {
+          const productItems = purchase.items.filter(item => item.productName === product.name);
+          totalPurchased += productItems.reduce((sum, item) => sum + item.quantity, 0);
         }
       });
       
-      const stockValue = currentStock * (product.purchasePrice || 0);
-      const reorderLevel = product.reorderLevel || product.minStockLevel || 5;
-      const targetStock = product.targetStock || 30;
-      
-      let statusHtml = '';
-      let rowClass = '';
-      
-      if (currentStock === 0) {
-        statusHtml = '<span class="pill" style="background:#ef4444; color:white;">Out of Stock</span>';
-        rowClass = 'stock-out';
-      } else if (currentStock <= reorderLevel) {
-        statusHtml = '<span class="pill" style="background:#f59e0b; color:white;">Low Stock</span>';
-        rowClass = 'stock-low';
-      } else if (currentStock > targetStock * 1.5) {
-        statusHtml = '<span class="pill" style="background:#0ea5e9; color:white;">Excess Stock</span>';
-        rowClass = 'stock-good';
-      } else {
-        statusHtml = '<span class="pill" style="background:#16a34a; color:white;">Good</span>';
+      for (const [sheetDate, sheet] of Object.entries(db.dailySheets)) {
+        if (sheetDate <= date) {
+          const productItems = sheet.items.filter(item => item.productName === product.name);
+          totalSold += productItems.reduce((sum, item) => sum + item.quantity, 0);
+        }
       }
       
+      const openingStock = product.openingStock || 0;
+      const currentStock = Math.max(0, openingStock + totalPurchased - totalSold);
+      const stockValue = currentStock * (product.purchasePrice || 0);
+      const needsReorder = currentStock <= (product.reorderLevel || 10);
+      
       return `
-      <tr class="${rowClass}">
-        <td><strong>${product.name}</strong></td>
+      <tr ${needsReorder ? 'style="background:#fff7ed"' : ''}>
+        <td><strong>${product.name}</strong> ${needsReorder ? '⚠️' : ''}</td>
         <td><span class="pill">${product.category || 'other'}</span></td>
         <td>${openingStock}</td>
         <td>${totalPurchased}</td>
         <td>${totalSold}</td>
         <td><strong>${currentStock}</strong></td>
-        <td>${reorderLevel}</td>
         <td>${UGX(product.purchasePrice || 0)}</td>
         <td>${UGX(product.salePrice || 0)}</td>
         <td>${UGX(stockValue)}</td>
-        <td>${statusHtml}</td>
       </tr>
       `;
     }).join('');
   }
-  
-  // Update replenishment suggestions
-  updateReplenishmentSuggestions();
-  
-  // Update inventory summary
-  updateInventorySummary();
-}
-
-function updateReplenishmentSuggestions() {
-  const itemsNeedingReorder = InventorySystem.getItemsNeedingReorder();
-  
-  const tbody = document.querySelector('#replenishmentTable tbody');
-  if (tbody) {
-    tbody.innerHTML = itemsNeedingReorder.map(product => {
-      const reorderLevel = product.reorderLevel || product.minStockLevel || 5;
-      const targetStock = product.targetStock || 30;
-      const currentStock = product.currentStock || 0;
-      const suggestedQty = Math.max(targetStock - currentStock, reorderLevel);
-      const cost = suggestedQty * (product.purchasePrice || 0);
-      
-      return `
-      <tr>
-        <td><strong>${product.name}</strong></td>
-        <td>${currentStock}</td>
-        <td>${reorderLevel}</td>
-        <td><strong>${suggestedQty}</strong></td>
-        <td>${UGX(cost)}</td>
-      </tr>
-      `;
-    }).join('');
-  }
-}
-
-function updateInventorySummary() {
-  const totalValue = InventorySystem.getInventoryValue();
-  const lowStockItems = InventorySystem.getItemsNeedingReorder();
-  const outOfStockItems = db.products.filter(p => (p.currentStock || 0) === 0);
-  
-  // Calculate average stock days
-  let totalTurnover = 0;
-  let productsWithTurnover = 0;
-  
-  db.products.forEach(product => {
-    const turnover = InventorySystem.getStockTurnover(product.id, 30);
-    if (turnover > 0) {
-      totalTurnover += turnover;
-      productsWithTurnover++;
-    }
-  });
-  
-  const avgTurnover = productsWithTurnover > 0 ? totalTurnover / productsWithTurnover : 0;
-  const avgStockDays = avgTurnover > 0 ? (30 / avgTurnover).toFixed(1) : 0;
-  
-  document.getElementById('totalInventoryValue').textContent = UGX(totalValue);
-  document.getElementById('itemsNeedingReorder').textContent = lowStockItems.length;
-  document.getElementById('avgStockDays').textContent = avgStockDays;
 }
 
 function setupInventory() {
   document.getElementById('inventoryDate').addEventListener('change', renderInventory);
   document.getElementById('filterCategory').addEventListener('change', renderInventory);
-  document.getElementById('filterStockStatus').addEventListener('change', renderInventory);
   document.getElementById('btnUpdateInventory').addEventListener('click', renderInventory);
-  document.getElementById('btnAutoUpdateInventory').addEventListener('click', () => {
-    InventorySystem.updateAllStocks();
-    renderInventory();
-    updateDashboardStats();
-    alert('Inventory auto-updated successfully!');
-  });
 }
 
 // ================ EXPENSES MANAGEMENT ================
@@ -2360,7 +1961,6 @@ function renderExpenses() {
   
   // Load expenses
   loadExpenses();
-  updateExpenseAnalysis();
 }
 
 function loadExpenses() {
@@ -2379,7 +1979,6 @@ function loadExpenses() {
         <td><span class="pill">${expense.type}</span></td>
         <td>${expense.description || ''}</td>
         <td>${UGX(expense.amount)}</td>
-        <td>${expense.paymentMethod || 'cash'}</td>
         <td><button class="btn bad" data-remove-expense="${index}">×</button></td>
       </tr>
       `;
@@ -2391,44 +1990,6 @@ function loadExpenses() {
   document.getElementById('totalExpenses').textContent = UGX(totalExpenses);
 }
 
-function updateExpenseAnalysis() {
-  const currentMonth = todayStr().substring(0, 7);
-  const monthExpenses = db.expenses.filter(e => e.date && e.date.startsWith(currentMonth));
-  
-  const totalMonth = monthExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-  const avgDaily = totalMonth / new Date().getDate();
-  
-  // Find largest expense category
-  const categoryTotals = {};
-  monthExpenses.forEach(e => {
-    categoryTotals[e.type] = (categoryTotals[e.type] || 0) + (e.amount || 0);
-  });
-  
-  let largestCategory = '-';
-  let largestAmount = 0;
-  for (const [category, amount] of Object.entries(categoryTotals)) {
-    if (amount > largestAmount) {
-      largestAmount = amount;
-      largestCategory = category;
-    }
-  }
-  
-  // Calculate expense ratio (expenses vs sales)
-  let monthSales = 0;
-  Object.values(db.dailySheets).forEach(sheet => {
-    if (sheet.date && sheet.date.startsWith(currentMonth)) {
-      monthSales += sheet.totalSales || 0;
-    }
-  });
-  
-  const expenseRatio = monthSales > 0 ? (totalMonth / monthSales * 100).toFixed(1) : 0;
-  
-  document.getElementById('expensesThisMonth').textContent = UGX(totalMonth);
-  document.getElementById('avgDailyExpense').textContent = UGX(avgDaily);
-  document.getElementById('largestExpenseCategory').textContent = largestCategory;
-  document.getElementById('expenseRatio').textContent = expenseRatio + '%';
-}
-
 function setupExpenses() {
   // Save expense
   document.getElementById('btnSaveExpense').addEventListener('click', () => {
@@ -2436,8 +1997,6 @@ function setupExpenses() {
     const type = document.getElementById('expenseType').value;
     const description = document.getElementById('expenseDescription').value.trim();
     const amount = parseInt(document.getElementById('expenseAmount').value) || 0;
-    const paymentMethod = document.getElementById('expensePaymentMethod').value;
-    const recurring = document.getElementById('expenseRecurring').value;
     
     if (!description) {
       alert('Please enter expense description');
@@ -2455,8 +2014,6 @@ function setupExpenses() {
       type,
       description,
       amount,
-      paymentMethod,
-      recurring,
       recordedAt: new Date().toISOString()
     };
     
@@ -2485,10 +2042,363 @@ function setupExpenses() {
   });
   
   // Filter expenses
-  document.getElementById('btnFilterExpenses').addEventListener('click', () => {
-    loadExpenses();
-    updateExpenseAnalysis();
+  document.getElementById('btnFilterExpenses').addEventListener('click', loadExpenses);
+}
+
+// ================ EXCEL AUTOMATION ================
+function processExcelFile(file, sheetDate) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        
+        const result = {
+          fileName: file.name,
+          date: sheetDate,
+          items: [],
+          totalRecords: 0,
+          totalSales: 0,
+          totalProfit: 0
+        };
+        
+        workbook.SheetNames.forEach(sheetName => {
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          
+          // Parse Excel data (based on provided sheet structure)
+          for (let i = 2; i < jsonData.length; i++) {
+            const row = jsonData[i];
+            if (row && row[1] && row[1].trim() !== '') {
+              const productName = String(row[1] || '').trim();
+              const category = String(row[2] || '').trim();
+              const purchasePrice = parseInt(row[3]) || 0;
+              const salePrice = parseInt(row[4]) || 0;
+              const openingStock = parseInt(row[5]) || 0;
+              const received = parseInt(row[6]) || 0;
+              const sold = parseInt(row[9]) || 0;
+              const profit = parseInt(row[10]) || 0;
+              
+              if (productName && sold > 0) {
+                // Find or create product
+                let product = db.products.find(p => 
+                  p.name.toLowerCase() === productName.toLowerCase()
+                );
+                
+                if (!product) {
+                  product = {
+                    id: 'prod_import_' + Date.now() + Math.random(),
+                    name: productName,
+                    category,
+                    purchasePrice,
+                    salePrice,
+                    openingStock,
+                    purchasedQuantity: 0,
+                    soldCount: 0,
+                    totalProfit: 0,
+                    reorderLevel: 10,
+                    lastPurchaseDate: null,
+                    lastPurchasePrice: purchasePrice
+                  };
+                  db.products.push(product);
+                }
+                
+                const total = sold * salePrice;
+                const itemProfit = sold * (salePrice - purchasePrice);
+                
+                result.items.push({
+                  productId: product.id,
+                  productName,
+                  quantity: sold,
+                  unitPrice: salePrice,
+                  total,
+                  profit: itemProfit
+                });
+                
+                result.totalRecords++;
+                result.totalSales += total;
+                result.totalProfit += itemProfit;
+                
+                // Update product
+                product.soldCount = (product.soldCount || 0) + sold;
+                product.totalProfit = (product.totalProfit || 0) + itemProfit;
+              }
+            }
+          }
+        });
+        
+        // Save daily sheet
+        db.dailySheets[sheetDate] = {
+          date: sheetDate,
+          items: result.items,
+          totalSales: result.totalSales,
+          totalProfit: result.totalProfit,
+          source: 'excel',
+          fileName: file.name,
+          recordedAt: new Date().toISOString()
+        };
+        
+        saveData();
+        logImport(`Processed sales sheet ${file.name} for ${sheetDate}: ${result.totalRecords} records, Sales: ${UGX(result.totalSales)}, Profit: ${UGX(result.totalProfit)}`);
+        
+        resolve(result);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
   });
+}
+
+function processPurchaseExcelFile(file, sheetDate, supplier) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        
+        const result = {
+          fileName: file.name,
+          date: sheetDate,
+          supplier,
+          items: [],
+          totalRecords: 0,
+          totalCost: 0
+        };
+        
+        workbook.SheetNames.forEach(sheetName => {
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          
+          // Parse Excel data for purchases
+          for (let i = 1; i < jsonData.length; i++) {
+            const row = jsonData[i];
+            if (row && row[0] && row[0].trim() !== '') {
+              const productName = String(row[0] || '').trim();
+              const quantity = parseInt(row[1]) || 0;
+              const unitCost = parseInt(row[2]) || 0;
+              const totalCost = quantity * unitCost;
+              
+              if (productName && quantity > 0) {
+                // Find or create product
+                let product = db.products.find(p => 
+                  p.name.toLowerCase() === productName.toLowerCase()
+                );
+                
+                if (!product) {
+                  product = {
+                    id: 'prod_import_' + Date.now() + Math.random(),
+                    name: productName,
+                    category: 'other',
+                    purchasePrice: unitCost,
+                    salePrice: unitCost * 1.5, // Default markup
+                    openingStock: 0,
+                    purchasedQuantity: 0,
+                    soldCount: 0,
+                    totalProfit: 0,
+                    reorderLevel: 10,
+                    lastPurchaseDate: sheetDate,
+                    lastPurchasePrice: unitCost
+                  };
+                  db.products.push(product);
+                }
+                
+                result.items.push({
+                  productId: product.id,
+                  productName,
+                  quantity,
+                  unitCost,
+                  totalCost
+                });
+                
+                result.totalRecords++;
+                result.totalCost += totalCost;
+                
+                // Update product
+                product.purchasedQuantity = (product.purchasedQuantity || 0) + quantity;
+                product.lastPurchaseDate = sheetDate;
+                product.lastPurchasePrice = unitCost;
+                
+                // Update purchase price if different
+                if (unitCost !== product.purchasePrice) {
+                  product.purchasePrice = unitCost;
+                }
+              }
+            }
+          }
+        });
+        
+        // Save purchase record
+        const newPurchase = {
+          id: 'pur_' + Date.now(),
+          date: sheetDate,
+          supplier,
+          items: result.items,
+          total: result.totalCost,
+          fileName: file.name,
+          recordedAt: new Date().toISOString()
+        };
+        
+        db.purchases.push(newPurchase);
+        saveData();
+        logImport(`Processed purchases sheet ${file.name} for ${sheetDate}: ${result.totalRecords} items, Total: ${UGX(result.totalCost)}`);
+        
+        resolve(result);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function setupAutomation() {
+  // Process daily sales sheet
+  document.getElementById('btnProcessDailySheet').addEventListener('click', async () => {
+    const fileInput = document.getElementById('dailyExcelFile');
+    if (!fileInput.files || fileInput.files.length === 0) {
+      alert('Please select an Excel file');
+      return;
+    }
+    
+    const sheetDate = document.getElementById('sheetDate').value || todayStr();
+    const overwriteOption = document.getElementById('overwriteOption').value;
+    
+    // Check if sheet already exists
+    if (db.dailySheets[sheetDate] && overwriteOption === 'no') {
+      alert(`Sheet already exists for ${sheetDate}. Change overwrite option or select a different date.`);
+      return;
+    }
+    
+    showLoading(true);
+    
+    try {
+      const result = await processExcelFile(fileInput.files[0], sheetDate);
+      
+      // Refresh display
+      renderProducts();
+      renderSales();
+      renderInventory();
+      updateDashboardStats();
+      renderAutomation();
+      
+      showLoading(false);
+      
+      alert(`Excel sales sheet processed successfully!\nDate: ${sheetDate}\nRecords: ${result.totalRecords}\nTotal Sales: ${UGX(result.totalSales)}\nTotal Profit: ${UGX(result.totalProfit)}`);
+      
+      // Clear file input
+      fileInput.value = '';
+    } catch (error) {
+      showLoading(false);
+      console.error('Error processing Excel:', error);
+      alert('Error processing Excel file: ' + error.message);
+    }
+  });
+  
+  // Process purchase sheet
+  document.getElementById('btnProcessPurchaseSheet').addEventListener('click', async () => {
+    const fileInput = document.getElementById('purchaseExcelFile');
+    if (!fileInput.files || fileInput.files.length === 0) {
+      alert('Please select an Excel file');
+      return;
+    }
+    
+    const sheetDate = document.getElementById('purchaseSheetDate').value || todayStr();
+    const supplier = document.getElementById('purchaseSheetSupplier').value.trim();
+    
+    if (!supplier) {
+      alert('Please enter supplier name');
+      return;
+    }
+    
+    showLoading(true);
+    
+    try {
+      const result = await processPurchaseExcelFile(fileInput.files[0], sheetDate, supplier);
+      
+      // Refresh display
+      renderProducts();
+      renderPurchases();
+      renderInventory();
+      updateDashboardStats();
+      renderAutomation();
+      
+      showLoading(false);
+      
+      alert(`Excel purchases sheet processed successfully!\nDate: ${sheetDate}\nSupplier: ${supplier}\nItems: ${result.totalRecords}\nTotal Cost: ${UGX(result.totalCost)}`);
+      
+      // Clear file input
+      fileInput.value = '';
+      document.getElementById('purchaseSheetSupplier').value = '';
+    } catch (error) {
+      showLoading(false);
+      console.error('Error processing purchases Excel:', error);
+      alert('Error processing purchases Excel file: ' + error.message);
+    }
+  });
+  
+  // File input click for sales
+  document.getElementById('dailyExcelFile').addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+      // Auto-set date from filename if possible
+      const fileName = this.files[0].name.toLowerCase();
+      const dateMatch = fileName.match(/(\d{4}[-_]\d{2}[-_]\d{2})|(\d{8})/);
+      if (dateMatch) {
+        let dateStr = dateMatch[0];
+        // Convert 20231231 to 2023-12-31
+        if (dateStr.length === 8 && !dateStr.includes('-') && !dateStr.includes('_')) {
+          dateStr = `${dateStr.substring(0,4)}-${dateStr.substring(4,6)}-${dateStr.substring(6,8)}`;
+        }
+        // Replace underscores with dashes
+        dateStr = dateStr.replace(/_/g, '-');
+        document.getElementById('sheetDate').value = dateStr;
+      }
+    }
+  });
+  
+  // File input click for purchases
+  document.getElementById('purchaseExcelFile').addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+      // Auto-set date from filename if possible
+      const fileName = this.files[0].name.toLowerCase();
+      const dateMatch = fileName.match(/(\d{4}[-_]\d{2}[-_]\d{2})|(\d{8})/);
+      if (dateMatch) {
+        let dateStr = dateMatch[0];
+        // Convert 20231231 to 2023-12-31
+        if (dateStr.length === 8 && !dateStr.includes('-') && !dateStr.includes('_')) {
+          dateStr = `${dateStr.substring(0,4)}-${dateStr.substring(4,6)}-${dateStr.substring(6,8)}`;
+        }
+        // Replace underscores with dashes
+        dateStr = dateStr.replace(/_/g, '-');
+        document.getElementById('purchaseSheetDate').value = dateStr;
+      }
+      
+      // Try to extract supplier from filename
+      const supplierMatch = fileName.match(/from_([a-z0-9_]+)/i);
+      if (supplierMatch) {
+        document.getElementById('purchaseSheetSupplier').value = supplierMatch[1].replace(/_/g, ' ');
+      }
+    }
+  });
+}
+
+function renderAutomation() {
+  const sheetCount = Object.keys(db.dailySheets).length;
+  const purchaseCount = db.purchases.length;
+  
+  document.getElementById('processedSheetsCount').textContent = sheetCount + purchaseCount;
+  document.getElementById('uniqueDatesCount').textContent = sheetCount;
+  
+  if (sheetCount > 0) {
+    const dates = Object.keys(db.dailySheets).sort();
+    const lastDate = dates[dates.length - 1];
+    const lastSheet = db.dailySheets[lastDate];
+    document.getElementById('lastAutoRun').textContent = new Date(lastSheet.recordedAt).toLocaleDateString();
+  }
 }
 
 // ================ REPORTS ================
@@ -2503,58 +2413,73 @@ function initReports() {
 function generateReport() {
   const startDate = document.getElementById('reportStart').value;
   const endDate = document.getElementById('reportEnd').value;
-  const comparePeriod = document.getElementById('comparePeriod').value;
+  const reportType = document.getElementById('reportType').value;
   
   if (!startDate || !endDate) {
     alert('Please select report period');
     return;
   }
   
+  // Calculate report data based on type
+  if (reportType === 'purchases') {
+    generatePurchasesReport(startDate, endDate);
+  } else if (reportType === 'inventory') {
+    generateInventoryReport(startDate, endDate);
+  } else if (reportType === 'combined') {
+    generateCombinedReport(startDate, endDate);
+  } else {
+    generateProfitLossReport(startDate, endDate);
+  }
+}
+
+function generateProfitLossReport(startDate, endDate) {
   // Calculate report data
   let totalSales = 0;
-  let totalCost = 0;
   let totalProfit = 0;
   let totalExpenses = 0;
+  let totalPurchases = 0;
   const categoryBreakdown = {};
   const dailyBreakdown = [];
   
-  // Get sales for period
+  // Get sheets for period
   for (const [date, sheet] of Object.entries(db.dailySheets)) {
     if (date >= startDate && date <= endDate) {
       totalSales += sheet.totalSales || 0;
-      totalCost += sheet.totalCost || 0;
       totalProfit += sheet.totalProfit || 0;
       
       // Daily breakdown
       dailyBreakdown.push({
         date,
         sales: sheet.totalSales || 0,
-        cost: sheet.totalCost || 0,
-        profit: sheet.totalProfit || 0,
-        expenses: db.expenses.filter(e => e.date === date).reduce((sum, e) => sum + (e.amount || 0), 0)
+        profit: sheet.totalProfit || 0
       });
       
       // Category breakdown
       sheet.items.forEach(item => {
-        const product = InventorySystem.getProductById(item.productId);
+        const product = db.products.find(p => p.name === item.productName);
         if (product) {
           const category = product.category || 'other';
           if (!categoryBreakdown[category]) {
             categoryBreakdown[category] = {
               sales: 0,
-              cost: 0,
               profit: 0,
               items: 0
             };
           }
           categoryBreakdown[category].sales += item.total;
-          categoryBreakdown[category].cost += item.cost || 0;
-          categoryBreakdown[category].profit += item.profit || 0;
+          categoryBreakdown[category].profit += item.profit;
           categoryBreakdown[category].items += item.quantity;
         }
       });
     }
   }
+  
+  // Get purchases for period
+  db.purchases.forEach(purchase => {
+    if (purchase.date >= startDate && purchase.date <= endDate) {
+      totalPurchases += purchase.total || 0;
+    }
+  });
   
   // Get expenses for period
   db.expenses.forEach(expense => {
@@ -2563,9 +2488,8 @@ function generateReport() {
     }
   });
   
-  const netProfit = totalProfit - totalExpenses;
+  const netProfit = totalProfit - totalExpenses - totalPurchases;
   const profitMargin = totalSales > 0 ? (totalProfit / totalSales * 100).toFixed(1) : 0;
-  const netMargin = totalSales > 0 ? (netProfit / totalSales * 100).toFixed(1) : 0;
   
   // Generate report HTML
   let html = `
@@ -2583,40 +2507,39 @@ function generateReport() {
         <b>${UGX(totalProfit)}</b>
       </div>
       <div class="stat">
-        <span class="muted">Gross Margin</span>
+        <span class="muted">Profit Margin</span>
         <b>${profitMargin}%</b>
       </div>
     </div>
     
     <div class="grid-4" style="margin-top:16px;">
       <div class="stat">
-        <span class="muted">COGS</span>
-        <b>${UGX(totalCost)}</b>
+        <span class="muted">Total Purchases</span>
+        <b>${UGX(totalPurchases)}</b>
       </div>
       <div class="stat">
         <span class="muted">Total Expenses</span>
         <b>${UGX(totalExpenses)}</b>
       </div>
-      <div class="stat ${netProfit >= 0 ? 'goodmsg' : 'badmsg'}">
-        <span class="muted">Net Profit/Loss</span>
-        <b>${UGX(netProfit)}</b>
-      </div>
       <div class="stat">
-        <span class="muted">Net Margin</span>
-        <b>${netMargin}%</b>
+        <span class="muted">Net Profit/Loss</span>
+        <b style="color: ${netProfit >= 0 ? '#16a34a' : '#ef4444'}">${UGX(netProfit)}</b>
+      </div>
+      <div class="stat ${netProfit >= 0 ? 'goodmsg' : 'badmsg'}">
+        <span class="muted">Status</span>
+        <b>${netProfit >= 0 ? 'PROFITABLE' : 'LOSS MAKING'}</b>
       </div>
     </div>
     
     <div class="hr"></div>
     
-    <h4>Category Performance</h4>
+    <h4>Category Breakdown</h4>
     <table class="table" style="margin-bottom:20px;">
       <thead>
         <tr>
           <th>Category</th>
           <th>Items Sold</th>
-          <th>Sales Revenue</th>
-          <th>COGS</th>
+          <th>Total Sales</th>
           <th>Gross Profit</th>
           <th>Profit Margin</th>
         </tr>
@@ -2631,7 +2554,6 @@ function generateReport() {
         <td><strong>${category}</strong></td>
         <td>${data.items}</td>
         <td>${UGX(data.sales)}</td>
-        <td>${UGX(data.cost)}</td>
         <td>${UGX(data.profit)}</td>
         <td>${categoryMargin}%</td>
       </tr>
@@ -2641,32 +2563,242 @@ function generateReport() {
   html += `
       </tbody>
     </table>
+  `;
+  
+  document.getElementById('reportOutput').innerHTML = html;
+}
+
+function generatePurchasesReport(startDate, endDate) {
+  let totalPurchases = 0;
+  let totalItems = 0;
+  const supplierBreakdown = {};
+  const productBreakdown = {};
+  
+  // Filter purchases
+  const filteredPurchases = db.purchases.filter(p => p.date >= startDate && p.date <= endDate);
+  
+  filteredPurchases.forEach(purchase => {
+    totalPurchases += purchase.total || 0;
+    
+    // Supplier breakdown
+    const supplier = purchase.supplier || 'Unknown';
+    if (!supplierBreakdown[supplier]) {
+      supplierBreakdown[supplier] = {
+        count: 0,
+        total: 0,
+        items: 0
+      };
+    }
+    supplierBreakdown[supplier].count++;
+    supplierBreakdown[supplier].total += purchase.total;
+    supplierBreakdown[supplier].items += purchase.items.length;
+    
+    // Product breakdown
+    purchase.items.forEach(item => {
+      totalItems += item.quantity;
+      if (!productBreakdown[item.productName]) {
+        productBreakdown[item.productName] = {
+          quantity: 0,
+          total: 0
+        };
+      }
+      productBreakdown[item.productName].quantity += item.quantity;
+      productBreakdown[item.productName].total += item.totalCost;
+    });
+  });
+  
+  let html = `
+    <div class="grid-3">
+      <div class="stat">
+        <span class="muted">Report Period</span>
+        <b>${startDate} to ${endDate}</b>
+      </div>
+      <div class="stat">
+        <span class="muted">Total Purchases</span>
+        <b>${UGX(totalPurchases)}</b>
+      </div>
+      <div class="stat">
+        <span class="muted">Total Items</span>
+        <b>${totalItems}</b>
+      </div>
+    </div>
+    
+    <div class="hr"></div>
+    
+    <h4>Supplier Breakdown</h4>
+    <table class="table" style="margin-bottom:20px;">
+      <thead>
+        <tr>
+          <th>Supplier</th>
+          <th>Purchase Count</th>
+          <th>Items</th>
+          <th>Total Value</th>
+          <th>Average Purchase</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  for (const [supplier, data] of Object.entries(supplierBreakdown)) {
+    const avgPurchase = data.count > 0 ? data.total / data.count : 0;
+    html += `
+      <tr>
+        <td><strong>${supplier}</strong></td>
+        <td>${data.count}</td>
+        <td>${data.items}</td>
+        <td>${UGX(data.total)}</td>
+        <td>${UGX(avgPurchase)}</td>
+      </tr>
+    `;
+  }
+  
+  html += `
+      </tbody>
+    </table>
+    
+    <h4>Product Breakdown</h4>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Quantity Purchased</th>
+          <th>Total Cost</th>
+          <th>Average Unit Cost</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  for (const [product, data] of Object.entries(productBreakdown)) {
+    const avgCost = data.quantity > 0 ? data.total / data.quantity : 0;
+    html += `
+      <tr>
+        <td><strong>${product}</strong></td>
+        <td>${data.quantity}</td>
+        <td>${UGX(data.total)}</td>
+        <td>${UGX(avgCost)}</td>
+      </tr>
+    `;
+  }
+  
+  html += `
+      </tbody>
+    </table>
+  `;
+  
+  document.getElementById('reportOutput').innerHTML = html;
+}
+
+function generateCombinedReport(startDate, endDate) {
+  // Call both reports and combine
+  let html = `<h3>Combined Business Report</h3>`;
+  html += `<p>Period: ${startDate} to ${endDate}</p>`;
+  
+  // Calculate totals
+  let totalSales = 0;
+  let totalProfit = 0;
+  let totalPurchases = 0;
+  let totalExpenses = 0;
+  
+  // Sales and profit
+  for (const [date, sheet] of Object.entries(db.dailySheets)) {
+    if (date >= startDate && date <= endDate) {
+      totalSales += sheet.totalSales || 0;
+      totalProfit += sheet.totalProfit || 0;
+    }
+  }
+  
+  // Purchases
+  db.purchases.forEach(purchase => {
+    if (purchase.date >= startDate && purchase.date <= endDate) {
+      totalPurchases += purchase.total || 0;
+    }
+  });
+  
+  // Expenses
+  db.expenses.forEach(expense => {
+    if (expense.date >= startDate && expense.date <= endDate) {
+      totalExpenses += expense.amount || 0;
+    }
+  });
+  
+  const netProfit = totalProfit - totalExpenses - totalPurchases;
+  
+  html += `
+    <div class="grid-4" style="margin-top:16px;">
+      <div class="stat">
+        <span class="muted">Total Sales</span>
+        <b>${UGX(totalSales)}</b>
+      </div>
+      <div class="stat">
+        <span class="muted">Gross Profit</span>
+        <b>${UGX(totalProfit)}</b>
+      </div>
+      <div class="stat">
+        <span class="muted">Total Purchases</span>
+        <b>${UGX(totalPurchases)}</b>
+      </div>
+      <div class="stat">
+        <span class="muted">Total Expenses</span>
+        <b>${UGX(totalExpenses)}</b>
+      </div>
+    </div>
+    
+    <div class="grid-2" style="margin-top:16px;">
+      <div class="stat" style="background: ${netProfit >= 0 ? '#ecfdf5' : '#fee2e2'};">
+        <span class="muted">Net Profit/Loss</span>
+        <b style="color: ${netProfit >= 0 ? '#16a34a' : '#ef4444'}; font-size:28px;">${UGX(netProfit)}</b>
+      </div>
+      <div class="stat">
+        <span class="muted">Profit Margin</span>
+        <b>${totalSales > 0 ? ((totalProfit / totalSales) * 100).toFixed(1) : 0}%</b>
+      </div>
+    </div>
+    
+    <div class="hr"></div>
     
     <div class="grid-2">
       <div>
-        <h4>Daily Performance</h4>
-        <table class="table compact-table">
+        <h4>Top Selling Products</h4>
+        <table class="table">
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Sales</th>
-              <th>Profit</th>
-              <th>Expenses</th>
-              <th>Net</th>
+              <th>Product</th>
+              <th>Quantity Sold</th>
+              <th>Sales Value</th>
             </tr>
           </thead>
           <tbody>
   `;
   
-  dailyBreakdown.forEach(day => {
-    const dailyNet = day.profit - day.expenses;
+  // Calculate top selling products
+  const productSales = {};
+  for (const [date, sheet] of Object.entries(db.dailySheets)) {
+    if (date >= startDate && date <= endDate) {
+      sheet.items.forEach(item => {
+        if (!productSales[item.productName]) {
+          productSales[item.productName] = {
+            quantity: 0,
+            sales: 0
+          };
+        }
+        productSales[item.productName].quantity += item.quantity;
+        productSales[item.productName].sales += item.total;
+      });
+    }
+  }
+  
+  // Sort by sales
+  const sortedProducts = Object.entries(productSales)
+    .sort((a, b) => b[1].sales - a[1].sales)
+    .slice(0, 10);
+  
+  sortedProducts.forEach(([product, data]) => {
     html += `
       <tr>
-        <td>${day.date}</td>
-        <td>${UGX(day.sales)}</td>
-        <td>${UGX(day.profit)}</td>
-        <td>${UGX(day.expenses)}</td>
-        <td class="${dailyNet >= 0 ? 'positive' : 'negative'}">${UGX(dailyNet)}</td>
+        <td>${product}</td>
+        <td>${data.quantity}</td>
+        <td>${UGX(data.sales)}</td>
       </tr>
     `;
   });
@@ -2677,35 +2809,49 @@ function generateReport() {
       </div>
       
       <div>
-        <h4>Expense Breakdown</h4>
-        <table class="table compact-table">
+        <h4>Top Purchased Products</h4>
+        <table class="table">
           <thead>
             <tr>
-              <th>Expense Type</th>
-              <th>Amount</th>
-              <th>% of Total</th>
+              <th>Product</th>
+              <th>Quantity Purchased</th>
+              <th>Purchase Value</th>
             </tr>
           </thead>
           <tbody>
   `;
   
-  const expenseTypes = {};
-  db.expenses.forEach(expense => {
-    if (expense.date >= startDate && expense.date <= endDate) {
-      expenseTypes[expense.type] = (expenseTypes[expense.type] || 0) + (expense.amount || 0);
+  // Calculate top purchased products
+  const productPurchases = {};
+  db.purchases.forEach(purchase => {
+    if (purchase.date >= startDate && purchase.date <= endDate) {
+      purchase.items.forEach(item => {
+        if (!productPurchases[item.productName]) {
+          productPurchases[item.productName] = {
+            quantity: 0,
+            cost: 0
+          };
+        }
+        productPurchases[item.productName].quantity += item.quantity;
+        productPurchases[item.productName].cost += item.totalCost;
+      });
     }
   });
   
-  for (const [type, amount] of Object.entries(expenseTypes)) {
-    const percentage = totalExpenses > 0 ? ((amount / totalExpenses) * 100).toFixed(1) : 0;
+  // Sort by cost
+  const sortedPurchases = Object.entries(productPurchases)
+    .sort((a, b) => b[1].cost - a[1].cost)
+    .slice(0, 10);
+  
+  sortedPurchases.forEach(([product, data]) => {
     html += `
       <tr>
-        <td><span class="pill">${type}</span></td>
-        <td>${UGX(amount)}</td>
-        <td>${percentage}%</td>
+        <td>${product}</td>
+        <td>${data.quantity}</td>
+        <td>${UGX(data.cost)}</td>
       </tr>
     `;
-  }
+  });
   
   html += `
           </tbody>
@@ -2720,41 +2866,84 @@ function generateReport() {
 function setupReports() {
   document.getElementById('btnGenerateReport').addEventListener('click', generateReport);
   
-  // Export report to Excel
+  // Export report
   document.getElementById('btnExportReport').addEventListener('click', () => {
     const startDate = document.getElementById('reportStart').value;
     const endDate = document.getElementById('reportEnd').value;
+    const reportType = document.getElementById('reportType').value;
     
     if (!startDate || !endDate) {
       alert('Please select report period first');
       return;
     }
     
-    try {
-      const wb = XLSX.utils.book_new();
+    // Generate Excel report based on type
+    let reportData = [];
+    
+    if (reportType === 'purchases') {
+      reportData = [
+        ["BAR MANAGEMENT SYSTEM - PURCHASES REPORT"],
+        ["Period:", `${startDate} to ${endDate}`],
+        ["Generated:", new Date().toLocaleString()],
+        [],
+        ["PURCHASES SUMMARY"],
+        ["Total Purchases", "Total Items", "Number of Purchases"],
+      ];
       
-      // Summary sheet
-      const summaryData = [
+      let totalPurchases = 0;
+      let totalItems = 0;
+      const filteredPurchases = db.purchases.filter(p => p.date >= startDate && p.date <= endDate);
+      
+      filteredPurchases.forEach(p => {
+        totalPurchases += p.total || 0;
+        totalItems += p.items.length;
+      });
+      
+      reportData.push([
+        UGX(totalPurchases).replace('UGX', '').trim(),
+        totalItems,
+        filteredPurchases.length
+      ]);
+      
+      reportData.push([], ["DETAILED PURCHASES"]);
+      reportData.push(["Date", "Supplier", "Invoice", "Items", "Total"]);
+      
+      filteredPurchases.forEach(p => {
+        reportData.push([
+          p.date,
+          p.supplier || 'N/A',
+          p.invoice || 'N/A',
+          p.items.length,
+          UGX(p.total || 0).replace('UGX', '').trim()
+        ]);
+      });
+    } else {
+      // Default P&L report
+      reportData = [
         ["BAR MANAGEMENT SYSTEM - PROFIT & LOSS REPORT"],
         ["Period:", `${startDate} to ${endDate}`],
         ["Generated:", new Date().toLocaleString()],
         [],
         ["SUMMARY"],
-        ["Total Sales", "COGS", "Gross Profit", "Total Expenses", "Net Profit", "Gross Margin", "Net Margin"],
-        // Data will be added below
+        ["Total Sales", "Total Expenses", "Gross Profit", "Net Profit", "Profit Margin"],
       ];
       
       // Calculate totals
       let totalSales = 0;
-      let totalCost = 0;
       let totalProfit = 0;
       let totalExpenses = 0;
+      let totalPurchases = 0;
       
-      Object.values(db.dailySheets).forEach(sheet => {
-        if (sheet.date >= startDate && sheet.date <= endDate) {
+      for (const [date, sheet] of Object.entries(db.dailySheets)) {
+        if (date >= startDate && date <= endDate) {
           totalSales += sheet.totalSales || 0;
-          totalCost += sheet.totalCost || 0;
           totalProfit += sheet.totalProfit || 0;
+        }
+      }
+      
+      db.purchases.forEach(purchase => {
+        if (purchase.date >= startDate && purchase.date <= endDate) {
+          totalPurchases += purchase.total || 0;
         }
       });
       
@@ -2764,74 +2953,63 @@ function setupReports() {
         }
       });
       
-      const netProfit = totalProfit - totalExpenses;
-      const grossMargin = totalSales > 0 ? (totalProfit / totalSales * 100).toFixed(2) : 0;
-      const netMargin = totalSales > 0 ? (netProfit / totalSales * 100).toFixed(2) : 0;
+      const netProfit = totalProfit - totalExpenses - totalPurchases;
+      const profitMargin = totalSales > 0 ? (totalProfit / totalSales * 100).toFixed(1) : 0;
       
-      summaryData.push([
-        totalSales,
-        totalCost,
-        totalProfit,
-        totalExpenses,
-        netProfit,
-        `${grossMargin}%`,
-        `${netMargin}%`
+      reportData.push([
+        UGX(totalSales).replace('UGX', '').trim(),
+        UGX(totalExpenses).replace('UGX', '').trim(),
+        UGX(totalProfit).replace('UGX', '').trim(),
+        UGX(netProfit).replace('UGX', '').trim(),
+        `${profitMargin}%`
       ]);
       
-      const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-      XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
-      
-      // Daily breakdown sheet
-      const dailyData = [
-        ["DAILY BREAKDOWN"],
-        ["Date", "Sales", "COGS", "Gross Profit", "Expenses", "Net Profit", "Margin"]
-      ];
+      reportData.push([], ["DAILY BREAKDOWN"]);
+      reportData.push(["Date", "Sales", "Profit", "Expenses", "Net"]);
       
       for (const [date, sheet] of Object.entries(db.dailySheets)) {
         if (date >= startDate && date <= endDate) {
           const dailyExpenses = db.expenses
             .filter(e => e.date === date)
             .reduce((sum, e) => sum + (e.amount || 0), 0);
-          const dailyNet = (sheet.totalProfit || 0) - dailyExpenses;
-          const dailyMargin = (sheet.totalSales || 0) > 0 ? 
-            ((sheet.totalProfit || 0) / (sheet.totalSales || 0) * 100).toFixed(2) : 0;
+          const dailyPurchases = db.purchases
+            .filter(p => p.date === date)
+            .reduce((sum, p) => sum + (p.total || 0), 0);
+          const dailyNet = (sheet.totalProfit || 0) - dailyExpenses - dailyPurchases;
           
-          dailyData.push([
+          reportData.push([
             date,
-            sheet.totalSales || 0,
-            sheet.totalCost || 0,
-            sheet.totalProfit || 0,
-            dailyExpenses,
-            dailyNet,
-            `${dailyMargin}%`
+            UGX(sheet.totalSales || 0).replace('UGX', '').trim(),
+            UGX(sheet.totalProfit || 0).replace('UGX', '').trim(),
+            UGX(dailyExpenses).replace('UGX', '').trim(),
+            UGX(dailyNet).replace('UGX', '').trim()
           ]);
         }
       }
-      
-      const wsDaily = XLSX.utils.aoa_to_sheet(dailyData);
-      XLSX.utils.book_append_sheet(wb, wsDaily, "Daily");
-      
-      // Download
-      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
-      
-      function s2ab(s) {
-        const buf = new ArrayBuffer(s.length);
-        const view = new Uint8Array(buf);
-        for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-        return buf;
-      }
-      
-      download(`profit-loss-report-${startDate}-to-${endDate}.xlsx`, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
-      
-      alert('Report exported to Excel successfully!');
-    } catch (error) {
-      console.error('Export error:', error);
-      alert('Error exporting report: ' + error.message);
     }
+    
+    const ws = XLSX.utils.aoa_to_sheet(reportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Report");
+    
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+    
+    function s2ab(s) {
+      const buf = new ArrayBuffer(s.length);
+      const view = new Uint8Array(buf);
+      for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+      return buf;
+    }
+    
+    const fileName = reportType === 'purchases' 
+      ? `purchases-report-${startDate}-to-${endDate}.xlsx`
+      : `profit-loss-report-${startDate}-to-${endDate}.xlsx`;
+    
+    download(fileName, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
   });
 }
 
-// ================ DATA MANAGEMENT ================
+// ================ DATA SECTION ================
 function renderDataSection() {
   updateLastSaveTime();
 }
@@ -2881,48 +3059,139 @@ function setupDataManagement() {
   });
   
   // Export all data
-  document.getElementById('btnExportAllData').addEventListener('click', exportAllData);
-  
-  // Export inventory
-  document.getElementById('btnExportInventoryExcel').addEventListener('click', exportInventoryExcel);
-  
-  // Data tools
-  document.getElementById('btnRecalculateInventory').addEventListener('click', () => {
-    InventorySystem.updateAllStocks();
-    renderInventory();
-    updateDashboardStats();
-    alert('Inventory recalculated successfully!');
-  });
-  
-  document.getElementById('btnFixStockLevels').addEventListener('click', () => {
-    // Find and fix negative stocks
-    let fixedCount = 0;
-    db.products.forEach(product => {
-      if (product.currentStock < 0) {
-        const adjustment = {
-          id: 'adj_fix_' + Date.now(),
-          date: todayStr(),
-          productId: product.id,
-          previousQty: product.currentStock,
-          newQty: 0,
-          reason: 'Fixed negative stock',
-          recordedAt: new Date().toISOString()
-        };
-        db.adjustments.push(adjustment);
-        product.currentStock = 0;
-        fixedCount++;
+  document.getElementById('btnExportAllData').addEventListener('click', () => {
+    try {
+      // Create workbook with multiple sheets
+      const wb = XLSX.utils.book_new();
+      
+      // Products sheet
+      const productsData = db.products.map(p => ({
+        'Name': p.name,
+        'Category': p.category,
+        'Purchase Price': p.purchasePrice,
+        'Sale Price': p.salePrice,
+        'Opening Stock': p.openingStock,
+        'Purchased Quantity': p.purchasedQuantity || 0,
+        'Sold Count': p.soldCount || 0,
+        'Current Stock': calculateCurrentStock(p),
+        'Reorder Level': p.reorderLevel || 10,
+        'Total Profit': p.totalProfit || 0,
+        'Last Purchase Date': p.lastPurchaseDate,
+        'Last Purchase Price': p.lastPurchasePrice || p.purchasePrice
+      }));
+      
+      const wsProducts = XLSX.utils.json_to_sheet(productsData);
+      XLSX.utils.book_append_sheet(wb, wsProducts, 'Products');
+      
+      // Daily sheets summary
+      const dailyData = [];
+      for (const [date, sheet] of Object.entries(db.dailySheets)) {
+        dailyData.push({
+          'Date': date,
+          'Items Count': sheet.items.length,
+          'Total Sales': sheet.totalSales || 0,
+          'Total Profit': sheet.totalProfit || 0,
+          'Source': sheet.source || 'manual',
+          'Recorded At': sheet.recordedAt ? new Date(sheet.recordedAt).toLocaleString() : ''
+        });
       }
-    });
-    
-    saveData();
-    renderProducts();
-    renderInventory();
-    alert(`Fixed ${fixedCount} negative stock items!`);
+      
+      if (dailyData.length > 0) {
+        const wsDaily = XLSX.utils.json_to_sheet(dailyData);
+        XLSX.utils.book_append_sheet(wb, wsDaily, 'Daily Sheets');
+      }
+      
+      // Purchases sheet
+      if (db.purchases.length > 0) {
+        const purchaseData = db.purchases.flatMap(p => 
+          p.items.map(item => ({
+            'Date': p.date,
+            'Supplier': p.supplier || 'N/A',
+            'Invoice': p.invoice || 'N/A',
+            'Product': item.productName,
+            'Quantity': item.quantity,
+            'Unit Cost': item.unitCost,
+            'Total Cost': item.totalCost
+          }))
+        );
+        
+        const wsPurchases = XLSX.utils.json_to_sheet(purchaseData);
+        XLSX.utils.book_append_sheet(wb, wsPurchases, 'Purchases');
+      }
+      
+      // Expenses sheet
+      if (db.expenses.length > 0) {
+        const wsExpenses = XLSX.utils.json_to_sheet(db.expenses);
+        XLSX.utils.book_append_sheet(wb, wsExpenses, 'Expenses');
+      }
+      
+      // Download
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+      
+      function s2ab(s) {
+        const buf = new ArrayBuffer(s.length);
+        const view = new Uint8Array(buf);
+        for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+        return buf;
+      }
+      
+      download(`bar-data-export-${todayStr()}.xlsx`, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
+      
+      alert('All data exported to Excel successfully!');
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Error exporting data: ' + error.message);
+    }
   });
   
-  document.getElementById('btnDataAudit').addEventListener('click', runDataAudit);
+  // Export purchases
+  document.getElementById('btnExportPurchases').addEventListener('click', () => {
+    const from = document.getElementById('exportFrom').value;
+    const to = document.getElementById('exportTo').value;
+    
+    // Filter purchases by date range
+    let filteredPurchases = db.purchases;
+    if (from && to) {
+      filteredPurchases = db.purchases.filter(p => p.date >= from && p.date <= to);
+    }
+    
+    if (filteredPurchases.length === 0) {
+      alert('No purchases found for the selected date range');
+      return;
+    }
+    
+    const purchaseData = filteredPurchases.flatMap(p => 
+      p.items.map(item => ({
+        'Date': p.date,
+        'Supplier': p.supplier || 'N/A',
+        'Invoice': p.invoice || 'N/A',
+        'Product': item.productName,
+        'Quantity': item.quantity,
+        'Unit Cost': item.unitCost,
+        'Total Cost': item.totalCost
+      }))
+    );
+    
+    const ws = XLSX.utils.json_to_sheet(purchaseData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Purchases");
+    
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+    
+    function s2ab(s) {
+      const buf = new ArrayBuffer(s.length);
+      const view = new Uint8Array(buf);
+      for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+      return buf;
+    }
+    
+    const fileName = `purchases-export-${from || 'all'}-to-${to || 'all'}.xlsx`;
+    download(fileName, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
+    
+    alert('Purchases exported successfully!');
+  });
   
-  // Danger zone
+  // Wipe data
   document.getElementById('btnWipe').addEventListener('click', () => {
     if (confirm('ARE YOU SURE? This will delete ALL data and cannot be undone!')) {
       localStorage.removeItem(STORAGE_KEY);
@@ -2930,19 +3199,36 @@ function setupDataManagement() {
     }
   });
   
+  // Clear sheets
+  document.getElementById('btnClearSheets').addEventListener('click', () => {
+    if (confirm('Clear all daily sheets? This cannot be undone!')) {
+      db.dailySheets = {};
+      saveData();
+      renderSales();
+      renderProducts();
+      updateDashboardStats();
+      alert('All daily sheets cleared!');
+    }
+  });
+  
+  // Clear purchases
   document.getElementById('btnClearPurchases').addEventListener('click', () => {
-    if (confirm('Clear all purchases? This cannot be undone!')) {
+    if (confirm('Clear all purchases? This will also reset purchased quantities. This cannot be undone!')) {
+      // Reset purchased quantities in products
+      db.products.forEach(product => {
+        product.purchasedQuantity = 0;
+      });
+      
       db.purchases = [];
-      InventorySystem.updateAllStocks();
       saveData();
       renderPurchases();
       renderProducts();
-      renderInventory();
       updateDashboardStats();
       alert('All purchases cleared!');
     }
   });
   
+  // Clear expenses
   document.getElementById('btnClearExpenses').addEventListener('click', () => {
     if (confirm('Clear all expenses? This cannot be undone!')) {
       db.expenses = [];
@@ -2952,237 +3238,6 @@ function setupDataManagement() {
       alert('All expenses cleared!');
     }
   });
-}
-
-function exportAllData() {
-  try {
-    const wb = XLSX.utils.book_new();
-    
-    // Products sheet
-    const productsData = db.products.map(p => ({
-      'ID': p.id,
-      'Name': p.name,
-      'Category': p.category || 'other',
-      'Purchase Price': p.purchasePrice || 0,
-      'Sale Price': p.salePrice || 0,
-      'Opening Stock': p.openingStock || 0,
-      'Current Stock': p.currentStock || 0,
-      'Reorder Level': p.reorderLevel || p.minStockLevel || 5,
-      'Target Stock': p.targetStock || 30,
-      'Unit': p.unit || 'bottle',
-      'Sold Count': p.soldCount || 0,
-      'Total Sales': p.totalSales || 0,
-      'Total Profit': p.totalProfit || 0,
-      'Stock Value': (p.currentStock || 0) * (p.purchasePrice || 0),
-      'Stock Status': p.stockStatus || 'good'
-    }));
-    
-    const wsProducts = XLSX.utils.json_to_sheet(productsData);
-    XLSX.utils.book_append_sheet(wb, wsProducts, 'Products');
-    
-    // Purchases sheet
-    const purchasesData = db.purchases.flatMap(p => 
-      (p.items || []).map(item => ({
-        'Date': p.date,
-        'Supplier': p.supplier || '',
-        'Invoice No': p.invoiceNo || '',
-        'Product': InventorySystem.getProductById(item.productId)?.name || 'Unknown',
-        'Quantity': item.quantity || 0,
-        'Unit Cost': item.unitCost || 0,
-        'Total': item.total || 0,
-        'Status': p.status || 'pending',
-        'Payment Method': p.paymentMethod || 'cash',
-        'Total Purchase': p.total || 0
-      }))
-    );
-    
-    if (purchasesData.length > 0) {
-      const wsPurchases = XLSX.utils.json_to_sheet(purchasesData);
-      XLSX.utils.book_append_sheet(wb, wsPurchases, 'Purchases');
-    }
-    
-    // Sales sheet
-    const salesData = [];
-    Object.values(db.dailySheets).forEach(sheet => {
-      (sheet.items || []).forEach(item => {
-        const product = InventorySystem.getProductById(item.productId);
-        salesData.push({
-          'Date': sheet.date,
-          'Shift': sheet.shift || 'full',
-          'Product': product?.name || 'Unknown',
-          'Quantity': item.quantity || 0,
-          'Unit Price': item.unitPrice || 0,
-          'Total Sales': item.total || 0,
-          'Cost': item.cost || 0,
-          'Profit': item.profit || 0,
-          'Source': sheet.source || 'manual'
-        });
-      });
-    });
-    
-    if (salesData.length > 0) {
-      const wsSales = XLSX.utils.json_to_sheet(salesData);
-      XLSX.utils.book_append_sheet(wb, wsSales, 'Sales');
-    }
-    
-    // Expenses sheet
-    if (db.expenses.length > 0) {
-      const wsExpenses = XLSX.utils.json_to_sheet(db.expenses);
-      XLSX.utils.book_append_sheet(wb, wsExpenses, 'Expenses');
-    }
-    
-    // Summary sheet
-    const summaryData = [
-      ["BAR MANAGEMENT SYSTEM - COMPLETE DATA EXPORT"],
-      ["Export Date:", new Date().toLocaleString()],
-      ["Total Products:", db.products.length],
-      ["Total Purchases:", db.purchases.length],
-      ["Total Sales Days:", Object.keys(db.dailySheets).length],
-      ["Total Expenses:", db.expenses.length],
-      ["Total Inventory Value:", UGX(InventorySystem.getInventoryValue())]
-    ];
-    
-    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
-    
-    // Download
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
-    
-    function s2ab(s) {
-      const buf = new ArrayBuffer(s.length);
-      const view = new Uint8Array(buf);
-      for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-      return buf;
-    }
-    
-    download(`bar-export-complete-${todayStr()}.xlsx`, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
-    
-    alert('All data exported to Excel successfully!');
-  } catch (error) {
-    console.error('Export error:', error);
-    alert('Error exporting to Excel: ' + error.message);
-  }
-}
-
-function exportInventoryExcel() {
-  try {
-    const inventoryData = db.products.map(p => ({
-      'Product': p.name,
-      'Category': p.category || 'other',
-      'Purchase Price': p.purchasePrice || 0,
-      'Sale Price': p.salePrice || 0,
-      'Opening Stock': p.openingStock || 0,
-      'Current Stock': p.currentStock || 0,
-      'Reorder Level': p.reorderLevel || p.minStockLevel || 5,
-      'Target Stock': p.targetStock || 30,
-      'Stock Value': (p.currentStock || 0) * (p.purchasePrice || 0),
-      'Unit': p.unit || 'bottle',
-      'Sold This Month': p.soldCount || 0,
-      'Profit Margin': p.purchasePrice > 0 ? 
-        ((p.salePrice - p.purchasePrice) / p.purchasePrice * 100).toFixed(1) + '%' : '0%',
-      'Stock Status': p.stockStatus || 'good',
-      'Last Updated': p.lastStockUpdate ? new Date(p.lastStockUpdate).toLocaleString() : 'Never'
-    }));
-    
-    const ws = XLSX.utils.json_to_sheet(inventoryData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Inventory');
-    
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
-    
-    function s2ab(s) {
-      const buf = new ArrayBuffer(s.length);
-      const view = new Uint8Array(buf);
-      for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-      return buf;
-    }
-    
-    download(`bar-inventory-${todayStr()}.xlsx`, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
-    
-    alert('Inventory exported to Excel successfully!');
-  } catch (error) {
-    console.error('Inventory export error:', error);
-    alert('Error exporting inventory: ' + error.message);
-  }
-}
-
-function runDataAudit() {
-  const auditResults = [];
-  const auditEl = document.getElementById('dataAuditResults');
-  const auditText = document.getElementById('auditResultsText');
-  
-  auditEl.style.display = 'block';
-  
-  // Check for negative stocks
-  const negativeStocks = db.products.filter(p => (p.currentStock || 0) < 0);
-  if (negativeStocks.length > 0) {
-    auditResults.push(`❌ Found ${negativeStocks.length} products with negative stock`);
-    negativeStocks.forEach(p => {
-      auditResults.push(`   - ${p.name}: ${p.currentStock}`);
-    });
-  }
-  
-  // Check for zero price products
-  const zeroPrice = db.products.filter(p => (p.purchasePrice || 0) <= 0 || (p.salePrice || 0) <= 0);
-  if (zeroPrice.length > 0) {
-    auditResults.push(`⚠️ Found ${zeroPrice.length} products with zero or negative prices`);
-  }
-  
-  // Check for missing categories
-  const missingCategory = db.products.filter(p => !p.category || p.category.trim() === '');
-  if (missingCategory.length > 0) {
-    auditResults.push(`⚠️ Found ${missingCategory.length} products without category`);
-  }
-  
-  // Check for duplicate product names
-  const productNames = db.products.map(p => p.name.toLowerCase());
-  const duplicates = productNames.filter((name, index) => productNames.indexOf(name) !== index);
-  if (duplicates.length > 0) {
-    auditResults.push(`❌ Found ${duplicates.length} duplicate product names`);
-  }
-  
-  // Check for invalid dates in transactions
-  let invalidDates = 0;
-  [...db.purchases, ...db.expenses].forEach(item => {
-    if (item.date && !/^\d{4}-\d{2}-\d{2}$/.test(item.date)) {
-      invalidDates++;
-    }
-  });
-  if (invalidDates > 0) {
-    auditResults.push(`⚠️ Found ${invalidDates} transactions with invalid date formats`);
-  }
-  
-  // Calculate data completeness
-  const totalProducts = db.products.length;
-  const completeProducts = db.products.filter(p => 
-    p.name && p.category && p.purchasePrice > 0 && p.salePrice > 0
-  ).length;
-  const completeness = totalProducts > 0 ? (completeProducts / totalProducts * 100).toFixed(1) : 0;
-  
-  auditResults.push(`\n📊 Data Completeness: ${completeness}% (${completeProducts}/${totalProducts} products complete)`);
-  
-  // Inventory accuracy check
-  InventorySystem.updateAllStocks();
-  const mismatched = db.products.filter(p => {
-    const calculated = InventorySystem.calculateCurrentStock(p.id);
-    return Math.abs(calculated - (p.currentStock || 0)) > 0.01;
-  });
-  
-  if (mismatched.length > 0) {
-    auditResults.push(`⚠️ Found ${mismatched.length} products with stock calculation mismatches`);
-  } else {
-    auditResults.push(`✅ Inventory calculations are accurate`);
-  }
-  
-  auditText.textContent = auditResults.join('\n');
-  
-  if (negativeStocks.length === 0 && duplicates.length === 0) {
-    auditEl.style.borderColor = '#16a34a';
-    auditEl.style.background = '#ecfdf5';
-  } else {
-    auditEl.style.borderColor = '#ef4444';
-    auditEl.style.background = '#fee2e2';
-  }
 }
 
 // ================ GOOGLE DRIVE INTEGRATION ================
@@ -3465,17 +3520,15 @@ async function initializeApp() {
   // Initialize products from Excel if empty
   initializeProductsFromExcel();
   
-  // Update all stocks initially
-  InventorySystem.updateAllStocks();
-  
   // Setup all components
   setupTabs();
   setupProducts();
-  setupPurchases();
   setupSales();
+  setupPurchases();
   setupInventory();
   setupExpenses();
   setupReports();
+  setupAutomation();
   setupDataManagement();
   
   // Initialize Google Drive
@@ -3485,9 +3538,10 @@ async function initializeApp() {
   // Initial render
   renderProducts();
   updateDashboardStats();
-  renderDataSection();
+  renderAutomation();
+  updateLastSaveTime();
   
-  console.log('Complete Bar Management System with Automated Inventory initialized successfully!');
+  console.log('Enhanced Bar Management System with Purchases initialized successfully!');
 }
 
 // Start the application
