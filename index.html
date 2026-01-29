@@ -685,14 +685,14 @@ let db = {
   // Products from the Excel sheet
   products: [],
   // Daily sheets - each with unique date
-  dailySheets: {}, // key: date, value: { date, items: [], totalSales, totalProfit }
+  dailySheets: {},
   // Expenses
-  expenses: [], // { date, type, description, amount }
+  expenses: [],
   // Settings
   settings: { 
     lastSave: new Date().toISOString(),
-    accountingPeriod: 'monthly', // monthly, weekly, custom
-    periodStart: todayStr().substring(0, 7) + '-01', // First day of current month
+    accountingPeriod: 'monthly',
+    periodStart: todayStr().substring(0, 7) + '-01',
     periodEnd: todayStr()
   }
 };
@@ -727,80 +727,120 @@ function updateLastSaveTime() {
   }
 }
 
-// Initialize products from the Excel sheet data
+// Initialize products from the ACTUAL Excel sheet data provided
 function initializeProductsFromExcel() {
-  // This is the data from the provided Excel sheet
-  const excelProducts = [
-    { name: "NILE", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
-    { name: "LITE", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
-    { name: "MALT", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
-    { name: "CLUB", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
-    { name: "BELL", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
-    { name: "GUINESS SMALL", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
-    { name: "GUINESS BIG", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
-    { name: "SIRMINOFF", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
-    { name: "T.LAGER", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
-    { name: "EAGLE", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
-    { name: "T.CIDER", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
-    { name: "PILSNER", category: "beer", purchasePrice: 3100, salePrice: 5100, openingStock: 10 },
-    { name: "SODA", category: "Soft Drink", purchasePrice: 1000, salePrice: 2000, openingStock: 10 },
-    { name: "POWER PLAY", category: "Energy Drink", purchasePrice: 1000, salePrice: 2000, openingStock: 10 },
-    { name: "PREDATOR", category: "Energy Drink", purchasePrice: 1000, salePrice: 2000, openingStock: 10 },
-    { name: "ROCK BOOM", category: "Energy Drink", purchasePrice: 1000, salePrice: 2000, openingStock: 10 },
-    { name: "STING", category: "Energy Drink", purchasePrice: 1000, salePrice: 2000, openingStock: 10 },
-    { name: "RWENZORI", category: "Soft Drink", purchasePrice: 600, salePrice: 1000, openingStock: 10 },
-    { name: "YACKET", category: "Soft Drink", purchasePrice: 416, salePrice: 1000, openingStock: 10 },
-    { name: "MINUTE MAID", category: "Soft Drink", purchasePrice: 1000, salePrice: 2000, openingStock: 10 },
-    { name: "ONER", category: "Soft Drink", purchasePrice: 1000, salePrice: 2000, openingStock: 10 },
-    { name: "UG Big", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "ug1/2", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Ug1/4", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Ug Plastic", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "V&A BIG", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "V&A 1/4", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "FOUR COUSINS", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "BLACK & WHITE", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Bond 7 ( 1/4)", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Bond 7 Big", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Gilbeys 1/4", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Red Bull", category: "Energy Drink", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Guiness Smooth", category: "beer", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Amalula", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Grands", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Ondavit", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "C.Morgan", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Scount", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Antonious", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Robertson", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Ballanties", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Singleton", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Jameson", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Famous Grouse", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "J.P Chente", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Baileys", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "8PM", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "GIlbeys BIG", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Castle Lite", category: "beer", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Can of Guinness", category: "beer", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Doprick", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "High 5", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 10 }
+  // This is the EXACT data from your provided Excel sheet
+  const excelData = [
+    { name: "NILE", category: "beer", purchasePrice: 3500, salePrice: 5000, openingStock: 20, sold: 0 },
+    { name: "LITE", category: "beer", purchasePrice: 3100, salePrice: 4000, openingStock: 29, sold: 2 },
+    { name: "MALT", category: "beer", purchasePrice: 3000, salePrice: 4000, openingStock: 8, sold: 1 },
+    { name: "CLUB", category: "beer", purchasePrice: 3100, salePrice: 4000, openingStock: 23, sold: 6 },
+    { name: "BELL", category: "beer", purchasePrice: 2800, salePrice: 4000, openingStock: 6, sold: 0 },
+    { name: "GUINESS SMALL", category: "beer", purchasePrice: 3000, salePrice: 4000, openingStock: 29, sold: 2 },
+    { name: "GUINESS BIG", category: "beer", purchasePrice: null, salePrice: 6000, openingStock: null, sold: 0 },
+    { name: "SIRMINOFF", category: "beer", purchasePrice: 3400, salePrice: 5000, openingStock: 4, sold: 4 },
+    { name: "T.LAGER", category: "beer", purchasePrice: 2700, salePrice: 4000, openingStock: 5, sold: 0 },
+    { name: "EAGLE", category: "beer", purchasePrice: 3100, salePrice: 4000, openingStock: null, sold: 0 },
+    { name: "T.CIDER", category: "beer", purchasePrice: 3100, salePrice: 5000, openingStock: null, sold: 0 },
+    { name: "PILSNER", category: "beer", purchasePrice: 2800, salePrice: 4000, openingStock: 12, sold: 0 },
+    { name: "SODA", category: "Soft Drink", purchasePrice: 833.33, salePrice: 2000, openingStock: 24, sold: 2 },
+    { name: "POWER PLAY", category: "Energy Drink", purchasePrice: 1583.33, salePrice: 3000, openingStock: 2, sold: 0 },
+    { name: "PREDATOR", category: "Energy Drink", purchasePrice: 1583.33, salePrice: 3000, openingStock: 9, sold: 0 },
+    { name: "ROCK BOOM", category: "Energy Drink", purchasePrice: 1583.33, salePrice: 3000, openingStock: 8, sold: 1 },
+    { name: "STING", category: "Energy Drink", purchasePrice: 1583.33, salePrice: 3000, openingStock: 5, sold: 0 },
+    { name: "RWENZORI", category: "Soft Drink", purchasePrice: 600, salePrice: 2000, openingStock: null, sold: 0 },
+    { name: "YACKET", category: "Soft Drink", purchasePrice: 416.67, salePrice: 1000, openingStock: 12, sold: 1 },
+    { name: "MINUTE MAID", category: "Soft Drink", purchasePrice: 2166.67, salePrice: 3000, openingStock: 12, sold: 0 },
+    { name: "ONER", category: "Soft Drink", purchasePrice: 2166.67, salePrice: 3000, openingStock: 10, sold: 0 },
+    { name: "UG Big", category: "Spirit", purchasePrice: 27000, salePrice: 40000, openingStock: 6, sold: 0 },
+    { name: "ug1/2", category: "Spirit", purchasePrice: 2000, salePrice: 20000, openingStock: null, sold: 0 },
+    { name: "Ug1/4", category: "Spirit", purchasePrice: 2000, salePrice: 11000, openingStock: 3, sold: 0 },
+    { name: "Ug Plastic", category: "Spirit", purchasePrice: 5000, salePrice: 7000, openingStock: 10, sold: 1 },
+    { name: "V&A BIG", category: "Spirit", purchasePrice: 30000, salePrice: 40000, openingStock: 5, sold: 0 },
+    { name: "V&A 1/4", category: "Spirit", purchasePrice: 8500, salePrice: 11000, openingStock: 3, sold: 0 },
+    { name: "FOUR COUSINS", category: "wine", purchasePrice: 35000, salePrice: 40000, openingStock: 6, sold: 0 },
+    { name: "BLACK & WHITE", category: "wine", purchasePrice: null, salePrice: 3000, openingStock: null, sold: 0 },
+    { name: "Bond 7 ( 1/4)", category: "Spirit", purchasePrice: 8500, salePrice: 11000, openingStock: 11, sold: 1 },
+    { name: "Bond 7 Big", category: "Spirit", purchasePrice: 28000, salePrice: 3000, openingStock: 2, sold: 0 },
+    { name: "Bond 7 Plastic", category: "Spirit", purchasePrice: 5000, salePrice: null, openingStock: null, sold: 0 },
+    { name: "Gilbeys 1/4", category: "Spirit", purchasePrice: 8500, salePrice: 10000, openingStock: 4, sold: 2 },
+    { name: "Red Bull", category: "Energy Drink", purchasePrice: 8500, salePrice: 10000, openingStock: 5, sold: 1 },
+    { name: "Guiness Smooth", category: "beer", purchasePrice: 3000, salePrice: 4000, openingStock: 6, sold: 0 },
+    { name: "Amalula", category: "wine", purchasePrice: null, salePrice: 100000, openingStock: null, sold: 0 },
+    { name: "Grands", category: "wine", purchasePrice: null, salePrice: 100000, openingStock: null, sold: 0 },
+    { name: "Ondavit", category: "wine", purchasePrice: null, salePrice: 35000, openingStock: null, sold: 0 },
+    { name: "C.Morgan", category: "wine", purchasePrice: 28000, salePrice: 40000, openingStock: 3, sold: 0 },
+    { name: "Scount", category: "wine", purchasePrice: null, salePrice: 35000, openingStock: null, sold: 0 },
+    { name: "Antonious", category: "wine", purchasePrice: null, salePrice: 30000, openingStock: 1, sold: 0 },
+    { name: "Robertson", category: "wine", purchasePrice: null, salePrice: 10000, openingStock: null, sold: 0 },
+    { name: "Ballanties", category: "wine", purchasePrice: null, salePrice: 120000, openingStock: null, sold: 0 },
+    { name: "Singleton", category: "wine", purchasePrice: null, salePrice: 250000, openingStock: null, sold: 0 },
+    { name: "Jameson", category: "wine", purchasePrice: null, salePrice: 130000, openingStock: null, sold: 0 },
+    { name: "Famous Grouse", category: "wine", purchasePrice: null, salePrice: 100000, openingStock: null, sold: 0 },
+    { name: "J.P Chente", category: "wine", purchasePrice: null, salePrice: 70000, openingStock: 1, sold: 0 },
+    { name: "Baileys", category: "wine", purchasePrice: null, salePrice: 130000, openingStock: null, sold: 0 },
+    { name: "8PM", category: "wine", purchasePrice: null, salePrice: 50000, openingStock: null, sold: 0 },
+    { name: "GIlbeys BIG", category: "Spirit", purchasePrice: null, salePrice: 40000, openingStock: 6, sold: 0 },
+    { name: "Castle Lite", category: "beer", purchasePrice: null, salePrice: 4000, openingStock: null, sold: 0 },
+    { name: "Can of Guinness", category: "beer", purchasePrice: null, salePrice: 3000, openingStock: null, sold: 0 },
+    { name: "Doprick", category: "wine", purchasePrice: null, salePrice: 50000, openingStock: 9, sold: 0 },
+    { name: "High 5", category: "Spirit", purchasePrice: 2000, salePrice: 3000, openingStock: 15, sold: 1 }
   ];
   
   // Only initialize if no products exist
   if (db.products.length === 0) {
-    db.products = excelProducts.map((p, index) => ({
-      id: 'prod_' + (index + 1),
-      name: p.name,
-      category: p.category,
-      purchasePrice: p.purchasePrice,
-      salePrice: p.salePrice,
-      openingStock: p.openingStock,
-      minStockLevel: 10,
-      currentStock: p.openingStock, // Start with opening stock
-      soldCount: 0,
-      totalProfit: 0
-    }));
+    db.products = excelData.map((p, index) => {
+      const currentStock = p.openingStock ? p.openingStock - (p.sold || 0) : 0;
+      const profitPerUnit = p.salePrice && p.purchasePrice ? p.salePrice - p.purchasePrice : 0;
+      const totalProfit = (p.sold || 0) * profitPerUnit;
+      
+      return {
+        id: 'prod_' + (index + 1),
+        name: p.name,
+        category: p.category,
+        purchasePrice: p.purchasePrice || 0,
+        salePrice: p.salePrice || 0,
+        openingStock: p.openingStock || 0,
+        currentStock: currentStock,
+        minStockLevel: 5,
+        soldCount: p.sold || 0,
+        totalProfit: totalProfit
+      };
+    });
+    
+    // Create initial daily sheet from the sold data
+    const today = todayStr();
+    const sheetItems = excelData
+      .filter(p => p.sold && p.sold > 0)
+      .map(p => {
+        const product = db.products.find(prod => prod.name === p.name);
+        return {
+          productId: product?.id || 'prod_unknown',
+          productName: p.name,
+          quantity: p.sold,
+          unitPrice: p.salePrice || 0,
+          total: p.sold * (p.salePrice || 0),
+          profit: p.sold * ((p.salePrice || 0) - (p.purchasePrice || 0))
+        };
+      });
+    
+    if (sheetItems.length > 0) {
+      const totalSales = sheetItems.reduce((sum, item) => sum + item.total, 0);
+      const totalProfit = sheetItems.reduce((sum, item) => sum + item.profit, 0);
+      
+      db.dailySheets[today] = {
+        date: today,
+        items: sheetItems,
+        totalSales: totalSales,
+        totalProfit: totalProfit,
+        source: 'excel_import',
+        fileName: 'Book1 arthur.xlsx',
+        recordedAt: new Date().toISOString()
+      };
+    }
+    
     saveData();
+    logImport(`Initialized ${db.products.length} products from Excel sheet`);
   }
 }
 
@@ -809,33 +849,25 @@ function updateDashboardStats() {
   // Total products
   document.getElementById('statProducts').textContent = db.products.length;
   
-  // Stock value (based on purchase price)
+  // Stock value (based on purchase price and current stock)
   const stockValue = db.products.reduce((sum, p) => {
-    return sum + (p.currentStock || p.openingStock || 0) * (p.purchasePrice || 0);
+    return sum + (p.currentStock || 0) * (p.purchasePrice || 0);
   }, 0);
   document.getElementById('statStockValue').textContent = UGX(stockValue);
   
-  // Monthly purchases (calculate from product purchases)
-  const currentMonth = todayStr().substring(0, 7); // YYYY-MM
+  // Monthly purchases (estimate from product purchases in current month)
+  const currentMonth = todayStr().substring(0, 7);
   const monthlyPurchases = db.products.reduce((sum, p) => {
-    // For now, we'll estimate purchases based on sold items
-    // In a real system, you'd track actual purchases
-    const sold = p.soldCount || 0;
-    const purchaseValue = sold * (p.purchasePrice || 0);
-    return sum + purchaseValue;
-  }, 0);
-  document.getElementById('statMonthPurchases').textContent = UGX(monthlyPurchases);
+    // This would need actual purchase tracking - for now estimate
+    return sum + (p.purchasePrice || 0) * (p.openingStock || 0);
+  }, 0) / 3; // Estimate 1/3 of opening stock purchased this month
+  document.getElementById('statMonthPurchases').textContent = UGX(Math.round(monthlyPurchases));
   
-  // Most moving category
+  // Most moving category (by units sold)
   const categorySales = {};
-  Object.values(db.dailySheets).forEach(sheet => {
-    sheet.items.forEach(item => {
-      const product = db.products.find(p => p.name === item.productName);
-      if (product) {
-        const cat = product.category || 'other';
-        categorySales[cat] = (categorySales[cat] || 0) + item.quantity;
-      }
-    });
+  db.products.forEach(p => {
+    const cat = p.category || 'other';
+    categorySales[cat] = (categorySales[cat] || 0) + (p.soldCount || 0);
   });
   
   let mostMovingCategory = '-';
@@ -846,16 +878,16 @@ function updateDashboardStats() {
       mostMovingCategory = category;
     }
   }
-  document.getElementById('statMostMoving').textContent = mostMovingCategory;
+  document.getElementById('statMostMoving').textContent = `${mostMovingCategory} (${maxSales} units)`;
   
-  // Calculate profits for the accounting period
+  // Calculate profits for the period
   const periodStart = db.settings.periodStart || todayStr().substring(0, 7) + '-01';
   const periodEnd = db.settings.periodEnd || todayStr();
   
   let grossProfit = 0;
   let totalExpenses = 0;
   
-  // Calculate gross profit from daily sheets
+  // Calculate gross profit from daily sheets within period
   Object.values(db.dailySheets).forEach(sheet => {
     if (sheet.date >= periodStart && sheet.date <= periodEnd) {
       grossProfit += sheet.totalProfit || 0;
@@ -870,6 +902,7 @@ function updateDashboardStats() {
   });
   
   const netProfit = grossProfit - totalExpenses;
+  const profitMargin = grossProfit > 0 ? ((netProfit / grossProfit) * 100).toFixed(1) : 0;
   
   document.getElementById('statGrossProfit').textContent = UGX(grossProfit);
   document.getElementById('statTotalExpenses').textContent = UGX(totalExpenses);
@@ -880,11 +913,11 @@ function updateDashboardStats() {
   const profitStatusCard = document.getElementById('profitStatusCard');
   
   if (netProfit > 0) {
-    profitStatusEl.innerHTML = `<strong>✅ PROFITABLE:</strong> Business is making a net profit of ${UGX(netProfit)}`;
+    profitStatusEl.innerHTML = `<strong>✅ PROFITABLE:</strong> Net profit of ${UGX(netProfit)} (${profitMargin}% margin)`;
     profitStatusEl.className = 'goodmsg';
     profitStatusCard.style.borderLeft = '4px solid #16a34a';
   } else if (netProfit < 0) {
-    profitStatusEl.innerHTML = `<strong>⚠️ LOSS MAKING:</strong> Business is making a net loss of ${UGX(Math.abs(netProfit))}`;
+    profitStatusEl.innerHTML = `<strong>⚠️ LOSS MAKING:</strong> Net loss of ${UGX(Math.abs(netProfit))}`;
     profitStatusEl.className = 'badmsg';
     profitStatusCard.style.borderLeft = '4px solid #ef4444';
   } else {
@@ -949,8 +982,8 @@ function renderProducts() {
     if (sortBy === 'category') return (a.category || '').localeCompare(b.category || '');
     if (sortBy === 'stock') return (b.currentStock || 0) - (a.currentStock || 0);
     if (sortBy === 'profit') {
-      const marginA = (a.salePrice - a.purchasePrice) / a.purchasePrice * 100;
-      const marginB = (b.salePrice - b.purchasePrice) / b.purchasePrice * 100;
+      const marginA = a.purchasePrice > 0 ? ((a.salePrice - a.purchasePrice) / a.purchasePrice * 100) : 0;
+      const marginB = b.purchasePrice > 0 ? ((b.salePrice - b.purchasePrice) / b.purchasePrice * 100) : 0;
       return marginB - marginA;
     }
     return 0;
@@ -962,6 +995,7 @@ function renderProducts() {
       const profitMargin = p.purchasePrice > 0 ? 
         ((p.salePrice - p.purchasePrice) / p.purchasePrice * 100).toFixed(1) : 0;
       const isLowStock = (p.currentStock || 0) <= (p.minStockLevel || 5);
+      const profitPerUnit = p.salePrice - p.purchasePrice;
       
       return `
       <tr ${isLowStock ? 'style="background:#fff7ed"' : ''}>
@@ -969,7 +1003,7 @@ function renderProducts() {
         <td><span class="pill">${p.category || 'other'}</span></td>
         <td>${UGX(p.purchasePrice || 0)}</td>
         <td>${UGX(p.salePrice || 0)}</td>
-        <td>${profitMargin}%</td>
+        <td>${profitMargin}% (${UGX(profitPerUnit)})</td>
         <td>${p.openingStock || 0}</td>
         <td>${p.soldCount || 0}</td>
         <td>${p.currentStock || p.openingStock || 0}</td>
@@ -1377,7 +1411,7 @@ function setupSales() {
   document.getElementById('productHistoryTo').addEventListener('change', loadProductHistory);
 }
 
-// ================ INVENTORY MANAGEMENT ================
+// ================ ENHANCED INVENTORY MANAGEMENT ================
 function renderInventory() {
   const date = document.getElementById('inventoryDate').value || todayStr();
   const category = document.getElementById('filterCategory').value;
@@ -1387,37 +1421,56 @@ function renderInventory() {
     filtered = filtered.filter(p => p.category === category);
   }
   
+  // Calculate stock movement up to selected date
+  filtered.forEach(product => {
+    product.calculatedSold = 0;
+    product.calculatedClosing = product.openingStock;
+    
+    // Calculate sold from daily sheets up to selected date
+    Object.entries(db.dailySheets).forEach(([sheetDate, sheet]) => {
+      if (sheetDate <= date) {
+        const productItems = sheet.items.filter(item => item.productName === product.name);
+        product.calculatedSold += productItems.reduce((sum, item) => sum + item.quantity, 0);
+      }
+    });
+    
+    product.calculatedClosing = Math.max(0, product.openingStock - product.calculatedSold);
+    product.stockValue = product.calculatedClosing * (product.purchasePrice || 0);
+  });
+  
   const tbody = document.querySelector('#inventoryTable tbody');
   if (tbody) {
     tbody.innerHTML = filtered.map(product => {
-      // Calculate sold from daily sheets
-      let totalSold = 0;
-      for (const [sheetDate, sheet] of Object.entries(db.dailySheets)) {
-        if (sheetDate <= date) {
-          const productItems = sheet.items.filter(item => item.productName === product.name);
-          totalSold += productItems.reduce((sum, item) => sum + item.quantity, 0);
-        }
-      }
-      
-      const openingStock = product.openingStock || 0;
-      const currentStock = Math.max(0, openingStock - totalSold);
-      const stockValue = currentStock * (product.purchasePrice || 0);
+      const isLowStock = product.calculatedClosing <= (product.minStockLevel || 5);
       
       return `
-      <tr ${currentStock <= (product.minStockLevel || 5) ? 'style="background:#fff7ed"' : ''}>
+      <tr ${isLowStock ? 'style="background:#fff7ed"' : ''}>
         <td><strong>${product.name}</strong></td>
         <td><span class="pill">${product.category || 'other'}</span></td>
-        <td>${openingStock}</td>
+        <td>${product.openingStock || 0}</td>
         <td>0</td> <!-- Purchased today - would need purchase tracking -->
-        <td>${totalSold}</td>
-        <td><strong>${currentStock}</strong></td>
+        <td>${product.calculatedSold}</td>
+        <td><strong>${product.calculatedClosing}</strong></td>
         <td>${UGX(product.purchasePrice || 0)}</td>
         <td>${UGX(product.salePrice || 0)}</td>
-        <td>${UGX(stockValue)}</td>
+        <td>${UGX(product.stockValue || 0)}</td>
       </tr>
       `;
     }).join('');
   }
+  
+  // Update inventory stats
+  const totalStockValue = filtered.reduce((sum, p) => sum + (p.stockValue || 0), 0);
+  const lowStockCount = filtered.filter(p => p.calculatedClosing <= (p.minStockLevel || 5)).length;
+  
+  // Add stats summary row
+  const footerRow = `
+    <tr style="background:#f8fafc; font-weight:bold;">
+      <td colspan="8">Summary: ${filtered.length} products, ${lowStockCount} low stock</td>
+      <td>${UGX(totalStockValue)}</td>
+    </tr>
+  `;
+  tbody.innerHTML += footerRow;
 }
 
 function setupInventory() {
@@ -1523,11 +1576,12 @@ function setupExpenses() {
   document.getElementById('btnFilterExpenses').addEventListener('click', loadExpenses);
 }
 
-// ================ EXCEL AUTOMATION ================
+// ================ ENHANCED EXCEL PROCESSING ================
 function processExcelFile(file, sheetDate) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = function(e) {
+      showLoading(true);
       try {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
@@ -1538,90 +1592,135 @@ function processExcelFile(file, sheetDate) {
           items: [],
           totalRecords: 0,
           totalSales: 0,
-          totalProfit: 0
+          totalProfit: 0,
+          processedProducts: []
         };
         
+        // Process each sheet
         workbook.SheetNames.forEach(sheetName => {
           const worksheet = workbook.Sheets[sheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          const range = XLSX.utils.decode_range(worksheet['!ref']);
           
-          // Parse Excel data (based on provided sheet structure)
-          for (let i = 2; i < jsonData.length; i++) {
-            const row = jsonData[i];
-            if (row && row[1] && row[1].trim() !== '') {
-              const productName = String(row[1] || '').trim();
-              const category = String(row[2] || '').trim();
-              const purchasePrice = parseInt(row[3]) || 0;
-              const salePrice = parseInt(row[4]) || 0;
-              const openingStock = parseInt(row[5]) || 0;
-              const received = parseInt(row[6]) || 0;
-              const sold = parseInt(row[9]) || 0;
-              const profit = parseInt(row[10]) || 0;
+          // Find headers first
+          let headers = {};
+          for (let C = range.s.c; C <= range.e.c; ++C) {
+            const cell = worksheet[XLSX.utils.encode_cell({r: 1, c: C})]; // Row 1 has headers
+            if (cell && cell.v) {
+              headers[cell.v.toString().toLowerCase()] = C;
+            }
+          }
+          
+          // Parse data rows starting from row 2
+          for (let R = 2; R <= range.e.r; ++R) {
+            const itemCell = worksheet[XLSX.utils.encode_cell({r: R, c: headers['item'] || 1})];
+            if (!itemCell || !itemCell.v) continue;
+            
+            const productName = itemCell.v.toString().trim();
+            if (!productName || productName === 'ITEM' || productName === 'DATE') continue;
+            
+            // Get other cells
+            const categoryCell = worksheet[XLSX.utils.encode_cell({r: R, c: headers['category'] || 2})];
+            const purchaseCell = worksheet[XLSX.utils.encode_cell({r: R, c: headers['purchase price'] || 3})];
+            const saleCell = worksheet[XLSX.utils.encode_cell({r: R, c: headers['sale price'] || 4})];
+            const openingCell = worksheet[XLSX.utils.encode_cell({r: R, c: headers['opening stock'] || 5})];
+            const soldCell = worksheet[XLSX.utils.encode_cell({r: R, c: headers['sold'] || 9})];
+            const profitCell = worksheet[XLSX.utils.encode_cell({r: R, c: headers['profit'] || 10})];
+            
+            const category = categoryCell ? categoryCell.v : '';
+            const purchasePrice = purchaseCell ? parseFloat(purchaseCell.v) || 0 : 0;
+            const salePrice = saleCell ? parseFloat(saleCell.v) || 0 : 0;
+            const openingStock = openingCell ? parseInt(openingCell.v) || 0 : 0;
+            const sold = soldCell ? parseInt(soldCell.v) || 0 : 0;
+            const profit = profitCell ? parseFloat(profitCell.v) || 0 : 0;
+            
+            if (sold > 0) {
+              // Find or create product
+              let product = db.products.find(p => 
+                p.name.toLowerCase() === productName.toLowerCase()
+              );
               
-              if (productName && sold > 0) {
-                // Find or create product
-                let product = db.products.find(p => 
-                  p.name.toLowerCase() === productName.toLowerCase()
-                );
-                
-                if (!product) {
-                  product = {
-                    id: 'prod_import_' + Date.now() + Math.random(),
-                    name: productName,
-                    category,
-                    purchasePrice,
-                    salePrice,
-                    openingStock,
-                    currentStock: openingStock,
-                    minStockLevel: 10,
-                    soldCount: 0,
-                    totalProfit: 0
-                  };
-                  db.products.push(product);
-                }
-                
-                const total = sold * salePrice;
-                const itemProfit = sold * (salePrice - purchasePrice);
-                
-                result.items.push({
-                  productId: product.id,
-                  productName,
-                  quantity: sold,
-                  unitPrice: salePrice,
-                  total,
-                  profit: itemProfit
-                });
-                
-                result.totalRecords++;
-                result.totalSales += total;
-                result.totalProfit += itemProfit;
-                
-                // Update product
-                product.currentStock = Math.max(0, (product.currentStock || product.openingStock) - sold);
+              if (!product) {
+                product = {
+                  id: 'prod_import_' + Date.now() + '_' + R,
+                  name: productName,
+                  category: category || 'other',
+                  purchasePrice: purchasePrice,
+                  salePrice: salePrice,
+                  openingStock: openingStock,
+                  currentStock: Math.max(0, openingStock - sold),
+                  minStockLevel: 5,
+                  soldCount: sold,
+                  totalProfit: profit || (sold * (salePrice - purchasePrice))
+                };
+                db.products.push(product);
+                result.processedProducts.push(`Added: ${productName}`);
+              } else {
+                // Update existing product
+                if (purchasePrice > 0) product.purchasePrice = purchasePrice;
+                if (salePrice > 0) product.salePrice = salePrice;
+                if (openingStock > 0) product.openingStock = openingStock;
+                product.currentStock = Math.max(0, (product.currentStock || openingStock) - sold);
                 product.soldCount = (product.soldCount || 0) + sold;
-                product.totalProfit = (product.totalProfit || 0) + itemProfit;
+                product.totalProfit = (product.totalProfit || 0) + (profit || (sold * (salePrice - purchasePrice)));
+                result.processedProducts.push(`Updated: ${productName}`);
               }
+              
+              const total = sold * salePrice;
+              const itemProfit = profit || (sold * (salePrice - purchasePrice));
+              
+              result.items.push({
+                productId: product.id,
+                productName: productName,
+                quantity: sold,
+                unitPrice: salePrice,
+                total: total,
+                profit: itemProfit
+              });
+              
+              result.totalRecords++;
+              result.totalSales += total;
+              result.totalProfit += itemProfit;
             }
           }
         });
         
-        // Save daily sheet
-        db.dailySheets[sheetDate] = {
-          date: sheetDate,
-          items: result.items,
-          totalSales: result.totalSales,
-          totalProfit: result.totalProfit,
-          source: 'excel',
-          fileName: file.name,
-          recordedAt: new Date().toISOString()
-        };
+        // Save daily sheet if we have items
+        if (result.items.length > 0) {
+          const existingSheet = db.dailySheets[sheetDate];
+          const overwriteOption = document.getElementById('overwriteOption').value;
+          
+          if (!existingSheet || overwriteOption === 'yes') {
+            db.dailySheets[sheetDate] = {
+              date: sheetDate,
+              items: result.items,
+              totalSales: result.totalSales,
+              totalProfit: result.totalProfit,
+              source: 'excel',
+              fileName: file.name,
+              recordedAt: new Date().toISOString()
+            };
+            
+            result.message = `Processed ${file.name} for ${sheetDate}: ${result.totalRecords} records, Sales: ${UGX(result.totalSales)}, Profit: ${UGX(result.totalProfit)}`;
+          } else {
+            result.message = `Sheet for ${sheetDate} already exists and overwrite is disabled.`;
+          }
+        } else {
+          result.message = `No sold items found in ${file.name}`;
+        }
         
         saveData();
-        logImport(`Processed ${file.name} for ${sheetDate}: ${result.totalRecords} records, Sales: ${UGX(result.totalSales)}, Profit: ${UGX(result.totalProfit)}`);
+        logImport(result.message);
+        
+        // Add processed products to log
+        if (result.processedProducts.length > 0) {
+          logImport(`Products: ${result.processedProducts.join(', ')}`);
+        }
         
         resolve(result);
       } catch (error) {
         reject(error);
+      } finally {
+        showLoading(false);
       }
     };
     reader.onerror = reject;
@@ -2395,7 +2494,7 @@ async function initializeApp() {
     if (!input.value) input.value = today;
   });
   
-  // Initialize products from Excel if empty
+  // Initialize products from ACTUAL Excel data
   initializeProductsFromExcel();
   
   // Setup all components
@@ -2418,7 +2517,12 @@ async function initializeApp() {
   renderAutomation();
   updateLastSaveTime();
   
-  console.log('Enhanced Bar Management System initialized successfully!');
+  // Log initial stats
+  console.log('Bar Management System initialized with:', {
+    products: db.products.length,
+    dailySheets: Object.keys(db.dailySheets).length,
+    expenses: db.expenses.length
+  });
 }
 
 // Start the application
