@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BAR MANAGEMENT SYSTEM - Enhanced with Purchases & Daily Sheets</title>
-<meta name="description" content="Fully functional bar stock management system with purchases and daily sheet tracking">
+<title>BAR MANAGEMENT SYSTEM - Enhanced with Daily Sheets</title>
+<meta name="description" content="Fully functional bar stock management system with daily sheet tracking">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <!-- Google Identity Services -->
@@ -81,7 +81,6 @@
         <button class="tab active" data-tab="dashboard">Dashboard</button>
         <button class="tab" data-tab="inventory">Inventory</button>
         <button class="tab" data-tab="sales">Daily Sales</button>
-        <button class="tab" data-tab="purchases">Purchases</button>
         <button class="tab" data-tab="expenses">Expenses</button>
         <button class="tab" data-tab="reports">Reports</button>
         <button class="tab" data-tab="products">Products</button>
@@ -166,10 +165,10 @@
             <tr>
               <th>Product</th>
               <th>Category</th>
-              <th>Opening Stock</th>
+              <th>Opening</th>
               <th>Purchased</th>
               <th>Sold</th>
-              <th>Current Stock</th>
+              <th>Closing</th>
               <th>Cost Price</th>
               <th>Sale Price</th>
               <th>Stock Value</th>
@@ -307,150 +306,6 @@
       </div>
     </section>
 
-    <!-- PURCHASES SECTION - NEW -->
-    <section id="purchases" class="tabpanel" style="display:none;">
-      <div class="grid-2">
-        <div class="card">
-          <h3>Record Purchase (Restocking)</h3>
-          <div class="grid-3">
-            <div>
-              <label>Purchase Date</label>
-              <input type="date" id="purchaseDate" value="">
-            </div>
-            <div>
-              <label>Supplier</label>
-              <input type="text" id="purchaseSupplier" placeholder="Supplier name">
-            </div>
-            <div>
-              <label>Invoice Number</label>
-              <input type="text" id="purchaseInvoice" placeholder="Optional">
-            </div>
-          </div>
-          
-          <div class="hr"></div>
-          
-          <h4>Purchase Items</h4>
-          <div class="grid-4" style="margin-bottom:12px;">
-            <div>
-              <label>Product</label>
-              <select id="purchaseProduct"></select>
-            </div>
-            <div>
-              <label>Quantity</label>
-              <input type="number" id="purchaseQty" min="1" value="1">
-            </div>
-            <div>
-              <label>Unit Cost (UGX)</label>
-              <input type="number" id="purchaseCost" min="0" value="0">
-            </div>
-            <div style="align-self:flex-end;">
-              <button class="btn" id="btnAddPurchaseItem">Add Item</button>
-            </div>
-          </div>
-          
-          <table class="table compact-table" id="purchaseItemsTable">
-            <thead><tr><th>Product</th><th>Qty</th><th>Unit Cost</th><th>Total Cost</th><th></th></tr></thead>
-            <tbody></tbody>
-          </table>
-          
-          <div class="right" style="margin-top:16px;">
-            <div class="stat">
-              <span class="muted">Total Purchase</span>
-              <b id="purchaseTotal">UGX 0</b>
-            </div>
-            <button class="btn primary" id="btnSavePurchase">Save Purchase</button>
-          </div>
-        </div>
-        
-        <div class="card">
-          <h3>Recent Purchases</h3>
-          <div class="grid-3" style="margin-bottom:16px;">
-            <div>
-              <label>From Date</label>
-              <input type="date" id="purchaseFrom">
-            </div>
-            <div>
-              <label>To Date</label>
-              <input type="date" id="purchaseTo">
-            </div>
-            <div style="align-self:flex-end;">
-              <button class="btn" id="btnFilterPurchases">Filter</button>
-            </div>
-          </div>
-          
-          <table class="table compact-table" id="purchasesTable">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Supplier</th>
-                <th>Items</th>
-                <th>Total Cost</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-          
-          <div class="right" style="margin-top:16px;">
-            <div class="stat">
-              <span class="muted">Total Purchases</span>
-              <b id="totalPurchases">UGX 0</b>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="hr"></div>
-      
-      <div class="card">
-        <h3>Purchase Analysis</h3>
-        <div class="grid-3" style="margin-bottom:16px;">
-          <div>
-            <label>Product</label>
-            <select id="purchaseAnalysisProduct">
-              <option value="">All Products</option>
-            </select>
-          </div>
-          <div>
-            <label>From Date</label>
-            <input type="date" id="purchaseAnalysisFrom">
-          </div>
-          <div>
-            <label>To Date</label>
-            <input type="date" id="purchaseAnalysisTo">
-          </div>
-        </div>
-        
-        <div class="grid-3">
-          <div class="stat">
-            <span class="muted">Total Purchased Value</span>
-            <b id="analysisTotalValue">UGX 0</b>
-          </div>
-          <div class="stat">
-            <span class="muted">Average Cost</span>
-            <b id="analysisAvgCost">UGX 0</b>
-          </div>
-          <div class="stat">
-            <span class="muted">Reorder Frequency</span>
-            <b id="analysisReorderFreq">-</b>
-          </div>
-        </div>
-        
-        <table class="table compact-table" id="purchaseAnalysisTable">
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th>Total Purchased</th>
-              <th>Total Cost</th>
-              <th>Avg Unit Cost</th>
-              <th>Last Purchase Date</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
-
     <!-- Expenses -->
     <section id="expenses" class="tabpanel" style="display:none;">
       <div class="grid-2">
@@ -546,12 +401,11 @@
             <input type="date" id="reportEnd" value="">
           </div>
           <div>
-            <label>Report Type</label>
-            <select id="reportType">
-              <option value="profitloss">Profit & Loss</option>
-              <option value="purchases">Purchases Summary</option>
-              <option value="inventory">Inventory Valuation</option>
-              <option value="combined">Combined Report</option>
+            <label>Compare With</label>
+            <select id="comparePeriod">
+              <option value="none">No Comparison</option>
+              <option value="previous">Previous Period</option>
+              <option value="same_last_year">Same Period Last Year</option>
             </select>
           </div>
           <div class="right">
@@ -602,8 +456,8 @@
               <input id="productOpeningStock" type="number" min="0" value="0">
             </div>
             <div>
-              <label>Reorder Level</label>
-              <input id="productReorderLevel" type="number" min="0" value="10">
+              <label>Min Stock Level</label>
+              <input id="productMinStock" type="number" min="0" value="10">
             </div>
           </div>
           <div class="stack" style="margin-top:20px;">
@@ -622,7 +476,6 @@
               <option value="category">Sort by Category</option>
               <option value="stock">Sort by Stock</option>
               <option value="profit">Sort by Profit Margin</option>
-              <option value="needReorder">Needs Reorder</option>
             </select>
           </div>
           
@@ -635,7 +488,6 @@
                 <th>Sale Price</th>
                 <th>Profit Margin</th>
                 <th>Opening Stock</th>
-                <th>Purchased</th>
                 <th>Sold</th>
                 <th>Current Stock</th>
                 <th></th>
@@ -695,30 +547,6 @@
         
         <div class="hr"></div>
         
-        <h4>Import Purchases Excel</h4>
-        <div class="stack">
-          <label class="btn">
-            <input type="file" id="purchaseExcelFile" accept=".xlsx,.xls" style="display:none">
-            Upload Purchases Sheet
-          </label>
-          <button class="btn ok" id="btnProcessPurchaseSheet">Process Purchases</button>
-        </div>
-        
-        <div class="grid-3" style="margin-top:12px;">
-          <div>
-            <label>Purchase Date</label>
-            <input type="date" id="purchaseSheetDate" value="">
-          </div>
-          <div>
-            <label>Supplier</label>
-            <input type="text" id="purchaseSheetSupplier" placeholder="Supplier name">
-          </div>
-        </div>
-        
-        <p class="help">Upload purchases sheet to automatically update inventory and record purchases.</p>
-        
-        <div class="hr"></div>
-        
         <h4>Import Log</h4>
         <div style="max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:12px;background:#f8fafc;">
           <pre id="importLog" style="margin:0;font-size:12px;white-space:pre-wrap;">No import activity yet.</pre>
@@ -744,7 +572,7 @@
             <span class="muted">Last Saved</span>
             <b id="lastSaveTime">Never</b>
           </div>
-          <p class="help">Exports all daily sheets, products, purchases and expenses to a JSON file.</p>
+          <p class="help">Exports all daily sheets, products, and expenses to a JSON file.</p>
         </div>
 
         <!-- Excel Export -->
@@ -753,7 +581,6 @@
           <div class="stack section-tools">
             <button class="btn" id="btnExportAllData">Export All Data</button>
             <button class="btn" id="btnExportProfitLoss">Export P&L Report</button>
-            <button class="btn" id="btnExportPurchases">Export Purchases</button>
           </div>
           
           <div class="grid-2" style="margin-top:12px; gap:8px;">
@@ -801,7 +628,6 @@
           <div class="stack" style="margin-top:16px;">
             <button class="btn bad" id="btnWipe">Reset ALL Data</button>
             <button class="btn bad" id="btnClearSheets">Clear All Daily Sheets</button>
-            <button class="btn bad" id="btnClearPurchases">Clear All Purchases</button>
             <button class="btn bad" id="btnClearExpenses">Clear All Expenses</button>
           </div>
         </div>
@@ -854,14 +680,12 @@ function logImport(message) {
 }
 
 // ================ ENHANCED DATA MANAGEMENT ================
-const STORAGE_KEY = 'bar_management_enhanced_v3';
+const STORAGE_KEY = 'bar_management_enhanced_v2';
 let db = {
   // Products from the Excel sheet
   products: [],
   // Daily sheets - each with unique date
   dailySheets: {}, // key: date, value: { date, items: [], totalSales, totalProfit }
-  // Purchases - new section
-  purchases: [], // { id, date, supplier, invoice, items: [], total, recordedAt }
   // Expenses
   expenses: [], // { date, type, description, amount }
   // Settings
@@ -945,7 +769,7 @@ function initializeProductsFromExcel() {
     { name: "Grands", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
     { name: "Ondavit", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
     { name: "C.Morgan", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
-    { name: "Scout", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
+    { name: "Scount", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
     { name: "Antonious", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
     { name: "Robertson", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
     { name: "Ballanties", category: "wine", purchasePrice: 2000, salePrice: 3000, openingStock: 10 },
@@ -971,12 +795,10 @@ function initializeProductsFromExcel() {
       purchasePrice: p.purchasePrice,
       salePrice: p.salePrice,
       openingStock: p.openingStock,
-      reorderLevel: 10,
-      purchasedQuantity: 0, // Track purchased quantity separately
+      minStockLevel: 10,
+      currentStock: p.openingStock, // Start with opening stock
       soldCount: 0,
-      totalProfit: 0,
-      lastPurchaseDate: null,
-      lastPurchasePrice: p.purchasePrice
+      totalProfit: 0
     }));
     saveData();
   }
@@ -989,18 +811,18 @@ function updateDashboardStats() {
   
   // Stock value (based on purchase price)
   const stockValue = db.products.reduce((sum, p) => {
-    const currentStock = calculateCurrentStock(p);
-    return sum + currentStock * (p.purchasePrice || 0);
+    return sum + (p.currentStock || p.openingStock || 0) * (p.purchasePrice || 0);
   }, 0);
   document.getElementById('statStockValue').textContent = UGX(stockValue);
   
-  // Monthly purchases (calculate from purchases array)
+  // Monthly purchases (calculate from product purchases)
   const currentMonth = todayStr().substring(0, 7); // YYYY-MM
-  const monthlyPurchases = db.purchases.reduce((sum, purchase) => {
-    if (purchase.date && purchase.date.substring(0, 7) === currentMonth) {
-      return sum + (purchase.total || 0);
-    }
-    return sum;
+  const monthlyPurchases = db.products.reduce((sum, p) => {
+    // For now, we'll estimate purchases based on sold items
+    // In a real system, you'd track actual purchases
+    const sold = p.soldCount || 0;
+    const purchaseValue = sold * (p.purchasePrice || 0);
+    return sum + purchaseValue;
   }, 0);
   document.getElementById('statMonthPurchases').textContent = UGX(monthlyPurchases);
   
@@ -1032,19 +854,11 @@ function updateDashboardStats() {
   
   let grossProfit = 0;
   let totalExpenses = 0;
-  let totalPurchases = 0;
   
   // Calculate gross profit from daily sheets
   Object.values(db.dailySheets).forEach(sheet => {
     if (sheet.date >= periodStart && sheet.date <= periodEnd) {
       grossProfit += sheet.totalProfit || 0;
-    }
-  });
-  
-  // Calculate total purchases for period
-  db.purchases.forEach(purchase => {
-    if (purchase.date >= periodStart && purchase.date <= periodEnd) {
-      totalPurchases += purchase.total || 0;
     }
   });
   
@@ -1055,7 +869,7 @@ function updateDashboardStats() {
     }
   });
   
-  const netProfit = grossProfit - totalExpenses - totalPurchases;
+  const netProfit = grossProfit - totalExpenses;
   
   document.getElementById('statGrossProfit').textContent = UGX(grossProfit);
   document.getElementById('statTotalExpenses').textContent = UGX(totalExpenses);
@@ -1103,7 +917,6 @@ function setupTabs() {
         // Initialize panel if needed
         if (tabId === 'products') renderProducts();
         if (tabId === 'sales') renderSales();
-        if (tabId === 'purchases') renderPurchases();
         if (tabId === 'inventory') renderInventory();
         if (tabId === 'expenses') renderExpenses();
         if (tabId === 'reports') initReports();
@@ -1116,14 +929,6 @@ function setupTabs() {
 
 // ================ PRODUCTS MANAGEMENT ================
 let editingProductId = null;
-
-// Calculate current stock for a product
-function calculateCurrentStock(product) {
-  const openingStock = product.openingStock || 0;
-  const purchased = product.purchasedQuantity || 0;
-  const sold = product.soldCount || 0;
-  return Math.max(0, openingStock + purchased - sold);
-}
 
 function renderProducts() {
   const searchTerm = document.getElementById('productSearch').value.toLowerCase();
@@ -1138,19 +943,11 @@ function renderProducts() {
     );
   }
   
-  // Filter by reorder needs
-  if (sortBy === 'needReorder') {
-    filtered = filtered.filter(p => {
-      const currentStock = calculateCurrentStock(p);
-      return currentStock <= (p.reorderLevel || 10);
-    });
-  }
-  
   // Sort products
   filtered.sort((a, b) => {
     if (sortBy === 'name') return a.name.localeCompare(b.name);
     if (sortBy === 'category') return (a.category || '').localeCompare(b.category || '');
-    if (sortBy === 'stock') return calculateCurrentStock(b) - calculateCurrentStock(a);
+    if (sortBy === 'stock') return (b.currentStock || 0) - (a.currentStock || 0);
     if (sortBy === 'profit') {
       const marginA = (a.salePrice - a.purchasePrice) / a.purchasePrice * 100;
       const marginB = (b.salePrice - b.purchasePrice) / b.purchasePrice * 100;
@@ -1164,20 +961,18 @@ function renderProducts() {
     tbody.innerHTML = filtered.map(p => {
       const profitMargin = p.purchasePrice > 0 ? 
         ((p.salePrice - p.purchasePrice) / p.purchasePrice * 100).toFixed(1) : 0;
-      const currentStock = calculateCurrentStock(p);
-      const needsReorder = currentStock <= (p.reorderLevel || 10);
+      const isLowStock = (p.currentStock || 0) <= (p.minStockLevel || 5);
       
       return `
-      <tr ${needsReorder ? 'style="background:#fff7ed"' : ''}>
-        <td><strong>${p.name}</strong> ${needsReorder ? '⚠️' : ''}</td>
+      <tr ${isLowStock ? 'style="background:#fff7ed"' : ''}>
+        <td><strong>${p.name}</strong></td>
         <td><span class="pill">${p.category || 'other'}</span></td>
         <td>${UGX(p.purchasePrice || 0)}</td>
         <td>${UGX(p.salePrice || 0)}</td>
         <td>${profitMargin}%</td>
         <td>${p.openingStock || 0}</td>
-        <td>${p.purchasedQuantity || 0}</td>
         <td>${p.soldCount || 0}</td>
-        <td><strong>${currentStock}</strong></td>
+        <td>${p.currentStock || p.openingStock || 0}</td>
         <td><button class="btn" data-edit="${p.id}">Edit</button></td>
       </tr>
       `;
@@ -1190,36 +985,17 @@ function renderProducts() {
 
 function populateProductSelects() {
   const saleSelect = document.getElementById('saleProduct');
-  const purchaseSelect = document.getElementById('purchaseProduct');
   const historySelect = document.getElementById('productHistorySelect');
-  const analysisSelect = document.getElementById('purchaseAnalysisProduct');
   
   if (saleSelect) {
     saleSelect.innerHTML = '<option value="">Select Product</option>' +
-      db.products.map(p => {
-        const currentStock = calculateCurrentStock(p);
-        return `<option value="${p.id}" data-price="${p.salePrice}">${p.name} (Stock: ${currentStock})</option>`;
-      }).join('');
-  }
-  
-  if (purchaseSelect) {
-    purchaseSelect.innerHTML = '<option value="">Select Product</option>' +
-      db.products.map(p => {
-        const currentStock = calculateCurrentStock(p);
-        const needsReorder = currentStock <= (p.reorderLevel || 10);
-        return `<option value="${p.id}" data-cost="${p.purchasePrice}">${p.name} ${needsReorder ? '⚠️' : ''} (Stock: ${currentStock})</option>`;
-      }).join('');
+      db.products.map(p => 
+        `<option value="${p.id}" data-price="${p.salePrice}">${p.name} (Stock: ${p.currentStock || p.openingStock || 0})</option>`
+      ).join('');
   }
   
   if (historySelect) {
     historySelect.innerHTML = '<option value="">Select Product</option>' +
-      db.products.map(p => 
-        `<option value="${p.id}">${p.name}</option>`
-      ).join('');
-  }
-  
-  if (analysisSelect) {
-    analysisSelect.innerHTML = '<option value="">All Products</option>' +
       db.products.map(p => 
         `<option value="${p.id}">${p.name}</option>`
       ).join('');
@@ -1242,7 +1018,7 @@ function setupProducts() {
     document.getElementById('productCost').value = product.purchasePrice || 0;
     document.getElementById('productPrice').value = product.salePrice || 0;
     document.getElementById('productOpeningStock').value = product.openingStock || 0;
-    document.getElementById('productReorderLevel').value = product.reorderLevel || 10;
+    document.getElementById('productMinStock').value = product.minStockLevel || 10;
     document.getElementById('btnDeleteProduct').disabled = false;
   });
   
@@ -1258,7 +1034,7 @@ function setupProducts() {
     const purchasePrice = parseInt(document.getElementById('productCost').value) || 0;
     const salePrice = parseInt(document.getElementById('productPrice').value) || 0;
     const openingStock = parseInt(document.getElementById('productOpeningStock').value) || 0;
-    const reorderLevel = parseInt(document.getElementById('productReorderLevel').value) || 10;
+    const minStockLevel = parseInt(document.getElementById('productMinStock').value) || 10;
     
     if (editingProductId) {
       // Update existing product
@@ -1269,7 +1045,12 @@ function setupProducts() {
         product.purchasePrice = purchasePrice;
         product.salePrice = salePrice;
         product.openingStock = openingStock;
-        product.reorderLevel = reorderLevel;
+        product.minStockLevel = minStockLevel;
+        
+        // Update current stock if opening stock changed
+        if (product.currentStock === undefined) {
+          product.currentStock = openingStock;
+        }
       }
     } else {
       // Create new product
@@ -1280,12 +1061,10 @@ function setupProducts() {
         purchasePrice,
         salePrice,
         openingStock,
-        purchasedQuantity: 0,
+        currentStock: openingStock,
+        minStockLevel,
         soldCount: 0,
-        totalProfit: 0,
-        reorderLevel,
-        lastPurchaseDate: null,
-        lastPurchasePrice: purchasePrice
+        totalProfit: 0
       };
       db.products.push(newProduct);
     }
@@ -1300,7 +1079,7 @@ function setupProducts() {
     document.getElementById('productCost').value = '0';
     document.getElementById('productPrice').value = '0';
     document.getElementById('productOpeningStock').value = '0';
-    document.getElementById('productReorderLevel').value = '10';
+    document.getElementById('productMinStock').value = '10';
     document.getElementById('btnDeleteProduct').disabled = true;
     editingProductId = null;
     
@@ -1324,7 +1103,7 @@ function setupProducts() {
     document.getElementById('productCost').value = '0';
     document.getElementById('productPrice').value = '0';
     document.getElementById('productOpeningStock').value = '0';
-    document.getElementById('productReorderLevel').value = '10';
+    document.getElementById('productMinStock').value = '10';
     document.getElementById('btnDeleteProduct').disabled = true;
     editingProductId = null;
     
@@ -1334,298 +1113,6 @@ function setupProducts() {
   // Search products
   document.getElementById('productSearch').addEventListener('input', renderProducts);
   document.getElementById('productSort').addEventListener('change', renderProducts);
-}
-
-// ================ PURCHASES MANAGEMENT - NEW ================
-let purchaseItems = [];
-
-function renderPurchases() {
-  const today = todayStr();
-  document.getElementById('purchaseDate').value = today;
-  document.getElementById('purchaseFrom').value = today;
-  document.getElementById('purchaseTo').value = today;
-  document.getElementById('purchaseAnalysisFrom').value = today;
-  document.getElementById('purchaseAnalysisTo').value = today;
-  document.getElementById('purchaseSheetDate').value = today;
-  
-  // Reset form
-  purchaseItems = [];
-  document.getElementById('purchaseSupplier').value = '';
-  document.getElementById('purchaseInvoice').value = '';
-  document.getElementById('purchaseQty').value = '1';
-  document.getElementById('purchaseCost').value = '';
-  updatePurchaseTotal();
-  
-  // Load recent purchases
-  loadRecentPurchases();
-  updatePurchaseAnalysis();
-}
-
-function updatePurchaseTotal() {
-  const total = purchaseItems.reduce((sum, item) => sum + (item.totalCost || 0), 0);
-  document.getElementById('purchaseTotal').textContent = UGX(total);
-  
-  const tbody = document.querySelector('#purchaseItemsTable tbody');
-  if (tbody) {
-    tbody.innerHTML = purchaseItems.map((item, index) => {
-      return `
-      <tr>
-        <td>${item.productName}</td>
-        <td>${item.quantity}</td>
-        <td>${UGX(item.unitCost)}</td>
-        <td>${UGX(item.totalCost)}</td>
-        <td><button class="btn bad" data-remove-purchase="${index}">×</button></td>
-      </tr>
-      `;
-    }).join('');
-  }
-}
-
-function loadRecentPurchases() {
-  const from = document.getElementById('purchaseFrom').value || todayStr();
-  const to = document.getElementById('purchaseTo').value || todayStr();
-  
-  // Filter purchases by date range
-  const filteredPurchases = db.purchases.filter(p => 
-    p.date >= from && p.date <= to
-  ).sort((a, b) => new Date(b.date) - new Date(a.date));
-  
-  const tbody = document.querySelector('#purchasesTable tbody');
-  if (tbody) {
-    tbody.innerHTML = filteredPurchases.map((purchase, index) => {
-      const itemCount = purchase.items?.length || 0;
-      return `
-      <tr>
-        <td>${purchase.date}</td>
-        <td>${purchase.supplier || 'N/A'}</td>
-        <td>${itemCount} items</td>
-        <td>${UGX(purchase.total || 0)}</td>
-        <td><button class="btn" data-view-purchase="${index}">View</button></td>
-      </tr>
-      `;
-    }).join('');
-  }
-  
-  // Update total purchases
-  const totalPurchases = filteredPurchases.reduce((sum, p) => sum + (p.total || 0), 0);
-  document.getElementById('totalPurchases').textContent = UGX(totalPurchases);
-}
-
-function updatePurchaseAnalysis() {
-  const productId = document.getElementById('purchaseAnalysisProduct').value;
-  const from = document.getElementById('purchaseAnalysisFrom').value || todayStr();
-  const to = document.getElementById('purchaseAnalysisTo').value || todayStr();
-  
-  // Filter purchases
-  let relevantPurchases = db.purchases.filter(p => p.date >= from && p.date <= to);
-  
-  if (productId) {
-    const product = db.products.find(p => p.id === productId);
-    if (product) {
-      relevantPurchases = relevantPurchases.filter(p => 
-        p.items.some(item => item.productName === product.name)
-      );
-    }
-  }
-  
-  // Calculate analysis
-  let totalValue = 0;
-  let totalQuantity = 0;
-  const productAnalysis = {};
-  
-  relevantPurchases.forEach(purchase => {
-    purchase.items.forEach(item => {
-      if (!productId || item.productName === db.products.find(p => p.id === productId)?.name) {
-        totalValue += item.totalCost;
-        totalQuantity += item.quantity;
-        
-        if (!productAnalysis[item.productName]) {
-          productAnalysis[item.productName] = {
-            totalQuantity: 0,
-            totalCost: 0,
-            lastDate: purchase.date
-          };
-        }
-        
-        productAnalysis[item.productName].totalQuantity += item.quantity;
-        productAnalysis[item.productName].totalCost += item.totalCost;
-        productAnalysis[item.productName].lastDate = purchase.date;
-      }
-    });
-  });
-  
-  const avgCost = totalQuantity > 0 ? totalValue / totalQuantity : 0;
-  
-  document.getElementById('analysisTotalValue').textContent = UGX(totalValue);
-  document.getElementById('analysisAvgCost').textContent = UGX(avgCost);
-  document.getElementById('analysisReorderFreq').textContent = relevantPurchases.length > 0 ? 
-    `${relevantPurchases.length} purchases` : '-';
-  
-  // Update analysis table
-  const tbody = document.querySelector('#purchaseAnalysisTable tbody');
-  if (tbody) {
-    tbody.innerHTML = Object.entries(productAnalysis).map(([productName, data]) => {
-      const avgUnitCost = data.totalQuantity > 0 ? data.totalCost / data.totalQuantity : 0;
-      return `
-      <tr>
-        <td>${productName}</td>
-        <td>${data.totalQuantity}</td>
-        <td>${UGX(data.totalCost)}</td>
-        <td>${UGX(avgUnitCost)}</td>
-        <td>${data.lastDate}</td>
-      </tr>
-      `;
-    }).join('');
-  }
-}
-
-function setupPurchases() {
-  // Auto-fill cost when product selected
-  document.getElementById('purchaseProduct').addEventListener('change', function() {
-    const selectedOption = this.options[this.selectedIndex];
-    if (selectedOption && selectedOption.value) {
-      const purchaseCost = selectedOption.getAttribute('data-cost');
-      document.getElementById('purchaseCost').value = purchaseCost || '';
-    }
-  });
-  
-  // Add purchase item
-  document.getElementById('btnAddPurchaseItem').addEventListener('click', () => {
-    const productId = document.getElementById('purchaseProduct').value;
-    const quantity = parseInt(document.getElementById('purchaseQty').value) || 1;
-    const unitCost = parseInt(document.getElementById('purchaseCost').value) || 0;
-    
-    if (!productId) {
-      alert('Please select a product');
-      return;
-    }
-    if (quantity <= 0) {
-      alert('Please enter a valid quantity');
-      return;
-    }
-    if (unitCost <= 0) {
-      alert('Please enter a valid cost');
-      return;
-    }
-    
-    const product = db.products.find(p => p.id === productId);
-    if (!product) {
-      alert('Product not found');
-      return;
-    }
-    
-    const totalCost = quantity * unitCost;
-    
-    purchaseItems.push({
-      productId,
-      productName: product.name,
-      quantity,
-      unitCost,
-      totalCost
-    });
-    
-    updatePurchaseTotal();
-    
-    // Reset form
-    document.getElementById('purchaseQty').value = '1';
-    document.getElementById('purchaseCost').value = '';
-  });
-  
-  // Remove purchase item
-  document.getElementById('purchaseItemsTable').addEventListener('click', (e) => {
-    const removeBtn = e.target.closest('[data-remove-purchase]');
-    if (!removeBtn) return;
-    
-    const index = parseInt(removeBtn.getAttribute('data-remove-purchase'));
-    purchaseItems.splice(index, 1);
-    updatePurchaseTotal();
-  });
-  
-  // Save purchase
-  document.getElementById('btnSavePurchase').addEventListener('click', () => {
-    if (purchaseItems.length === 0) {
-      alert('Please add items to the purchase');
-      return;
-    }
-    
-    const date = document.getElementById('purchaseDate').value || todayStr();
-    const supplier = document.getElementById('purchaseSupplier').value.trim();
-    const invoice = document.getElementById('purchaseInvoice').value.trim();
-    
-    if (!supplier) {
-      alert('Please enter supplier name');
-      return;
-    }
-    
-    const total = purchaseItems.reduce((sum, item) => sum + item.totalCost, 0);
-    
-    // Update product stocks and purchase counts
-    purchaseItems.forEach(item => {
-      const product = db.products.find(p => p.id === item.productId);
-      if (product) {
-        product.purchasedQuantity = (product.purchasedQuantity || 0) + item.quantity;
-        product.lastPurchaseDate = date;
-        product.lastPurchasePrice = item.unitCost;
-        
-        // Update purchase price if different
-        if (item.unitCost !== product.purchasePrice) {
-          product.purchasePrice = item.unitCost;
-        }
-      }
-    });
-    
-    // Save purchase record
-    const newPurchase = {
-      id: 'pur_' + Date.now(),
-      date,
-      supplier,
-      invoice: invoice || null,
-      items: [...purchaseItems],
-      total,
-      recordedAt: new Date().toISOString()
-    };
-    
-    db.purchases.push(newPurchase);
-    saveData();
-    
-    // Refresh display
-    renderPurchases();
-    renderProducts();
-    renderInventory();
-    updateDashboardStats();
-    
-    alert(`Purchase saved for ${date}! Total: ${UGX(total)}`);
-  });
-  
-  // Filter purchases
-  document.getElementById('btnFilterPurchases').addEventListener('click', loadRecentPurchases);
-  
-  // View purchase details
-  document.getElementById('purchasesTable').addEventListener('click', (e) => {
-    const viewBtn = e.target.closest('[data-view-purchase]');
-    if (!viewBtn) return;
-    
-    const index = parseInt(viewBtn.getAttribute('data-view-purchase'));
-    const purchase = db.purchases[index];
-    
-    if (purchase) {
-      let details = `Purchase Date: ${purchase.date}\n`;
-      details += `Supplier: ${purchase.supplier}\n`;
-      details += `Invoice: ${purchase.invoice || 'N/A'}\n\n`;
-      details += 'Items:\n';
-      purchase.items.forEach(item => {
-        details += `- ${item.productName}: ${item.quantity} × ${UGX(item.unitCost)} = ${UGX(item.totalCost)}\n`;
-      });
-      details += `\nTotal: ${UGX(purchase.total)}`;
-      
-      alert(details);
-    }
-  });
-  
-  // Purchase analysis
-  document.getElementById('purchaseAnalysisProduct').addEventListener('change', updatePurchaseAnalysis);
-  document.getElementById('purchaseAnalysisFrom').addEventListener('change', updatePurchaseAnalysis);
-  document.getElementById('purchaseAnalysisTo').addEventListener('change', updatePurchaseAnalysis);
 }
 
 // ================ DAILY SALES MANAGEMENT ================
@@ -1792,7 +1279,7 @@ function setupSales() {
     }
     
     // Check stock
-    const currentStock = calculateCurrentStock(product);
+    const currentStock = product.currentStock || product.openingStock || 0;
     if (currentStock < quantity) {
       if (!confirm(`Only ${currentStock} items in stock. Continue anyway?`)) {
         return;
@@ -1853,6 +1340,7 @@ function setupSales() {
     dailySaleItems.forEach(item => {
       const product = db.products.find(p => p.id === item.productId);
       if (product) {
+        product.currentStock = Math.max(0, (product.currentStock || product.openingStock || 0) - item.quantity);
         product.soldCount = (product.soldCount || 0) + item.quantity;
         product.totalProfit = (product.totalProfit || 0) + item.profit;
       }
@@ -1902,17 +1390,8 @@ function renderInventory() {
   const tbody = document.querySelector('#inventoryTable tbody');
   if (tbody) {
     tbody.innerHTML = filtered.map(product => {
-      // Calculate purchased up to date
-      let totalPurchased = 0;
+      // Calculate sold from daily sheets
       let totalSold = 0;
-      
-      db.purchases.forEach(purchase => {
-        if (purchase.date <= date) {
-          const productItems = purchase.items.filter(item => item.productName === product.name);
-          totalPurchased += productItems.reduce((sum, item) => sum + item.quantity, 0);
-        }
-      });
-      
       for (const [sheetDate, sheet] of Object.entries(db.dailySheets)) {
         if (sheetDate <= date) {
           const productItems = sheet.items.filter(item => item.productName === product.name);
@@ -1921,16 +1400,15 @@ function renderInventory() {
       }
       
       const openingStock = product.openingStock || 0;
-      const currentStock = Math.max(0, openingStock + totalPurchased - totalSold);
+      const currentStock = Math.max(0, openingStock - totalSold);
       const stockValue = currentStock * (product.purchasePrice || 0);
-      const needsReorder = currentStock <= (product.reorderLevel || 10);
       
       return `
-      <tr ${needsReorder ? 'style="background:#fff7ed"' : ''}>
-        <td><strong>${product.name}</strong> ${needsReorder ? '⚠️' : ''}</td>
+      <tr ${currentStock <= (product.minStockLevel || 5) ? 'style="background:#fff7ed"' : ''}>
+        <td><strong>${product.name}</strong></td>
         <td><span class="pill">${product.category || 'other'}</span></td>
         <td>${openingStock}</td>
-        <td>${totalPurchased}</td>
+        <td>0</td> <!-- Purchased today - would need purchase tracking -->
         <td>${totalSold}</td>
         <td><strong>${currentStock}</strong></td>
         <td>${UGX(product.purchasePrice || 0)}</td>
@@ -2094,12 +1572,10 @@ function processExcelFile(file, sheetDate) {
                     purchasePrice,
                     salePrice,
                     openingStock,
-                    purchasedQuantity: 0,
+                    currentStock: openingStock,
+                    minStockLevel: 10,
                     soldCount: 0,
-                    totalProfit: 0,
-                    reorderLevel: 10,
-                    lastPurchaseDate: null,
-                    lastPurchasePrice: purchasePrice
+                    totalProfit: 0
                   };
                   db.products.push(product);
                 }
@@ -2121,6 +1597,7 @@ function processExcelFile(file, sheetDate) {
                 result.totalProfit += itemProfit;
                 
                 // Update product
+                product.currentStock = Math.max(0, (product.currentStock || product.openingStock) - sold);
                 product.soldCount = (product.soldCount || 0) + sold;
                 product.totalProfit = (product.totalProfit || 0) + itemProfit;
               }
@@ -2140,111 +1617,7 @@ function processExcelFile(file, sheetDate) {
         };
         
         saveData();
-        logImport(`Processed sales sheet ${file.name} for ${sheetDate}: ${result.totalRecords} records, Sales: ${UGX(result.totalSales)}, Profit: ${UGX(result.totalProfit)}`);
-        
-        resolve(result);
-      } catch (error) {
-        reject(error);
-      }
-    };
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-function processPurchaseExcelFile(file, sheetDate, supplier) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        
-        const result = {
-          fileName: file.name,
-          date: sheetDate,
-          supplier,
-          items: [],
-          totalRecords: 0,
-          totalCost: 0
-        };
-        
-        workbook.SheetNames.forEach(sheetName => {
-          const worksheet = workbook.Sheets[sheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-          
-          // Parse Excel data for purchases
-          for (let i = 1; i < jsonData.length; i++) {
-            const row = jsonData[i];
-            if (row && row[0] && row[0].trim() !== '') {
-              const productName = String(row[0] || '').trim();
-              const quantity = parseInt(row[1]) || 0;
-              const unitCost = parseInt(row[2]) || 0;
-              const totalCost = quantity * unitCost;
-              
-              if (productName && quantity > 0) {
-                // Find or create product
-                let product = db.products.find(p => 
-                  p.name.toLowerCase() === productName.toLowerCase()
-                );
-                
-                if (!product) {
-                  product = {
-                    id: 'prod_import_' + Date.now() + Math.random(),
-                    name: productName,
-                    category: 'other',
-                    purchasePrice: unitCost,
-                    salePrice: unitCost * 1.5, // Default markup
-                    openingStock: 0,
-                    purchasedQuantity: 0,
-                    soldCount: 0,
-                    totalProfit: 0,
-                    reorderLevel: 10,
-                    lastPurchaseDate: sheetDate,
-                    lastPurchasePrice: unitCost
-                  };
-                  db.products.push(product);
-                }
-                
-                result.items.push({
-                  productId: product.id,
-                  productName,
-                  quantity,
-                  unitCost,
-                  totalCost
-                });
-                
-                result.totalRecords++;
-                result.totalCost += totalCost;
-                
-                // Update product
-                product.purchasedQuantity = (product.purchasedQuantity || 0) + quantity;
-                product.lastPurchaseDate = sheetDate;
-                product.lastPurchasePrice = unitCost;
-                
-                // Update purchase price if different
-                if (unitCost !== product.purchasePrice) {
-                  product.purchasePrice = unitCost;
-                }
-              }
-            }
-          }
-        });
-        
-        // Save purchase record
-        const newPurchase = {
-          id: 'pur_' + Date.now(),
-          date: sheetDate,
-          supplier,
-          items: result.items,
-          total: result.totalCost,
-          fileName: file.name,
-          recordedAt: new Date().toISOString()
-        };
-        
-        db.purchases.push(newPurchase);
-        saveData();
-        logImport(`Processed purchases sheet ${file.name} for ${sheetDate}: ${result.totalRecords} items, Total: ${UGX(result.totalCost)}`);
+        logImport(`Processed ${file.name} for ${sheetDate}: ${result.totalRecords} records, Sales: ${UGX(result.totalSales)}, Profit: ${UGX(result.totalProfit)}`);
         
         resolve(result);
       } catch (error) {
@@ -2257,7 +1630,7 @@ function processPurchaseExcelFile(file, sheetDate, supplier) {
 }
 
 function setupAutomation() {
-  // Process daily sales sheet
+  // Process daily sheet
   document.getElementById('btnProcessDailySheet').addEventListener('click', async () => {
     const fileInput = document.getElementById('dailyExcelFile');
     if (!fileInput.files || fileInput.files.length === 0) {
@@ -2288,7 +1661,7 @@ function setupAutomation() {
       
       showLoading(false);
       
-      alert(`Excel sales sheet processed successfully!\nDate: ${sheetDate}\nRecords: ${result.totalRecords}\nTotal Sales: ${UGX(result.totalSales)}\nTotal Profit: ${UGX(result.totalProfit)}`);
+      alert(`Excel sheet processed successfully!\nDate: ${sheetDate}\nRecords: ${result.totalRecords}\nTotal Sales: ${UGX(result.totalSales)}\nTotal Profit: ${UGX(result.totalProfit)}`);
       
       // Clear file input
       fileInput.value = '';
@@ -2299,49 +1672,7 @@ function setupAutomation() {
     }
   });
   
-  // Process purchase sheet
-  document.getElementById('btnProcessPurchaseSheet').addEventListener('click', async () => {
-    const fileInput = document.getElementById('purchaseExcelFile');
-    if (!fileInput.files || fileInput.files.length === 0) {
-      alert('Please select an Excel file');
-      return;
-    }
-    
-    const sheetDate = document.getElementById('purchaseSheetDate').value || todayStr();
-    const supplier = document.getElementById('purchaseSheetSupplier').value.trim();
-    
-    if (!supplier) {
-      alert('Please enter supplier name');
-      return;
-    }
-    
-    showLoading(true);
-    
-    try {
-      const result = await processPurchaseExcelFile(fileInput.files[0], sheetDate, supplier);
-      
-      // Refresh display
-      renderProducts();
-      renderPurchases();
-      renderInventory();
-      updateDashboardStats();
-      renderAutomation();
-      
-      showLoading(false);
-      
-      alert(`Excel purchases sheet processed successfully!\nDate: ${sheetDate}\nSupplier: ${supplier}\nItems: ${result.totalRecords}\nTotal Cost: ${UGX(result.totalCost)}`);
-      
-      // Clear file input
-      fileInput.value = '';
-      document.getElementById('purchaseSheetSupplier').value = '';
-    } catch (error) {
-      showLoading(false);
-      console.error('Error processing purchases Excel:', error);
-      alert('Error processing purchases Excel file: ' + error.message);
-    }
-  });
-  
-  // File input click for sales
+  // File input click
   document.getElementById('dailyExcelFile').addEventListener('change', function() {
     if (this.files && this.files[0]) {
       // Auto-set date from filename if possible
@@ -2359,38 +1690,11 @@ function setupAutomation() {
       }
     }
   });
-  
-  // File input click for purchases
-  document.getElementById('purchaseExcelFile').addEventListener('change', function() {
-    if (this.files && this.files[0]) {
-      // Auto-set date from filename if possible
-      const fileName = this.files[0].name.toLowerCase();
-      const dateMatch = fileName.match(/(\d{4}[-_]\d{2}[-_]\d{2})|(\d{8})/);
-      if (dateMatch) {
-        let dateStr = dateMatch[0];
-        // Convert 20231231 to 2023-12-31
-        if (dateStr.length === 8 && !dateStr.includes('-') && !dateStr.includes('_')) {
-          dateStr = `${dateStr.substring(0,4)}-${dateStr.substring(4,6)}-${dateStr.substring(6,8)}`;
-        }
-        // Replace underscores with dashes
-        dateStr = dateStr.replace(/_/g, '-');
-        document.getElementById('purchaseSheetDate').value = dateStr;
-      }
-      
-      // Try to extract supplier from filename
-      const supplierMatch = fileName.match(/from_([a-z0-9_]+)/i);
-      if (supplierMatch) {
-        document.getElementById('purchaseSheetSupplier').value = supplierMatch[1].replace(/_/g, ' ');
-      }
-    }
-  });
 }
 
 function renderAutomation() {
   const sheetCount = Object.keys(db.dailySheets).length;
-  const purchaseCount = db.purchases.length;
-  
-  document.getElementById('processedSheetsCount').textContent = sheetCount + purchaseCount;
+  document.getElementById('processedSheetsCount').textContent = sheetCount;
   document.getElementById('uniqueDatesCount').textContent = sheetCount;
   
   if (sheetCount > 0) {
@@ -2413,31 +1717,17 @@ function initReports() {
 function generateReport() {
   const startDate = document.getElementById('reportStart').value;
   const endDate = document.getElementById('reportEnd').value;
-  const reportType = document.getElementById('reportType').value;
+  const comparePeriod = document.getElementById('comparePeriod').value;
   
   if (!startDate || !endDate) {
     alert('Please select report period');
     return;
   }
   
-  // Calculate report data based on type
-  if (reportType === 'purchases') {
-    generatePurchasesReport(startDate, endDate);
-  } else if (reportType === 'inventory') {
-    generateInventoryReport(startDate, endDate);
-  } else if (reportType === 'combined') {
-    generateCombinedReport(startDate, endDate);
-  } else {
-    generateProfitLossReport(startDate, endDate);
-  }
-}
-
-function generateProfitLossReport(startDate, endDate) {
   // Calculate report data
   let totalSales = 0;
   let totalProfit = 0;
   let totalExpenses = 0;
-  let totalPurchases = 0;
   const categoryBreakdown = {};
   const dailyBreakdown = [];
   
@@ -2474,13 +1764,6 @@ function generateProfitLossReport(startDate, endDate) {
     }
   }
   
-  // Get purchases for period
-  db.purchases.forEach(purchase => {
-    if (purchase.date >= startDate && purchase.date <= endDate) {
-      totalPurchases += purchase.total || 0;
-    }
-  });
-  
   // Get expenses for period
   db.expenses.forEach(expense => {
     if (expense.date >= startDate && expense.date <= endDate) {
@@ -2488,7 +1771,7 @@ function generateProfitLossReport(startDate, endDate) {
     }
   });
   
-  const netProfit = totalProfit - totalExpenses - totalPurchases;
+  const netProfit = totalProfit - totalExpenses;
   const profitMargin = totalSales > 0 ? (totalProfit / totalSales * 100).toFixed(1) : 0;
   
   // Generate report HTML
@@ -2512,11 +1795,7 @@ function generateProfitLossReport(startDate, endDate) {
       </div>
     </div>
     
-    <div class="grid-4" style="margin-top:16px;">
-      <div class="stat">
-        <span class="muted">Total Purchases</span>
-        <b>${UGX(totalPurchases)}</b>
-      </div>
+    <div class="grid-3" style="margin-top:16px;">
       <div class="stat">
         <span class="muted">Total Expenses</span>
         <b>${UGX(totalExpenses)}</b>
@@ -2563,120 +1842,35 @@ function generateProfitLossReport(startDate, endDate) {
   html += `
       </tbody>
     </table>
-  `;
-  
-  document.getElementById('reportOutput').innerHTML = html;
-}
-
-function generatePurchasesReport(startDate, endDate) {
-  let totalPurchases = 0;
-  let totalItems = 0;
-  const supplierBreakdown = {};
-  const productBreakdown = {};
-  
-  // Filter purchases
-  const filteredPurchases = db.purchases.filter(p => p.date >= startDate && p.date <= endDate);
-  
-  filteredPurchases.forEach(purchase => {
-    totalPurchases += purchase.total || 0;
     
-    // Supplier breakdown
-    const supplier = purchase.supplier || 'Unknown';
-    if (!supplierBreakdown[supplier]) {
-      supplierBreakdown[supplier] = {
-        count: 0,
-        total: 0,
-        items: 0
-      };
-    }
-    supplierBreakdown[supplier].count++;
-    supplierBreakdown[supplier].total += purchase.total;
-    supplierBreakdown[supplier].items += purchase.items.length;
-    
-    // Product breakdown
-    purchase.items.forEach(item => {
-      totalItems += item.quantity;
-      if (!productBreakdown[item.productName]) {
-        productBreakdown[item.productName] = {
-          quantity: 0,
-          total: 0
-        };
-      }
-      productBreakdown[item.productName].quantity += item.quantity;
-      productBreakdown[item.productName].total += item.totalCost;
-    });
-  });
-  
-  let html = `
-    <div class="grid-3">
-      <div class="stat">
-        <span class="muted">Report Period</span>
-        <b>${startDate} to ${endDate}</b>
-      </div>
-      <div class="stat">
-        <span class="muted">Total Purchases</span>
-        <b>${UGX(totalPurchases)}</b>
-      </div>
-      <div class="stat">
-        <span class="muted">Total Items</span>
-        <b>${totalItems}</b>
-      </div>
-    </div>
-    
-    <div class="hr"></div>
-    
-    <h4>Supplier Breakdown</h4>
-    <table class="table" style="margin-bottom:20px;">
-      <thead>
-        <tr>
-          <th>Supplier</th>
-          <th>Purchase Count</th>
-          <th>Items</th>
-          <th>Total Value</th>
-          <th>Average Purchase</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-  
-  for (const [supplier, data] of Object.entries(supplierBreakdown)) {
-    const avgPurchase = data.count > 0 ? data.total / data.count : 0;
-    html += `
-      <tr>
-        <td><strong>${supplier}</strong></td>
-        <td>${data.count}</td>
-        <td>${data.items}</td>
-        <td>${UGX(data.total)}</td>
-        <td>${UGX(avgPurchase)}</td>
-      </tr>
-    `;
-  }
-  
-  html += `
-      </tbody>
-    </table>
-    
-    <h4>Product Breakdown</h4>
+    <h4>Expenses Breakdown</h4>
     <table class="table">
       <thead>
         <tr>
-          <th>Product</th>
-          <th>Quantity Purchased</th>
-          <th>Total Cost</th>
-          <th>Average Unit Cost</th>
+          <th>Expense Type</th>
+          <th>Count</th>
+          <th>Total Amount</th>
+          <th>% of Expenses</th>
         </tr>
       </thead>
       <tbody>
   `;
   
-  for (const [product, data] of Object.entries(productBreakdown)) {
-    const avgCost = data.quantity > 0 ? data.total / data.quantity : 0;
+  const expenseTypes = {};
+  db.expenses.forEach(expense => {
+    if (expense.date >= startDate && expense.date <= endDate) {
+      expenseTypes[expense.type] = (expenseTypes[expense.type] || 0) + (expense.amount || 0);
+    }
+  });
+  
+  for (const [type, amount] of Object.entries(expenseTypes)) {
+    const percentage = totalExpenses > 0 ? ((amount / totalExpenses) * 100).toFixed(1) : 0;
     html += `
       <tr>
-        <td><strong>${product}</strong></td>
-        <td>${data.quantity}</td>
-        <td>${UGX(data.total)}</td>
-        <td>${UGX(avgCost)}</td>
+        <td><span class="pill">${type}</span></td>
+        <td>${db.expenses.filter(e => e.type === type && e.date >= startDate && e.date <= endDate).length}</td>
+        <td>${UGX(amount)}</td>
+        <td>${percentage}%</td>
       </tr>
     `;
   }
@@ -2684,180 +1878,6 @@ function generatePurchasesReport(startDate, endDate) {
   html += `
       </tbody>
     </table>
-  `;
-  
-  document.getElementById('reportOutput').innerHTML = html;
-}
-
-function generateCombinedReport(startDate, endDate) {
-  // Call both reports and combine
-  let html = `<h3>Combined Business Report</h3>`;
-  html += `<p>Period: ${startDate} to ${endDate}</p>`;
-  
-  // Calculate totals
-  let totalSales = 0;
-  let totalProfit = 0;
-  let totalPurchases = 0;
-  let totalExpenses = 0;
-  
-  // Sales and profit
-  for (const [date, sheet] of Object.entries(db.dailySheets)) {
-    if (date >= startDate && date <= endDate) {
-      totalSales += sheet.totalSales || 0;
-      totalProfit += sheet.totalProfit || 0;
-    }
-  }
-  
-  // Purchases
-  db.purchases.forEach(purchase => {
-    if (purchase.date >= startDate && purchase.date <= endDate) {
-      totalPurchases += purchase.total || 0;
-    }
-  });
-  
-  // Expenses
-  db.expenses.forEach(expense => {
-    if (expense.date >= startDate && expense.date <= endDate) {
-      totalExpenses += expense.amount || 0;
-    }
-  });
-  
-  const netProfit = totalProfit - totalExpenses - totalPurchases;
-  
-  html += `
-    <div class="grid-4" style="margin-top:16px;">
-      <div class="stat">
-        <span class="muted">Total Sales</span>
-        <b>${UGX(totalSales)}</b>
-      </div>
-      <div class="stat">
-        <span class="muted">Gross Profit</span>
-        <b>${UGX(totalProfit)}</b>
-      </div>
-      <div class="stat">
-        <span class="muted">Total Purchases</span>
-        <b>${UGX(totalPurchases)}</b>
-      </div>
-      <div class="stat">
-        <span class="muted">Total Expenses</span>
-        <b>${UGX(totalExpenses)}</b>
-      </div>
-    </div>
-    
-    <div class="grid-2" style="margin-top:16px;">
-      <div class="stat" style="background: ${netProfit >= 0 ? '#ecfdf5' : '#fee2e2'};">
-        <span class="muted">Net Profit/Loss</span>
-        <b style="color: ${netProfit >= 0 ? '#16a34a' : '#ef4444'}; font-size:28px;">${UGX(netProfit)}</b>
-      </div>
-      <div class="stat">
-        <span class="muted">Profit Margin</span>
-        <b>${totalSales > 0 ? ((totalProfit / totalSales) * 100).toFixed(1) : 0}%</b>
-      </div>
-    </div>
-    
-    <div class="hr"></div>
-    
-    <div class="grid-2">
-      <div>
-        <h4>Top Selling Products</h4>
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th>Quantity Sold</th>
-              <th>Sales Value</th>
-            </tr>
-          </thead>
-          <tbody>
-  `;
-  
-  // Calculate top selling products
-  const productSales = {};
-  for (const [date, sheet] of Object.entries(db.dailySheets)) {
-    if (date >= startDate && date <= endDate) {
-      sheet.items.forEach(item => {
-        if (!productSales[item.productName]) {
-          productSales[item.productName] = {
-            quantity: 0,
-            sales: 0
-          };
-        }
-        productSales[item.productName].quantity += item.quantity;
-        productSales[item.productName].sales += item.total;
-      });
-    }
-  }
-  
-  // Sort by sales
-  const sortedProducts = Object.entries(productSales)
-    .sort((a, b) => b[1].sales - a[1].sales)
-    .slice(0, 10);
-  
-  sortedProducts.forEach(([product, data]) => {
-    html += `
-      <tr>
-        <td>${product}</td>
-        <td>${data.quantity}</td>
-        <td>${UGX(data.sales)}</td>
-      </tr>
-    `;
-  });
-  
-  html += `
-          </tbody>
-        </table>
-      </div>
-      
-      <div>
-        <h4>Top Purchased Products</h4>
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th>Quantity Purchased</th>
-              <th>Purchase Value</th>
-            </tr>
-          </thead>
-          <tbody>
-  `;
-  
-  // Calculate top purchased products
-  const productPurchases = {};
-  db.purchases.forEach(purchase => {
-    if (purchase.date >= startDate && purchase.date <= endDate) {
-      purchase.items.forEach(item => {
-        if (!productPurchases[item.productName]) {
-          productPurchases[item.productName] = {
-            quantity: 0,
-            cost: 0
-          };
-        }
-        productPurchases[item.productName].quantity += item.quantity;
-        productPurchases[item.productName].cost += item.totalCost;
-      });
-    }
-  });
-  
-  // Sort by cost
-  const sortedPurchases = Object.entries(productPurchases)
-    .sort((a, b) => b[1].cost - a[1].cost)
-    .slice(0, 10);
-  
-  sortedPurchases.forEach(([product, data]) => {
-    html += `
-      <tr>
-        <td>${product}</td>
-        <td>${data.quantity}</td>
-        <td>${UGX(data.cost)}</td>
-      </tr>
-    `;
-  });
-  
-  html += `
-          </tbody>
-        </table>
-      </div>
-    </div>
   `;
   
   document.getElementById('reportOutput').innerHTML = html;
@@ -2870,127 +1890,74 @@ function setupReports() {
   document.getElementById('btnExportReport').addEventListener('click', () => {
     const startDate = document.getElementById('reportStart').value;
     const endDate = document.getElementById('reportEnd').value;
-    const reportType = document.getElementById('reportType').value;
     
     if (!startDate || !endDate) {
       alert('Please select report period first');
       return;
     }
     
-    // Generate Excel report based on type
-    let reportData = [];
+    // Generate Excel report
+    const reportData = [
+      ["BAR MANAGEMENT SYSTEM - PROFIT & LOSS REPORT"],
+      ["Period:", `${startDate} to ${endDate}`],
+      ["Generated:", new Date().toLocaleString()],
+      [],
+      ["SUMMARY"],
+      ["Total Sales", "Total Expenses", "Gross Profit", "Net Profit", "Profit Margin"],
+    ];
     
-    if (reportType === 'purchases') {
-      reportData = [
-        ["BAR MANAGEMENT SYSTEM - PURCHASES REPORT"],
-        ["Period:", `${startDate} to ${endDate}`],
-        ["Generated:", new Date().toLocaleString()],
-        [],
-        ["PURCHASES SUMMARY"],
-        ["Total Purchases", "Total Items", "Number of Purchases"],
-      ];
-      
-      let totalPurchases = 0;
-      let totalItems = 0;
-      const filteredPurchases = db.purchases.filter(p => p.date >= startDate && p.date <= endDate);
-      
-      filteredPurchases.forEach(p => {
-        totalPurchases += p.total || 0;
-        totalItems += p.items.length;
-      });
-      
-      reportData.push([
-        UGX(totalPurchases).replace('UGX', '').trim(),
-        totalItems,
-        filteredPurchases.length
-      ]);
-      
-      reportData.push([], ["DETAILED PURCHASES"]);
-      reportData.push(["Date", "Supplier", "Invoice", "Items", "Total"]);
-      
-      filteredPurchases.forEach(p => {
-        reportData.push([
-          p.date,
-          p.supplier || 'N/A',
-          p.invoice || 'N/A',
-          p.items.length,
-          UGX(p.total || 0).replace('UGX', '').trim()
-        ]);
-      });
-    } else {
-      // Default P&L report
-      reportData = [
-        ["BAR MANAGEMENT SYSTEM - PROFIT & LOSS REPORT"],
-        ["Period:", `${startDate} to ${endDate}`],
-        ["Generated:", new Date().toLocaleString()],
-        [],
-        ["SUMMARY"],
-        ["Total Sales", "Total Expenses", "Gross Profit", "Net Profit", "Profit Margin"],
-      ];
-      
-      // Calculate totals
-      let totalSales = 0;
-      let totalProfit = 0;
-      let totalExpenses = 0;
-      let totalPurchases = 0;
-      
-      for (const [date, sheet] of Object.entries(db.dailySheets)) {
-        if (date >= startDate && date <= endDate) {
-          totalSales += sheet.totalSales || 0;
-          totalProfit += sheet.totalProfit || 0;
-        }
+    // Calculate totals
+    let totalSales = 0;
+    let totalProfit = 0;
+    let totalExpenses = 0;
+    
+    for (const [date, sheet] of Object.entries(db.dailySheets)) {
+      if (date >= startDate && date <= endDate) {
+        totalSales += sheet.totalSales || 0;
+        totalProfit += sheet.totalProfit || 0;
       }
-      
-      db.purchases.forEach(purchase => {
-        if (purchase.date >= startDate && purchase.date <= endDate) {
-          totalPurchases += purchase.total || 0;
-        }
-      });
-      
-      db.expenses.forEach(expense => {
-        if (expense.date >= startDate && expense.date <= endDate) {
-          totalExpenses += expense.amount || 0;
-        }
-      });
-      
-      const netProfit = totalProfit - totalExpenses - totalPurchases;
-      const profitMargin = totalSales > 0 ? (totalProfit / totalSales * 100).toFixed(1) : 0;
-      
-      reportData.push([
-        UGX(totalSales).replace('UGX', '').trim(),
-        UGX(totalExpenses).replace('UGX', '').trim(),
-        UGX(totalProfit).replace('UGX', '').trim(),
-        UGX(netProfit).replace('UGX', '').trim(),
-        `${profitMargin}%`
-      ]);
-      
-      reportData.push([], ["DAILY BREAKDOWN"]);
-      reportData.push(["Date", "Sales", "Profit", "Expenses", "Net"]);
-      
-      for (const [date, sheet] of Object.entries(db.dailySheets)) {
-        if (date >= startDate && date <= endDate) {
-          const dailyExpenses = db.expenses
-            .filter(e => e.date === date)
-            .reduce((sum, e) => sum + (e.amount || 0), 0);
-          const dailyPurchases = db.purchases
-            .filter(p => p.date === date)
-            .reduce((sum, p) => sum + (p.total || 0), 0);
-          const dailyNet = (sheet.totalProfit || 0) - dailyExpenses - dailyPurchases;
-          
-          reportData.push([
-            date,
-            UGX(sheet.totalSales || 0).replace('UGX', '').trim(),
-            UGX(sheet.totalProfit || 0).replace('UGX', '').trim(),
-            UGX(dailyExpenses).replace('UGX', '').trim(),
-            UGX(dailyNet).replace('UGX', '').trim()
-          ]);
-        }
+    }
+    
+    db.expenses.forEach(expense => {
+      if (expense.date >= startDate && expense.date <= endDate) {
+        totalExpenses += expense.amount || 0;
+      }
+    });
+    
+    const netProfit = totalProfit - totalExpenses;
+    const profitMargin = totalSales > 0 ? (totalProfit / totalSales * 100).toFixed(1) : 0;
+    
+    reportData.push([
+      UGX(totalSales).replace('UGX', '').trim(),
+      UGX(totalExpenses).replace('UGX', '').trim(),
+      UGX(totalProfit).replace('UGX', '').trim(),
+      UGX(netProfit).replace('UGX', '').trim(),
+      `${profitMargin}%`
+    ]);
+    
+    reportData.push([], ["DAILY BREAKDOWN"]);
+    reportData.push(["Date", "Sales", "Profit", "Expenses", "Net"]);
+    
+    for (const [date, sheet] of Object.entries(db.dailySheets)) {
+      if (date >= startDate && date <= endDate) {
+        const dailyExpenses = db.expenses
+          .filter(e => e.date === date)
+          .reduce((sum, e) => sum + (e.amount || 0), 0);
+        const dailyNet = (sheet.totalProfit || 0) - dailyExpenses;
+        
+        reportData.push([
+          date,
+          UGX(sheet.totalSales || 0).replace('UGX', '').trim(),
+          UGX(sheet.totalProfit || 0).replace('UGX', '').trim(),
+          UGX(dailyExpenses).replace('UGX', '').trim(),
+          UGX(dailyNet).replace('UGX', '').trim()
+        ]);
       }
     }
     
     const ws = XLSX.utils.aoa_to_sheet(reportData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Report");
+    XLSX.utils.book_append_sheet(wb, ws, "P&L Report");
     
     const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
     
@@ -3001,11 +1968,7 @@ function setupReports() {
       return buf;
     }
     
-    const fileName = reportType === 'purchases' 
-      ? `purchases-report-${startDate}-to-${endDate}.xlsx`
-      : `profit-loss-report-${startDate}-to-${endDate}.xlsx`;
-    
-    download(fileName, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
+    download(`profit-loss-report-${startDate}-to-${endDate}.xlsx`, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
   });
 }
 
@@ -3071,13 +2034,10 @@ function setupDataManagement() {
         'Purchase Price': p.purchasePrice,
         'Sale Price': p.salePrice,
         'Opening Stock': p.openingStock,
-        'Purchased Quantity': p.purchasedQuantity || 0,
+        'Current Stock': p.currentStock || p.openingStock,
         'Sold Count': p.soldCount || 0,
-        'Current Stock': calculateCurrentStock(p),
-        'Reorder Level': p.reorderLevel || 10,
         'Total Profit': p.totalProfit || 0,
-        'Last Purchase Date': p.lastPurchaseDate,
-        'Last Purchase Price': p.lastPurchasePrice || p.purchasePrice
+        'Min Stock Level': p.minStockLevel || 10
       }));
       
       const wsProducts = XLSX.utils.json_to_sheet(productsData);
@@ -3099,24 +2059,6 @@ function setupDataManagement() {
       if (dailyData.length > 0) {
         const wsDaily = XLSX.utils.json_to_sheet(dailyData);
         XLSX.utils.book_append_sheet(wb, wsDaily, 'Daily Sheets');
-      }
-      
-      // Purchases sheet
-      if (db.purchases.length > 0) {
-        const purchaseData = db.purchases.flatMap(p => 
-          p.items.map(item => ({
-            'Date': p.date,
-            'Supplier': p.supplier || 'N/A',
-            'Invoice': p.invoice || 'N/A',
-            'Product': item.productName,
-            'Quantity': item.quantity,
-            'Unit Cost': item.unitCost,
-            'Total Cost': item.totalCost
-          }))
-        );
-        
-        const wsPurchases = XLSX.utils.json_to_sheet(purchaseData);
-        XLSX.utils.book_append_sheet(wb, wsPurchases, 'Purchases');
       }
       
       // Expenses sheet
@@ -3144,53 +2086,6 @@ function setupDataManagement() {
     }
   });
   
-  // Export purchases
-  document.getElementById('btnExportPurchases').addEventListener('click', () => {
-    const from = document.getElementById('exportFrom').value;
-    const to = document.getElementById('exportTo').value;
-    
-    // Filter purchases by date range
-    let filteredPurchases = db.purchases;
-    if (from && to) {
-      filteredPurchases = db.purchases.filter(p => p.date >= from && p.date <= to);
-    }
-    
-    if (filteredPurchases.length === 0) {
-      alert('No purchases found for the selected date range');
-      return;
-    }
-    
-    const purchaseData = filteredPurchases.flatMap(p => 
-      p.items.map(item => ({
-        'Date': p.date,
-        'Supplier': p.supplier || 'N/A',
-        'Invoice': p.invoice || 'N/A',
-        'Product': item.productName,
-        'Quantity': item.quantity,
-        'Unit Cost': item.unitCost,
-        'Total Cost': item.totalCost
-      }))
-    );
-    
-    const ws = XLSX.utils.json_to_sheet(purchaseData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Purchases");
-    
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
-    
-    function s2ab(s) {
-      const buf = new ArrayBuffer(s.length);
-      const view = new Uint8Array(buf);
-      for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-      return buf;
-    }
-    
-    const fileName = `purchases-export-${from || 'all'}-to-${to || 'all'}.xlsx`;
-    download(fileName, new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
-    
-    alert('Purchases exported successfully!');
-  });
-  
   // Wipe data
   document.getElementById('btnWipe').addEventListener('click', () => {
     if (confirm('ARE YOU SURE? This will delete ALL data and cannot be undone!')) {
@@ -3208,23 +2103,6 @@ function setupDataManagement() {
       renderProducts();
       updateDashboardStats();
       alert('All daily sheets cleared!');
-    }
-  });
-  
-  // Clear purchases
-  document.getElementById('btnClearPurchases').addEventListener('click', () => {
-    if (confirm('Clear all purchases? This will also reset purchased quantities. This cannot be undone!')) {
-      // Reset purchased quantities in products
-      db.products.forEach(product => {
-        product.purchasedQuantity = 0;
-      });
-      
-      db.purchases = [];
-      saveData();
-      renderPurchases();
-      renderProducts();
-      updateDashboardStats();
-      alert('All purchases cleared!');
     }
   });
   
@@ -3524,7 +2402,6 @@ async function initializeApp() {
   setupTabs();
   setupProducts();
   setupSales();
-  setupPurchases();
   setupInventory();
   setupExpenses();
   setupReports();
@@ -3541,7 +2418,7 @@ async function initializeApp() {
   renderAutomation();
   updateLastSaveTime();
   
-  console.log('Enhanced Bar Management System with Purchases initialized successfully!');
+  console.log('Enhanced Bar Management System initialized successfully!');
 }
 
 // Start the application
