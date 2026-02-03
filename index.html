@@ -1116,8 +1116,8 @@ function initializeProductsFromExcel() {
       };
     });
     
-    // Create initial daily sheet from the sold data - DATE FIXED HERE
-    const sheetDate = '2026-01-10'; // Changed from 2026-10-01 to 2026-01-10
+    // Create initial daily sheet from the sold data
+    const sheetDate = '2026-01-10';
     const sheetItems = excelData
       .filter(p => p.sold && p.sold > 0)
       .map(p => {
@@ -1164,7 +1164,7 @@ function updateDashboardStats() {
   document.getElementById('statStockValue').textContent = UGX(stockValue);
   
   // Monthly purchases (estimate from product purchases in current month)
-  const currentMonth = '2026-01'; // January 2026
+  const currentMonth = '2026-10'; // October 2026
   const monthlyPurchases = db.products.reduce((sum, p) => {
     return sum + (p.purchasePrice || 0) * (p.openingStock || 0);
   }, 0);
@@ -2850,8 +2850,8 @@ async function initializeApp() {
   // Initialize background first
   initBackground();
   
-  // Set default dates - ALL CHANGED FROM 2026-10-01 to 2026-01-10
-  const defaultDate = '2026-01-10'; // Changed from 2026-10-01
+  // Set default dates
+  const defaultDate = '2026-01-10';
   document.querySelectorAll('input[type="date"]').forEach(input => {
     if (!input.value) input.value = defaultDate;
   });
