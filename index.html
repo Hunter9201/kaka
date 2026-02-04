@@ -221,6 +221,44 @@
   .highlight{background:#fef3c7;border-left:3px solid #f59e0b;}
   .profit-positive{color:var(--ok);font-weight:600;}
   .profit-negative{color:var(--bad);font-weight:600;}
+  
+  /* Print-specific styles */
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    .print-section, .print-section * {
+      visibility: visible;
+    }
+    .print-section {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      background: white;
+      color: black;
+      padding: 20px;
+      box-shadow: none;
+      border: none;
+    }
+    .no-print {
+      display: none !important;
+    }
+    .btn, .section-tools, .background-controls, header {
+      display: none !important;
+    }
+    .table {
+      border: 1px solid #000;
+    }
+    .table th, .table td {
+      border: 1px solid #000;
+      padding: 8px;
+    }
+    .pill {
+      border: 1px solid #000;
+    }
+  }
+  
   @media (max-width: 1200px){.grid-4{grid-template-columns:repeat(2,1fr);}}
   @media (max-width: 768px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}.row{grid-template-columns:1fr;}.card{padding:16px;}.nav{flex-direction:column;gap:16px;}.tabs{width:100%;justify-content:center;}.background-controls{bottom:10px;right:10px;padding:8px 12px;}}
 </style>
@@ -235,14 +273,14 @@
   </div>
   
   <!-- Background Controls -->
-  <div class="background-controls">
+  <div class="background-controls no-print">
     <div class="bg-btn active" data-bg="1" title="Background 1"></div>
     <div class="bg-btn" data-bg="2" title="Background 2"></div>
     <div class="bg-btn" data-bg="3" title="Background 3"></div>
     <button class="bg-pause" id="bgPause" title="Pause/Rotate">⏸️</button>
   </div>
 
-  <header>
+  <header class="no-print">
     <div class="nav">
       <div class="brand"><div class="brand-badge">B</div>KAKA BAR & RESTAURANT.</div>
       <div class="tabs" id="tabs">
@@ -317,14 +355,14 @@
 
     <!-- Inventory -->
     <section id="inventory" class="tabpanel" style="display:none;">
-      <div class="card">
-        <div class="section-tools">
+      <div class="card" id="inventoryPrintSection">
+        <div class="section-tools no-print">
           <h3 style="margin-right:auto">Inventory Management</h3>
           <button class="btn" id="btnPrintInventory">Print</button>
           <button class="btn" id="btnExportInventory">Export CSV</button>
         </div>
         
-        <div class="grid-3">
+        <div class="grid-3 no-print">
           <div>
             <label>Stock Date</label>
             <input type="date" id="inventoryDate" value="2026-01-10">
@@ -347,24 +385,32 @@
         
         <div class="hr"></div>
         
-        <div style="overflow-x:auto;">
-          <table class="table" id="inventoryTable">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Category</th>
-                <th>Opening</th>
-                <th>Purchased</th>
-                <th>Sold</th>
-                <th>Closing</th>
-                <th>Cost Price</th>
-                <th>Sale Price</th>
-                <th>Stock Value</th>
-                <th>Profit</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+        <div id="inventoryPrintContent">
+          <div class="print-header" style="text-align:center; margin-bottom:20px; display:none;">
+            <h2>KAKA BAR & RESTAURANT</h2>
+            <h3>Inventory Report</h3>
+            <p>Date: <span id="printInventoryDate">2026-01-10</span> | Generated: <span id="printInventoryGenerated"></span></p>
+          </div>
+          
+          <div style="overflow-x:auto;">
+            <table class="table" id="inventoryTable">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>Opening</th>
+                  <th>Purchased</th>
+                  <th>Sold</th>
+                  <th>Closing</th>
+                  <th>Cost Price</th>
+                  <th>Sale Price</th>
+                  <th>Stock Value</th>
+                  <th>Profit</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
@@ -372,9 +418,9 @@
     <!-- Daily Sales -->
     <section id="sales" class="tabpanel" style="display:none;">
       <div class="grid-2">
-        <div class="card">
+        <div class="card" id="salesRecordPrintSection">
           <h3>Record Daily Sales</h3>
-          <div class="grid-3">
+          <div class="grid-3 no-print">
             <div>
               <label>Date (Unique Day)</label>
               <input type="date" id="saleDate" value="2026-01-10">
@@ -395,7 +441,7 @@
           <div class="hr"></div>
           
           <h4>Daily Sales Items</h4>
-          <div class="grid-4" style="margin-bottom:12px;">
+          <div class="grid-4 no-print" style="margin-bottom:12px;">
             <div>
               <label>Product</label>
               <select id="saleProduct"></select>
@@ -415,12 +461,12 @@
           
           <div style="max-height:300px;overflow-y:auto;">
             <table class="table compact-table" id="saleItemsTable">
-              <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Profit</th><th></th></tr></thead>
+              <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Profit</th><th class="no-print"></th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
           
-          <div class="right" style="margin-top:16px;">
+          <div class="right no-print" style="margin-top:16px;">
             <div class="stat">
               <span class="muted">Total Sales</span>
               <b id="saleTotal">UGX 0</b>
@@ -433,9 +479,12 @@
           </div>
         </div>
         
-        <div class="card">
-          <h3>Recent Daily Sales</h3>
-          <div class="grid-3" style="margin-bottom:16px;">
+        <div class="card" id="salesHistoryPrintSection">
+          <div class="section-tools no-print">
+            <h3 style="margin-right:auto">Recent Daily Sales</h3>
+            <button class="btn" id="btnPrintSalesHistory">Print</button>
+          </div>
+          <div class="grid-3 no-print" style="margin-bottom:16px;">
             <div>
               <label>From Date</label>
               <input type="date" id="saleFrom" value="2026-01-10">
@@ -449,28 +498,39 @@
             </div>
           </div>
           
-          <div style="max-height:300px;overflow-y:auto;">
-            <table class="table compact-table" id="salesHistoryTable">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Items Sold</th>
-                  <th>Total Sales</th>
-                  <th>Total Profit</th>
-                  <th>Source</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+          <div id="salesHistoryPrintContent">
+            <div class="print-header" style="text-align:center; margin-bottom:20px; display:none;">
+              <h2>KAKA BAR & RESTAURANT</h2>
+              <h3>Daily Sales Report</h3>
+              <p>Period: <span id="printSalesPeriod"></span> | Generated: <span id="printSalesGenerated"></span></p>
+            </div>
+          
+            <div style="max-height:300px;overflow-y:auto;">
+              <table class="table compact-table" id="salesHistoryTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Items Sold</th>
+                    <th>Total Sales</th>
+                    <th>Total Profit</th>
+                    <th>Source</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
       
       <div class="hr"></div>
       
-      <div class="card">
-        <h3>Product Sales History</h3>
-        <div class="grid-3" style="margin-bottom:16px;">
+      <div class="card" id="productHistoryPrintSection">
+        <div class="section-tools no-print">
+          <h3 style="margin-right:auto">Product Sales History</h3>
+          <button class="btn" id="btnPrintProductHistory">Print</button>
+        </div>
+        <div class="grid-3 no-print" style="margin-bottom:16px;">
           <div>
             <label>Product</label>
             <select id="productHistorySelect"></select>
@@ -485,19 +545,27 @@
           </div>
         </div>
         
-        <div style="max-height:300px;overflow-y:auto;">
-          <table class="table compact-table" id="productHistoryTable">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Quantity Sold</th>
-                <th>Total Sales</th>
-                <th>Total Profit</th>
-                <th>Avg Price</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+        <div id="productHistoryPrintContent">
+          <div class="print-header" style="text-align:center; margin-bottom:20px; display:none;">
+            <h2>KAKA BAR & RESTAURANT</h2>
+            <h3>Product Sales History</h3>
+            <p>Product: <span id="printProductName"></span> | Period: <span id="printProductPeriod"></span></p>
+          </div>
+        
+          <div style="max-height:300px;overflow-y:auto;">
+            <table class="table compact-table" id="productHistoryTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Quantity Sold</th>
+                  <th>Total Sales</th>
+                  <th>Total Profit</th>
+                  <th>Avg Price</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
@@ -539,9 +607,12 @@
           </div>
         </div>
         
-        <div class="card">
-          <h3>Recent Expenses</h3>
-          <div class="grid-3" style="margin-bottom:16px;">
+        <div class="card" id="expensesPrintSection">
+          <div class="section-tools no-print">
+            <h3 style="margin-right:auto">Recent Expenses</h3>
+            <button class="btn" id="btnPrintExpenses">Print</button>
+          </div>
+          <div class="grid-3 no-print" style="margin-bottom:16px;">
             <div>
               <label>From Date</label>
               <input type="date" id="expenseFrom" value="2026-01-10">
@@ -555,19 +626,27 @@
             </div>
           </div>
           
-          <div style="max-height:300px;overflow-y:auto;">
-            <table class="table compact-table" id="expensesTable">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Description</th>
-                  <th>Amount</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+          <div id="expensesPrintContent">
+            <div class="print-header" style="text-align:center; margin-bottom:20px; display:none;">
+              <h2>KAKA BAR & RESTAURANT</h2>
+              <h3>Expenses Report</h3>
+              <p>Period: <span id="printExpensesPeriod"></span> | Generated: <span id="printExpensesGenerated"></span></p>
+            </div>
+          
+            <div style="max-height:300px;overflow-y:auto;">
+              <table class="table compact-table" id="expensesTable">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th class="no-print"></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
           </div>
           
           <div class="right" style="margin-top:16px;">
@@ -582,14 +661,14 @@
 
     <!-- Reports -->
     <section id="reports" class="tabpanel" style="display:none;">
-      <div class="card">
-        <div class="section-tools">
+      <div class="card" id="reportsPrintSection">
+        <div class="section-tools no-print">
           <h3 style="margin-right:auto">Profit & Loss Report</h3>
           <button class="btn" id="btnPrintReport">Print</button>
           <button class="btn" id="btnExportReport">Export Excel</button>
         </div>
         
-        <div class="grid-4">
+        <div class="grid-4 no-print">
           <div>
             <label>Report Period Start</label>
             <input type="date" id="reportStart" value="2026-01-10">
@@ -665,9 +744,10 @@
           <p class="help">Products are saved automatically</p>
         </div>
         
-        <div class="card" style="grid-column:span 8;">
-          <h3>Product List (From Excel Sheet)</h3>
-          <div class="section-tools" style="margin-bottom:16px;">
+        <div class="card" style="grid-column:span 8;" id="productsPrintSection">
+          <div class="section-tools no-print" style="margin-bottom:16px;">
+            <h3 style="margin-right:auto">Product List (From Excel Sheet)</h3>
+            <button class="btn" id="btnPrintProducts">Print</button>
             <input type="text" id="productSearch" placeholder="Search products..." style="flex:1;">
             <select id="productSort">
               <option value="name">Sort by Name</option>
@@ -677,23 +757,31 @@
             </select>
           </div>
           
-          <div style="max-height:500px;overflow-y:auto;">
-            <table class="table" id="productsTable">
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Category</th>
-                  <th>Purchase Price</th>
-                  <th>Sale Price</th>
-                  <th>Profit Margin</th>
-                  <th>Opening Stock</th>
-                  <th>Sold</th>
-                  <th>Current Stock</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+          <div id="productsPrintContent">
+            <div class="print-header" style="text-align:center; margin-bottom:20px; display:none;">
+              <h2>KAKA BAR & RESTAURANT</h2>
+              <h3>Product List</h3>
+              <p>Generated: <span id="printProductsGenerated"></span></p>
+            </div>
+          
+            <div style="max-height:500px;overflow-y:auto;">
+              <table class="table" id="productsTable">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Purchase Price</th>
+                    <th>Sale Price</th>
+                    <th>Profit Margin</th>
+                    <th>Opening Stock</th>
+                    <th>Sold</th>
+                    <th>Current Stock</th>
+                    <th class="no-print"></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -947,6 +1035,132 @@ function setupBackgroundControls() {
   
   // Pause button
   document.getElementById('bgPause').addEventListener('click', toggleBackgroundPause);
+}
+
+// ================ ENHANCED PRINT FUNCTIONALITY ================
+function setupPrintFunctionality() {
+  // Inventory Print
+  document.getElementById('btnPrintInventory').addEventListener('click', () => {
+    printSection('inventoryPrintSection', 'KAKA BAR - Inventory Report', () => {
+      document.getElementById('printInventoryDate').textContent = 
+        document.getElementById('inventoryDate').value || '2026-01-10';
+      document.getElementById('printInventoryGenerated').textContent = 
+        new Date().toLocaleDateString();
+    });
+  });
+  
+  // Sales History Print
+  document.getElementById('btnPrintSalesHistory').addEventListener('click', () => {
+    printSection('salesHistoryPrintSection', 'KAKA BAR - Daily Sales Report', () => {
+      const from = document.getElementById('saleFrom').value || '2026-01-10';
+      const to = document.getElementById('saleTo').value || '2026-01-10';
+      document.getElementById('printSalesPeriod').textContent = `${from} to ${to}`;
+      document.getElementById('printSalesGenerated').textContent = 
+        new Date().toLocaleDateString();
+    });
+  });
+  
+  // Product History Print
+  document.getElementById('btnPrintProductHistory').addEventListener('click', () => {
+    const productSelect = document.getElementById('productHistorySelect');
+    const productName = productSelect.options[productSelect.selectedIndex]?.text || 'All Products';
+    
+    printSection('productHistoryPrintSection', 'KAKA BAR - Product Sales History', () => {
+      const from = document.getElementById('productHistoryFrom').value || '2026-01-10';
+      const to = document.getElementById('productHistoryTo').value || '2026-01-10';
+      document.getElementById('printProductName').textContent = productName;
+      document.getElementById('printProductPeriod').textContent = `${from} to ${to}`;
+    });
+  });
+  
+  // Expenses Print
+  document.getElementById('btnPrintExpenses').addEventListener('click', () => {
+    printSection('expensesPrintSection', 'KAKA BAR - Expenses Report', () => {
+      const from = document.getElementById('expenseFrom').value || '2026-01-10';
+      const to = document.getElementById('expenseTo').value || '2026-01-10';
+      document.getElementById('printExpensesPeriod').textContent = `${from} to ${to}`;
+      document.getElementById('printExpensesGenerated').textContent = 
+        new Date().toLocaleDateString();
+    });
+  });
+  
+  // Reports Print
+  document.getElementById('btnPrintReport').addEventListener('click', () => {
+    printSection('reportsPrintSection', 'KAKA BAR - Profit & Loss Report');
+  });
+  
+  // Products Print
+  document.getElementById('btnPrintProducts').addEventListener('click', () => {
+    printSection('productsPrintSection', 'KAKA BAR - Product List', () => {
+      document.getElementById('printProductsGenerated').textContent = 
+        new Date().toLocaleDateString();
+    });
+  });
+}
+
+function printSection(sectionId, title, beforePrintCallback = null) {
+  const section = document.getElementById(sectionId);
+  if (!section) {
+    console.error(`Section ${sectionId} not found`);
+    return;
+  }
+  
+  // Clone the section to avoid affecting the original
+  const printClone = section.cloneNode(true);
+  
+  // Show print headers
+  const printHeaders = printClone.querySelectorAll('.print-header');
+  printHeaders.forEach(header => header.style.display = 'block');
+  
+  // Remove no-print elements
+  const noPrintElements = printClone.querySelectorAll('.no-print');
+  noPrintElements.forEach(el => el.remove());
+  
+  // Execute callback for additional setup
+  if (beforePrintCallback) {
+    beforePrintCallback();
+  }
+  
+  // Create a new window for printing
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${title}</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 20px; color: #000; }
+        .print-section { width: 100%; }
+        h2, h3, h4 { color: #000; margin: 10px 0; }
+        .table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .table th, .table td { border: 1px solid #000; padding: 8px; text-align: left; }
+        .table th { background-color: #f0f0f0; font-weight: bold; }
+        .print-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+        .stat { margin: 10px 0; padding: 10px; border: 1px solid #000; }
+        .pill { display: inline-block; padding: 2px 8px; margin: 2px; border: 1px solid #000; border-radius: 10px; font-size: 10px; }
+        .hr { border-top: 1px solid #000; margin: 20px 0; }
+        @media print {
+          body { margin: 0; padding: 10px; }
+          .no-print { display: none !important; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="print-section">
+        ${printClone.innerHTML}
+      </div>
+      <script>
+        window.onload = function() {
+          window.print();
+          setTimeout(function() {
+            window.close();
+          }, 100);
+        };
+      <\/script>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
 }
 
 // ================ UTILITY FUNCTIONS ================
@@ -1342,7 +1556,7 @@ function renderProducts() {
         <td>${p.openingStock || 0}</td>
         <td>${p.soldCount || 0}</td>
         <td><strong>${p.currentStock || p.openingStock || 0}</strong></td>
-        <td><button class="btn" data-edit="${p.id}">Edit</button></td>
+        <td class="no-print"><button class="btn" data-edit="${p.id}">Edit</button></td>
       </tr>
       `;
     }).join('');
@@ -1516,7 +1730,7 @@ function updateDailySaleTotal() {
         <td>${UGX(item.unitPrice)}</td>
         <td>${UGX(item.total)}</td>
         <td><span class="profit-positive">${UGX(item.profit)}</span></td>
-        <td><button class="btn bad" data-remove-sale="${index}">×</button></td>
+        <td class="no-print"><button class="btn bad" data-remove-sale="${index}">×</button></td>
       </tr>
       `;
     }).join('');
@@ -1810,6 +2024,56 @@ function setupInventory() {
   document.getElementById('inventoryDate').addEventListener('change', renderInventory);
   document.getElementById('filterCategory').addEventListener('change', renderInventory);
   document.getElementById('btnUpdateInventory').addEventListener('click', renderInventory);
+  
+  // Export CSV for inventory
+  document.getElementById('btnExportInventory').addEventListener('click', () => {
+    const date = document.getElementById('inventoryDate').value || '2026-01-10';
+    const category = document.getElementById('filterCategory').value;
+    
+    let filtered = db.products;
+    if (category) {
+      filtered = filtered.filter(p => p.category === category);
+    }
+    
+    // Calculate stock movement
+    filtered.forEach(product => {
+      product.calculatedSold = 0;
+      product.calculatedClosing = product.openingStock;
+      
+      Object.entries(db.dailySheets).forEach(([sheetDate, sheet]) => {
+        if (sheetDate <= date) {
+          const productItems = sheet.items.filter(item => item.productName === product.name);
+          product.calculatedSold += productItems.reduce((sum, item) => sum + item.quantity, 0);
+        }
+      });
+      
+      product.calculatedClosing = Math.max(0, product.openingStock - product.calculatedSold);
+      product.stockValue = product.calculatedClosing * (product.purchasePrice || 0);
+    });
+    
+    // Create CSV content
+    const headers = ['Product', 'Category', 'Opening', 'Purchased', 'Sold', 'Closing', 'Cost Price', 'Sale Price', 'Stock Value', 'Profit'];
+    const rows = filtered.map(p => [
+      p.name,
+      p.category || '',
+      p.openingStock || 0,
+      0, // Purchased
+      p.calculatedSold || 0,
+      p.calculatedClosing || 0,
+      p.purchasePrice || 0,
+      p.salePrice || 0,
+      p.stockValue || 0,
+      p.calculatedProfit || 0
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    download(`inventory-${date}.csv`, blob);
+  });
 }
 
 // ================ EXPENSES MANAGEMENT ================
@@ -1838,7 +2102,7 @@ function loadExpenses() {
         <td><span class="pill">${expense.type}</span></td>
         <td>${expense.description || ''}</td>
         <td>${UGX(expense.amount)}</td>
-        <td><button class="btn bad" data-remove-expense="${index}">×</button></td>
+        <td class="no-print"><button class="btn bad" data-remove-expense="${index}">×</button></td>
       </tr>
       `;
     }).join('');
@@ -2868,6 +3132,9 @@ async function initializeApp() {
   setupReports();
   setupAutomation();
   setupDataManagement();
+  
+  // Setup print functionality
+  setupPrintFunctionality();
   
   // Initialize Google Drive
   await initGoogleDrive();
